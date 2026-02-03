@@ -1,0 +1,66 @@
+name: Next.js CI/CD
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  ci:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout
+      - uses: actions/checkout@v3
+
+      # 2. Setup Node.js
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # 3. Install pnpm & dependencies
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # 4. Lint
+      - run: pnpm lint
+
+      # 5. Type check
+      - run: pnpm tsc --noEmit
+
+      # 6. Unit & Integration tests
+      - run: pnpm test -- --coverage
+
+      # 7. Build Next.js app
+      - run: pnpm build
+
+  cd:
+    name: Continuous Deployment
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      # 8. Deploy to Vercel
+      - name: Vercel Deployment
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          prod: ${{ github.ref == 'refs/heads/main' }}
