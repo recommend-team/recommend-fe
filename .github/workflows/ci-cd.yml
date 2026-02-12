@@ -14,20 +14,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
+      # Install Node
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
 
-      - run: pnpm install --frozen-lockfile
+      # Install pnpm manually
+      - name: Install pnpm
+        run: npm install -g pnpm
 
+      # Install dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Lint
       - run: pnpm lint
+
+      # Typecheck
       - run: pnpm tsc --noEmit
+
+      # Test
       - run: pnpm test -- --coverage
+
+      # Build
       - run: pnpm build
 
   cd:
