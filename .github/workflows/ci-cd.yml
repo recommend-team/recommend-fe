@@ -33,8 +33,11 @@ jobs:
       # Typecheck
       - run: pnpm tsc --noEmit
 
+      - name: Debug file structure
+        run: ls -R
+
       # Test
-      - run: pnpm test -- --coverage
+      - run: pnpm test --coverage
 
       # Build
       - run: pnpm build
