@@ -4,10 +4,6 @@ on:
   push:
     branches: [staging, main]
 
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
 jobs:
   deploy:
     name: CD - Deploy
@@ -38,22 +34,15 @@ jobs:
       # 6. Deploy to Production (main branch)
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
-        uses: amondnet/vercel-action@v25
+        uses: vercel/action@main
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ env.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ env.VERCEL_PROJECT_ID }}
-          working-directory: ./
-          vercel-args: --prod
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.VERCEL_TOKEN }}
+          prod: true
 
       # 7. Deploy to Staging (staging branch)
       - name: Deploy to Staging
         if: github.ref == 'refs/heads/staging'
-        uses: amondnet/vercel-action@v25
+        uses: vercel/action@main
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ env.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-          working-directory: ./
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.VERCEL_TOKEN }}
+          prod: false
