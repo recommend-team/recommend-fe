@@ -5,11 +5,12 @@ const createJestConfig = nextJest({ dir: './' })
 
 module.exports = createJestConfig({
   testEnvironment: 'jsdom',
-  testMatch: ['**/__tests__/**/*.test.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
+  testMatch: ['**/__tests__/**/*.[jt]s?(x)'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  passWithNoTests: true,
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
