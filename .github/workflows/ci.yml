@@ -15,15 +15,15 @@ jobs:
       # 1. Checkout code
       - uses: actions/checkout@v4
 
-      # 2. Setup Node.js
+      # 2. Install pnpm globally first
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # 3. Setup Node.js with pnpm cache
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
-
-      # 3. Install pnpm & dependencies
-      - name: Install pnpm
-        run: npm install -g pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
