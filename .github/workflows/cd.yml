@@ -34,15 +34,18 @@ jobs:
       # 6. Deploy to Production (main branch)
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
-        uses: vercel/action@main
+        uses: amondnet/vercel-action@v25
         with:
-          token: ${{ secrets.VERCEL_TOKEN }}
-          prod: true
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
 
       # 7. Deploy to Staging (staging branch)
       - name: Deploy to Staging
         if: github.ref == 'refs/heads/staging'
-        uses: vercel/action@main
+        uses: amondnet/vercel-action@v25
         with:
-          token: ${{ secrets.VERCEL_TOKEN }}
-          prod: false
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
