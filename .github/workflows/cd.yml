@@ -1,0 +1,51 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [staging, main]
+
+jobs:
+  deploy:
+    name: CD - Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - uses: actions/checkout@v4
+
+      # 2. Install pnpm globally first
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # 3. Setup Node.js with pnpm cache
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # 4. Install dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 5. Build Next.js app
+      - name: Build
+        run: pnpm build
+
+      # 6. Deploy to Production (main branch)
+      # - name: Deploy to Production
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: amondnet/vercel-action@v25
+      #   with:
+      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+      #     vercel-args: '--prod'
+
+      # 7. Deploy to Staging (staging branch)
+      # - name: Deploy to Staging
+      #   if: github.ref == 'refs/heads/staging'
+      #   uses: amondnet/vercel-action@v25
+      #   with:
+      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
