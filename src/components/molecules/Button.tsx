@@ -40,7 +40,7 @@ const Button = ({
   return (
     <Card
       variant={variants[variant].cardVariant}
-      rounded="lg"
+      rounded="sm"
       padding="small"
       hoverable={!disabled}
       className={cn(

@@ -19,9 +19,15 @@ const paddings = {
 };
 
 const radius = {
-  sm: "rounded-xl",
+  sm: "rounded-[1.1rem]",
   lg: "rounded-3xl",
 };
+
+const radiusInner = {
+  sm: "rounded-[1rem]",
+  lg: "rounded-[1.4rem]",
+};
+
 
 const Card = ({
   children,
@@ -57,7 +63,7 @@ const Card = ({
       <div
         className={cn(
           "bg-white",
-          radius[rounded],
+          radiusInner[rounded],
           paddings[padding],
           className,
         )}
