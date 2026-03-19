@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 type CardProps = {
   children: ReactNode;
   className?: string;
-  variant?: "regular" | "gradient";
+  variant?: "regular" | "gradient" | "none";
   padding?: "small" | "medium" | "large";
   rounded?: "sm" | "lg";
   hoverable?: boolean;
@@ -31,20 +31,29 @@ const Card = ({
   rounded = "lg",
   hoverable = true,
 }: CardProps) => {
-  const isGradient = variant === "gradient";
-
+  // Hover & Transition Logic
   const hoverClasses = hoverable
-    ? "hover:shadow-xl hover:-translate-y-0.5 transition-all duration-150"
+    ? "hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 ease-out"
     : "";
-  return (
-    <div
-      className={cn(
-        radius[rounded],
-        isGradient
-          ? `p-0.5 bg-linear-to-r from-[#EF5A22] via-pink-500 to-green-600 shadow-lg shadow-pink-200 ${hoverClasses}`
-          : `border-2 border-gray-100 bg-white shadow-md ${hoverClasses}`,
-      )}
-    >
+
+  const varis = {
+    gradient: cn(
+      "p-0.5 bg-linear-to-r from-[#EF5A22] via-pink-500 to-green-600 shadow-lg shadow-pink-200/50",
+      "hover:brightness-110 hover:shadow-pink-300/60",
+      hoverClasses,
+    ),
+
+    regular: cn(
+      "border-2 border-gray-100 bg-white shadow-md",
+      "hover:border-gray-200",
+      hoverClasses,
+    ),
+    none: cn("bg-white shadow-md", hoverClasses),
+  };
+
+  if (variant === "gradient") {
+    return (
+      <div className={cn(radius[rounded], varis[variant])}>
       <div
         className={cn(
           "bg-white",
@@ -55,6 +64,21 @@ const Card = ({
       >
         {children}
       </div>
+      </div>
+    );
+  }
+
+  // Standard return for regular/none to keep DOM tree shallow and avoid double shadows
+  return (
+    <div
+      className={cn(
+        radius[rounded],
+        varis[variant],
+        paddings[padding],
+        className,
+      )}
+    >
+      {children}
     </div>
   );
 };
