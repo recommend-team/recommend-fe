@@ -23,13 +23,13 @@ const Button = ({
   const variants = {
     green: {
       cardVariant: "none" as const,
-      bg: "bg-[#006837] text-white hover:bg-[#007a41] active:bg-[#00552a]",
-      disabledBg: "bg-[#006837] opacity-50 cursor-not-allowed",
+      bg: "bg-recommend-green text-white hover:bg-recommend-green-hover active:bg-recommend-green-active",
+      disabledBg: "bg-recommend-green opacity-50 cursor-not-allowed",
     },
     gradient: {
       cardVariant: "gradient" as const,
-      bg: "bg-[#FFFFDC] text-black hover:bg-[#fffff0] active:bg-[#e6e6b8]",
-      disabledBg: "bg-[#FFFFDC] opacity-50 cursor-not-allowed",
+      bg: "bg-recommend-amber text-black hover:bg-recommend-amber-hover active:bg-recommend-amber-active",
+      disabledBg: "bg-recommend-amber opacity-50 cursor-not-allowed",
     },
   };
 
@@ -40,7 +40,7 @@ const Button = ({
   return (
     <Card
       variant={variants[variant].cardVariant}
-      rounded="lg"
+      rounded="sm"
       padding="small"
       hoverable={!disabled}
       className={cn(
