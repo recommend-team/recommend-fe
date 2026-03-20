@@ -44,7 +44,7 @@ const Card = ({
 
   const varis = {
     gradient: cn(
-      "p-0.5 bg-linear-to-r from-[#EF5A22] via-pink-500 to-green-600 shadow-lg shadow-pink-200/50",
+      "p-0.5 bg-brand-gradient shadow-lg shadow-pink-200/50",
       "hover:brightness-110 hover:shadow-pink-300/60",
       hoverClasses,
     ),
