@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 name: Next.js CI/CD
 
 on:
@@ -20,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
 
       # 3. Install pnpm & dependencies
       - run: npm install -g pnpm
@@ -50,7 +49,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - run: npm install -g pnpm
       - run: pnpm install --frozen-lockfile
@@ -65,7 +64,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
           prod: ${{ github.ref == 'refs/heads/main' }}
-=======
+
 # This file has been deprecated and split into separate CI and CD workflows
 # See:
 # - .github/workflows/ci.yml for Continuous Integration
@@ -75,4 +74,4 @@ jobs:
 # - Production: main branch
 # - Staging: staging branch
 # - Development: development branch (default branch)
->>>>>>> ccd3e04df4421146527078b3411ca3f32f191dba
+

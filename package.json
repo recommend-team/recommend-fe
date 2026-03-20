@@ -13,11 +13,7 @@
     "e2e": "cypress open"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "@sentry/nextjs": "^10.38.0",
-=======
     "@sentry/nextjs": "^10.40.0",
->>>>>>> ccd3e04df4421146527078b3411ca3f32f191dba
     "@tanstack/react-query": "^5.90.20",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
