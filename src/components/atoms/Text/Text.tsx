@@ -2,11 +2,10 @@ import React from "react";
 import { TextProps, TextVariant, TextColor } from "./Text.types";
 
 const sizeStyles = {
-  "96": "text-[48px] md:text-[72px] lg:text-[96px]",
-  "64": "text-[40px] md:text-[64px] lg:text-[96px]",
+  "64": "text-[40px] md:text-[64px] lg:text-[64px]",
   "48": "text-[32px] md:text-[40px] lg:text-[48px]",
   "24": "text-[18px] md:text-[20px] lg:text-[24px]",
-  "20": "text-[16px] md:text-[20px]",
+  "20": "text-[20px] md:text-[20px]",
   "16": "text-[14px] md:text-[16px]",
 };
 
@@ -23,7 +22,7 @@ const variantStyles: Record<TextVariant, string> = {
   "hero-subtext":
     `font-dm font-extrabold ${sizeStyles["20"]} ${alignStyles.center} leading-none`,
   "section-heading-96":
-    `font-champ font-black ${sizeStyles["96"]} ${alignStyles.inherit} leading-none`,
+    `font-champ font-black ${sizeStyles["64"]} ${alignStyles.inherit} leading-none`,
   "section-heading-48":
     `font-champ font-black ${sizeStyles["48"]} ${alignStyles.inherit} leading-none`,
   "section-heading-48-right":
