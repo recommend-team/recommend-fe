@@ -38,7 +38,7 @@ const Button = ({
     : variants[variant].bg;
 
   return (
-    <div> 
+    <div className="flex"> 
     <Card
       variant={variants[variant].cardVariant}
       rounded="sm"
