@@ -39,7 +39,7 @@ const MobileHeader = () => {
 
 const DesktopHeader = () => {
   return (
-    <div className="hidden lg:flex flex-row justify-between items-center w-full max-w-7xl mx-auto p-4">
+    <div className="hidden lg:flex flex-row justify-between items-center w-full max-w-[1500px] mx-auto p-4">
       {/* Left Spacer to balance the layout */}
       <div className="flex-1" />
 
@@ -91,7 +91,7 @@ const DesktopHeader = () => {
 
 const LandingHeader = () => {
   return (
-    <header className="w-full sticky top-0 z-50  hover:backdrop-blur-xs">
+    <header className="w-full top-0 z-50  hover:backdrop-blur-xs">
       <MobileHeader />
       <DesktopHeader />
     </header>
