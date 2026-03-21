@@ -38,6 +38,7 @@ const Button = ({
     : variants[variant].bg;
 
   return (
+    <div className="flex"> 
     <Card
       variant={variants[variant].cardVariant}
       rounded="sm"
@@ -54,12 +55,12 @@ const Button = ({
         onClick={onClick}
         className="flex w-full items-center justify-center gap-2 px-3 font-medium outline-none"
       >
-        {icon && (
+        <span className="whitespace-nowrap font-bold">{text}</span>
+                {icon && (
           <span className="flex items-center justify-center">{icon}</span>
         )}
-        <span className="whitespace-nowrap">{text}</span>
       </button>
-    </Card>
+    </Card></div>
   );
 };
 
