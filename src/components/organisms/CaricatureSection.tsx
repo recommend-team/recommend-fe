@@ -1,6 +1,7 @@
 import { CaricatureMiddle } from "../molecules/CaricatureMiddle";
 import { CaricatureBottom } from "./CaricatureBottom";
 import { CaricatureTop } from "./CaricatureTop";
+import { MobileOnlyCaricatureSection } from "./MobileOnlyCaricatureSection";
 
 const CaricatureSection = () => {
   return (
@@ -8,6 +9,7 @@ const CaricatureSection = () => {
       <CaricatureTop />
       <CaricatureMiddle />
       <CaricatureBottom />
+      <MobileOnlyCaricatureSection/>
     </div>
   );
 };
