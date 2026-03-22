@@ -1,3 +1,4 @@
+import CaricatureSection from "@/components/organisms/CaricatureSection";
 import { LandingSectionOne } from "@/components/organisms/LandingSection1";
 import { BackgroundOne } from "@/components/templates/BackgroundOne";
 import NoAppSection from "@/components/templates/NoAppSection";
@@ -8,7 +9,8 @@ export default function Home() {
     <BackgroundOne>
       <LandingSectionOne />
       <NoAppSection />
-      <SlidingLocations/>
+      <SlidingLocations />
+      <CaricatureSection />
     </BackgroundOne>
   );
 }
