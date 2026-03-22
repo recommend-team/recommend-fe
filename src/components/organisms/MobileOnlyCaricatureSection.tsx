@@ -6,7 +6,6 @@ import WhatsAppIcon from "../atoms/WhatsAppIcon";
 const MobileOnlyCaricatureSection = () => {
   return (
     <div className="flex flex-col gap-6 md:hidden pt-10 px-4">
-      {" "}
       {/* Caricature block 1 */}
       <div className="flex flex-col items-center gap-3">
         <Text
