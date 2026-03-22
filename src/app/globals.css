@@ -41,6 +41,25 @@
     var(--color-recommend-green)
   );
   }
+
+  @keyframes slide {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-slide {
+    animation: slide 20s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide {
+    animation-duration: 0s;
+  }
 }
 
 body {
