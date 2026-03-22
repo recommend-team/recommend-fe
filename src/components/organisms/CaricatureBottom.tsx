@@ -81,16 +81,58 @@ const CaricatureBottom = () => {
       {/* separator */}
       <div className="w-0.5 h-3/4 bg-green-500 opacity-30" />
 
-      {/* Crescent block */}
-      <div className="flex-1 flex items-center justify-center h-full">
+
+      {/* Caricature block 2 */}
+      <div className="flex-1 flex flex-col items-center justify-center h-full gap-2 md:gap-3">
+        <div className="hidden md:block">
+          <Text
+            variant="neighborhoods-title"
+            color="orange"
+            className="text-center text-sm md:text-lg lg:text-2xl"
+          >
+            I Am a Business
+          </Text>
+
+          <Text
+            variant="neighborhoods-list"
+            color="orange"
+            className="text-center text-xs md:text-sm lg:text-base whitespace-nowrap"
+          >
+            10M+ reach - Whatsapp storefront
+          </Text>
+        </div>
+
+        {/* static image */}
+        <div className="hidden md:block w-12 h-12 md:w-16 md:h-16 lg:w-24 lg:h-24">
+          
+            <Image
+              src="/svg/business_agreement.svg"
+              alt=""
+              width={96}
+              height={96}
+              className="object-cover rounded-full"
+            />
+          
+        </div>
+
+              {/* Crescent block */}
+      <div className="md:hidden flex-1 flex items-center justify-center h-full">
         <Image
           src="/svg/curve_green.svg"
           alt=""
           width={80}
           height={80}
-          className="w-10 md:w-16 lg:w-24 h-auto"
+          className="w-10 md:w-16 lg:w-24 h-auto"/>
+          </div>
+
+        <Button
+          variant="gradient"
+          text="Join as a Business"
+          icon={<WhatsAppIcon />}
+          className="hidden md:block"
         />
       </div>
+
     </div>
   );
 };
