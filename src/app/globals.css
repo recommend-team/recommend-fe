@@ -49,6 +49,13 @@
   .font-dm {
     font-family: "DM Sans", "sans-serif";
   }
+.bg-heading {
+  font-size: clamp(80px, 5vw, 100px); /* smaller mobile */
+  letter-spacing: 2px;
+  line-height: 0;
+
+}
+}
 
   @keyframes float {
     0%, 100% {
@@ -79,7 +86,7 @@
   .animate-float-slow {
     animation: float 5s ease-in-out infinite;
   }
-}
+
 
 @media (prefers-reduced-motion: reduce) {
   .animate-slide,
@@ -94,3 +101,7 @@ body {
   color: var(--foreground);
   font-family: 'DM Sans' , sans-serif;
 }
+
+
+
+
