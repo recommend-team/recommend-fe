@@ -49,10 +49,16 @@
   .font-dm {
     font-family: "DM Sans", "sans-serif";
   }
-.bg-heading {
-  font-size: clamp(80px, 5vw, 100px); /* smaller mobile */
-  letter-spacing: 2px;
-  line-height: 0;
+ .bg-heading {
+    font-size: clamp(2rem, 8vw, 6rem);
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  @media (min-width: 768px) {
+    .bg-heading {
+      font-size: clamp(4rem, 7vw, 5rem);
+    }
 
 }
 }

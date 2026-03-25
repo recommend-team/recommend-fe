@@ -9,7 +9,7 @@ type FoodCardProps = {
 
 export const FoodCard = ({ image, title, comingSoon }: FoodCardProps) => {
   return (
-    <div className="bg-black rounded-[26px] w-[400px] overflow-hidden shadow-xl">
+    <div className="bg-black rounded-[26px] w-[280px] md:w-[400px] overflow-hidden shadow-xl">
 
       {/* Logo */}
       <div className="flex justify-center pt-3 pb-1">
@@ -24,7 +24,7 @@ export const FoodCard = ({ image, title, comingSoon }: FoodCardProps) => {
 
       {/* Image */}
       <div className="px-[17%] pt-[6%]">
-        <div className="relative rounded-[16px] overflow-hidden h-[280px]">
+        <div className="relative rounded-[16px] overflow-hidden h-[200px] md:h-[280px] border-[2px] border-white">
           <Image src={image} alt={title} fill className="object-cover" />
 
           {/* Coming soon overlay */}
@@ -66,6 +66,7 @@ export const FoodCard = ({ image, title, comingSoon }: FoodCardProps) => {
           <Image src="/images/heart.png" alt="" width={19} height={14} />
         </div>
       </div>
+
     </div>
   );
 };

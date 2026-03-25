@@ -13,39 +13,43 @@ const cards = [
     title: "GRAB A BITE",
     leftText: "Craving something tasty? From local bukas to top restaurants",
     rightText: "rice, pasta, grills, pastries, and more we've got you covered.",
+    comingSoon: false,
   },
   {
     image: "/images/everyday-essentials.png",
     title: "EVERYDAY ESSENTIALS",
     leftText: "Get groceries, household items, baby products,",
     rightText: "and other neccessities, right from nearby stores.",
+    comingSoon: false,
   },
   {
     image: "/images/medicine-wellness.png",
     title: "MEDICINE & WELLNESS",
     leftText: "Quick access to verified pharmacies for medicines,",
     rightText: "hygiene products, and wellness essentials.",
+    comingSoon: false,
   },
   {
     image: "/images/fresh-market.png",
     title: "FRESH FROM MARKET",
     leftText: "Fruits, vegetables, grains,",
     rightText: "seasonal picks delivered fresh to your home.",
+    comingSoon: true,
   },
   {
     image: "/images/beauty-fashion.png",
     title: "BEAUTY & FASHION",
     leftText: "Skincare vendors, Hair vendors, tailors, fashion stores,",
     rightText: "and personal care shops within your reach.",
+    comingSoon: true,
   },
 ];
 
 export default function WhatYouCanOrderSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [current, setCurrent] = useState(-1); // -1 = no card yet
+  const [current, setCurrent] = useState(-1);
   const [exiting, setExiting] = useState(false);
 
-  // Slide in first card when section enters viewport
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -73,23 +77,25 @@ export default function WhatYouCanOrderSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full h-screen overflow-hidden cursor-pointer"
+      className="relative w-full h-screen overflow-hidden cursor-pointer pb-24 md:pb-0"
+      style={{ minHeight: "130svh" }}
       onClick={handleClick}
     >
+
       {/* Background heading */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 px-4">
-      <Text
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 px-4">
+        <Text
           variant="section-heading-96"
           color="orange"
-            as="h2"
-  className="bg-heading font-champ font-black text-[#F15A24] whitespace-nowrap"
->
-  What You Can Order
-</Text>
+          as="h2"
+          className="bg-heading font-champ font-black text-[#F15A24] whitespace-nowrap"
+        >
+          What You Can Order
+        </Text>
       </div>
 
       {/* Card layer */}
-      <div className="absolute inset-0 flex items-center justify-center z-10 py-16">
+      <div className="absolute inset-0 flex items-center justify-center z-10 py-4 md:py-16">
         <AnimatePresence mode="wait">
           {current >= 0 && (
             <motion.div
@@ -99,50 +105,54 @@ export default function WhatYouCanOrderSection() {
               exit={{ y: "-100%", opacity: 0 }}
               transition={{ type: "spring", stiffness: 100, damping: 20 }}
             >
-              <div className="hidden md:flex items-center justify-center gap-8 w-full max-w-6xl px-10">
-  <div className="flex-1 flex justify-end mb-40">
 
-  <Text
-      variant="cta-sublabel"
-      color="green"
-      className="text-left max-w-[160px] leading-snug"
-    >
-      {cards[current].leftText}
-    </Text>
-  </div>
-  
-  <FoodCard
-    image={cards[current].image}
-    title={cards[current].title}
-  />
-  <div className="flex-1 flex justify-start mt-45">
-    <Text
-      variant="cta-sublabel"
-      color="green"
-      className="text-left max-w-[160px] leading-snug"
-    >
-      {cards[current].rightText}
-    </Text>
-  </div>
-</div>
+              {/* Desktop */}
+              <div className="hidden md:flex items-center justify-center gap-8 w-full max-w-6xl px-10">
+                <div className="flex-1 flex justify-end mb-40">
+                  <Text
+                    variant="cta-sublabel"
+                    color="green"
+                    className="text-left max-w-[160px] leading-snug"
+                  >
+                    {cards[current].leftText}
+                  </Text>
+                </div>
+
+                <FoodCard
+                  image={cards[current].image}
+                  title={cards[current].title}
+                  comingSoon={cards[current].comingSoon}
+                />
+
+                <div className="flex-1 flex justify-start mt-40">
+                  <Text
+                    variant="cta-sublabel"
+                    color="green"
+                    className="text-left max-w-[160px] leading-snug"
+                  >
+                    {cards[current].rightText}
+                  </Text>
+                </div>
+              </div>
 
               {/* Mobile */}
               <div className="flex md:hidden flex-col items-center w-full px-5 gap-4">
                 <Text
                   variant="cta-sublabel"
                   color="green"
-                  className="text-left max-w-[260px] leading-snug"
+                  className="text-left max-w-[200px] leading-snug"
                 >
                   {cards[current].leftText}
                 </Text>
                 <FoodCard
                   image={cards[current].image}
                   title={cards[current].title}
+                  comingSoon={cards[current].comingSoon}
                 />
                 <Text
                   variant="cta-sublabel"
                   color="green"
-                  className="text-center max-w-[260px] leading-snug"
+                  className="text-center max-w-[200px] leading-snug"
                 >
                   {cards[current].rightText}
                 </Text>
@@ -153,8 +163,9 @@ export default function WhatYouCanOrderSection() {
         </AnimatePresence>
       </div>
 
-      {/* Button — bottom right, always visible */}
-<div className="absolute bottom-14 right-8 z-20 pointer-events-auto">        <Button
+      {/* Button — bottom right */}
+      <div className="absolute bottom-14 right-8 z-20 pointer-events-auto">
+        <Button
           text="Start Ordering"
           icon={<WhatsAppIcon />}
           variant="green"
@@ -164,8 +175,3 @@ export default function WhatYouCanOrderSection() {
     </section>
   );
 }
-
-
-
-
-
