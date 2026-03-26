@@ -11,7 +11,8 @@ export type TextVariant =
   | "cta-sublabel"
   | "ticker"
   | "neighborhoods-title"
-  | "neighborhoods-list";
+  | "neighborhoods-list"
+  | "tap-hint";
 
 export type TextColor =
   | "orange"
