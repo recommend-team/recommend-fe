@@ -49,13 +49,18 @@ export default function WhatYouCanOrderSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(-1);
   const [exiting, setExiting] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && current === -1) {
-          setCurrent(0);
-        }
+  setTimeout(() => {
+    setCurrent(0);
+    setTimeout(() => setShowHint(true), 800);
+  }, 1800);
+}
       },
       { threshold: 0.3 }
     );
@@ -65,6 +70,7 @@ export default function WhatYouCanOrderSection() {
 
   const handleClick = () => {
     if (exiting) return;
+    setShowHint (false);
     if (current < cards.length - 1) {
       setExiting(true);
       setTimeout(() => {
@@ -81,6 +87,23 @@ export default function WhatYouCanOrderSection() {
       style={{ minHeight: "130svh" }}
       onClick={handleClick}
     >
+      {/* Tap hint — slides in from right */}
+<AnimatePresence>
+  {showHint && (
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 100 }}
+      transition={{ duration: 0.4 }}
+      className="absolute bottom-44 left-6 z-30 bg-[#006837] px-2 py-1 rounded-full pointer-events-none flex items-center gap-1"
+    >
+      <span className="text-base">🟠</span>
+      <Text variant="tap-hint" color="white">
+        Tap anywhere to see more
+      </Text>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {/* Background heading */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 px-4">

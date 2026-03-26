@@ -7,6 +7,7 @@ const sizeStyles = {
   "24": "text-[18px] md:text-[20px] lg:text-[24px]",
   "20": "text-[20px] md:text-[20px]",
   "16": "text-[14px] md:text-[16px]",
+  "12": "text-[11px] md:text-[12px]",
 };
 
 const alignStyles = {
@@ -39,6 +40,8 @@ const variantStyles: Record<TextVariant, string> = {
     `font-dm font-extrabold ${sizeStyles["20"]} ${alignStyles.inherit} leading-none`,
   "neighborhoods-list":
     `font-dm font-extrabold ${sizeStyles["16"]} ${alignStyles.inherit} leading-none`,
+    "tap-hint":
+  `font-dm font-medium ${sizeStyles["12"]} ${alignStyles.center} leading-none tracking-wide`,
 };
 
 const colorStyles: Record<TextColor, string> = {
@@ -61,6 +64,7 @@ const defaultTag: Record<TextVariant, React.ElementType> = {
   "ticker":                    "span",
   "neighborhoods-title":       "h3",
   "neighborhoods-list":        "p",
+  "tap-hint":                  "span",
 };
 
 export const Text: React.FC<TextProps> = ({
