@@ -5,6 +5,8 @@ import NoAppSection from "@/components/templates/NoAppSection";
 import WhatYouCanOrderSection from "@/components/templates/WhatYouCanOrderSection";
 import { SlidingLocations } from "@/components/templates/SlidingLocations";
 import CTASection from "@/components/templates/CTASection";
+import FooterSection from "@/components/templates/FooterSection";
+
 
 export default function Home() {
   return (
@@ -15,6 +17,7 @@ export default function Home() {
       <SlidingLocations />
       <CaricatureSection />
       <CTASection />
+      <FooterSection/>
     </BackgroundOne>
   );
 }
