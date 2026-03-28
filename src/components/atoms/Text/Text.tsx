@@ -52,6 +52,7 @@ const colorStyles: Record<TextColor, string> = {
   green:   "text-[#006837]",
   white:   "text-white",
   inherit: "text-inherit",
+  grey: "text-[#66665B]"
 };
 
 const defaultTag: Record<TextVariant, React.ElementType> = {
@@ -81,7 +82,7 @@ export const Text: React.FC<TextProps> = ({
 
   return (
     <Tag
-      className={`break-words ${variantStyles[variant]} ${colorStyles[color]} ${className}`}
+      className={`wrap-break-word ${variantStyles[variant]} ${colorStyles[color]} ${className}`}
     >
       {children}
     </Tag>
