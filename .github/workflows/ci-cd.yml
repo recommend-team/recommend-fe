@@ -1,9 +1,0 @@
-# This file has been deprecated and split into separate CI and CD workflows
-# See:
-# - .github/workflows/ci.yml for Continuous Integration
-# - .github/workflows/cd.yml for Continuous Deployment
-#
-# The CI/CD pipeline now supports 3 environments:
-# - Production: main branch
-# - Staging: staging branch
-# - Development: development branch (default branch)

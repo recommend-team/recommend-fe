@@ -1,11 +1,25 @@
+import CaricatureSection from "@/components/organisms/CaricatureSection";
+import { LandingSectionOne } from "@/components/organisms/LandingSection1";
+import { BackgroundOne } from "@/components/templates/BackgroundOne";
+import NoAppSection from "@/components/templates/NoAppSection";
+import WhatYouCanOrderSection from "@/components/templates/WhatYouCanOrderSection";
+import { SlidingLocations } from "@/components/templates/SlidingLocations";
+import CTASection from "@/components/templates/CTASection";
+import FooterSection from "@/components/templates/FooterSection";
+import { HowToOrder } from "@/components/templates/HowToOrder";
+
+
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white">
-      <main className="text-center">
-        <h1 className="text-4xl font-bold text-black">
-          Welcome to recommend.
-        </h1>
-      </main>
-    </div>
+    <BackgroundOne>
+      <LandingSectionOne />
+      <NoAppSection />
+      <WhatYouCanOrderSection />
+      <HowToOrder/>
+      <SlidingLocations />
+      <CaricatureSection />
+      <CTASection />
+      <FooterSection/>
+    </BackgroundOne>
   );
 }
