@@ -12,7 +12,8 @@ export type TextVariant =
   | "ticker"
   | "neighborhoods-title"
   | "neighborhoods-list"
-  | "tap-hint";
+  | "tap-hint"
+  | "footer-input-placeholder";
 
 export type TextColor =
   | "orange"

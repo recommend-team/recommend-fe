@@ -42,6 +42,8 @@ const variantStyles: Record<TextVariant, string> = {
     `font-dm font-extrabold ${sizeStyles["16"]} ${alignStyles.inherit} leading-none`,
     "tap-hint":
   `font-dm font-medium ${sizeStyles["12"]} ${alignStyles.center} leading-none tracking-wide`,
+  "footer-input-placeholder":
+  `font-dm font-normal ${sizeStyles["16"]} ${alignStyles.inherit} leading-none`,
 };
 
 const colorStyles: Record<TextColor, string> = {
@@ -65,6 +67,7 @@ const defaultTag: Record<TextVariant, React.ElementType> = {
   "neighborhoods-title":       "h3",
   "neighborhoods-list":        "p",
   "tap-hint":                  "span",
+  "footer-input-placeholder":  "span",
 };
 
 export const Text: React.FC<TextProps> = ({
