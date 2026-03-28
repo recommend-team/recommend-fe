@@ -8,7 +8,6 @@ export default function CTASection() {
     <section
       className="relative w-full py-20 md:py-23 overflow-hidden"
       style={{
-        backgroundColor: "#FAFAD2",
         backgroundImage: `
           repeating-linear-gradient(
             to bottom,

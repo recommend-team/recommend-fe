@@ -39,7 +39,7 @@ const MobileHeader = () => {
 
 const DesktopHeader = () => {
   return (
-    <div className="hidden lg:flex flex-row justify-between items-center w-full max-w-[1500px] mx-auto p-4">
+    <div className="hidden lg:flex flex-row justify-between items-center w-full max-w-375 mx-auto p-4">
       {/* Left Spacer to balance the layout */}
       <div className="flex-1" />
 
