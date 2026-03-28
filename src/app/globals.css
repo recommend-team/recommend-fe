@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=BBH+Hegarty&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;800&display=swap');
 @import "tailwindcss";
+@plugin "tailwind-scrollbar-hide";
 
 :root {
   --background: #ffffff;
