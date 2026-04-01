@@ -40,7 +40,7 @@ const MobileHeader = () => {
 
       {/* Mobile Sidebar overlay */}
       {isOpen && (
-        <div className="fixed top-0 left-0 z-[100] w-screen h-[100dvh] bg-[#FFFFDC]/80 backdrop-blur-lg flex flex-col p-6 animate-in fade-in duration-200">
+        <div className="fixed top-0 left-0 z-[100] w-screen h-[100dvh] bg-[#FFFFDC] backdrop-blur-lg flex flex-col p-6 animate-in fade-in duration-200">
           <div className="flex flex-row justify-between items-center">
             <div className="relative w-32.5 h-8.75">
               <Image
