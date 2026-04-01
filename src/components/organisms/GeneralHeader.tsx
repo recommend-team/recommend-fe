@@ -44,7 +44,7 @@ export default function GeneralHeader() {
   return (
     <>
       <div
-        className={`fixed top-0 left-0 w-full h-12 z-50 ${
+        className={`fixed top-0 left-0 w-full h-12 z-40 ${
           isHidden ? "pointer-events-auto" : "pointer-events-none"
         }`}
         onMouseEnter={() => setIsHoveringTop(true)}
@@ -54,7 +54,7 @@ export default function GeneralHeader() {
         onMouseEnter={() => setIsHoveringTop(true)}
         onMouseLeave={() => setIsHoveringTop(false)}
         className={`
-          fixed top-0 left-0 w-full z-40
+          fixed top-0 left-0 w-full z-50
           transition-transform duration-300 ease-in-out
           ${shouldBeVisible ? "translate-y-0" : "-translate-y-full"}
         `}
