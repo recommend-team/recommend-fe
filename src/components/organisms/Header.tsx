@@ -20,7 +20,7 @@ const MobileHeader = () => {
 
   return (
     <>
-      <div className="flex flex-row justify-between items-center lg:hidden p-4">
+      <div className="flex flex-row justify-between items-center lg:hidden p-4 bg-[#FFFFDC]/80 backdrop-blur-md shadow-black/5">
         <div className="relative w-32.5 h-8.75">
           <Image
             alt="brand logo"
