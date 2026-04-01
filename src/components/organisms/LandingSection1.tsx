@@ -7,7 +7,7 @@ import { BackgroundTwo } from "../templates/BackgroundTwo";
 const LandingSectionOne = () => {
   return (
     <BackgroundTwo>
-      <main className="flex flex-col p-5 md:p-10 pt-56 md:pt-32 gap-10 justify-center items-center">
+      <main className="flex flex-col p-5 md:p-10 pt-56 md:pt-64 gap-10 justify-center items-center">
         <div className="flex flex-col justify-center items-center">
           <Text variant="hero-heading" color="orange">
             Your Personal AI Market <br className="hidden md:flex" /> Assistant.
