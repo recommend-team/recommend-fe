@@ -41,7 +41,7 @@ export default function NoAppSection() {
         <div className="hidden md:block absolute left-[20%] top-[32%] z-20">
           <ChatBubble
             text="Hello Recommend"
-            avatar="/images/gravatar-1.png"
+            avatar="/images/gravatar-1.webp"
           />
         </div>
 
