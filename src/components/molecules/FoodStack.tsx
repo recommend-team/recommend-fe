@@ -38,6 +38,8 @@ const FoodStack = () => {
 
   return (
     <div className="w-full h-80 flex items-center justify-center overflow-hidden">
+
+        <Image src="/svg/l-food-exp.svg" width={50} height={50} alt="" className="translate-x-10 -translate-y-32"/>
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -84,6 +86,8 @@ const FoodStack = () => {
           </motion.div>
         </motion.div>
       </motion.div>
+
+        <Image src="/svg/r-food-exp.svg" width={40} height={40} alt=""  className="translate-x-0 translate-y-20" />
     </div>
   );
 };

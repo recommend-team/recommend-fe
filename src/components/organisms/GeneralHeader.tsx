@@ -11,10 +11,12 @@ export default function GeneralHeader() {
   useEffect(() => {
     const SCROLL_THRESHOLD = 100;
     const SCROLL_DELTA = 8;
+    const REVEAL_RANGE = 120;
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const diff = currentScrollY - lastScrollY.current;
+
 
       if (currentScrollY <= 10) {
         setIsHidden(false);
@@ -24,7 +26,9 @@ export default function GeneralHeader() {
 
       if (diff > SCROLL_DELTA && currentScrollY > SCROLL_THRESHOLD) {
         setIsHidden(true);
-      } else if (diff < -SCROLL_DELTA) {
+      }
+
+      else if (diff < -SCROLL_DELTA && currentScrollY <= REVEAL_RANGE) {
         setIsHidden(false);
       }
 
@@ -40,7 +44,7 @@ export default function GeneralHeader() {
   return (
     <>
       <div
-        className={`fixed top-0 left-0 w-full h-12 z-50 transition-all ${
+        className={`fixed top-0 left-0 w-full h-12 z-40 ${
           isHidden ? "pointer-events-auto" : "pointer-events-none"
         }`}
         onMouseEnter={() => setIsHoveringTop(true)}
@@ -50,12 +54,12 @@ export default function GeneralHeader() {
         onMouseEnter={() => setIsHoveringTop(true)}
         onMouseLeave={() => setIsHoveringTop(false)}
         className={`
-          fixed top-0 left-0 w-full z-40
+          fixed top-0 left-0 w-full z-50
           transition-transform duration-300 ease-in-out
           ${shouldBeVisible ? "translate-y-0" : "-translate-y-full"}
         `}
       >
-        <LandingHeader/>
+        <LandingHeader />
       </header>
     </>
   );

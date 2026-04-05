@@ -21,13 +21,12 @@ export default function FooterSection() {
   return (
     <footer
       className="relative w-full overflow-hidden"
-      style={{ backgroundColor: "#FAFFDC" }}
     >
       <div className="relative z-10 px-6 md:px-12 pt-12 pb-4">
 
         <div className="flex flex-col md:flex-row md:justify-between gap-10 md:gap-6">
 
-          <div className="flex flex-col gap-6 max-w-[501px]">
+          <div className="flex flex-col gap-6 max-w-125.25">
 
             <Text variant="section-heading-48" color="orange">
               Anything you need, delivered right on WhatsApp.

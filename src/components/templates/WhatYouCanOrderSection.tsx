@@ -6,6 +6,7 @@ import { Text } from "@/components/atoms/Text";
 import { FoodCard } from "@/components/molecules/FoodCard";
 import WhatsAppIcon from "@/components/atoms/WhatsAppIcon";
 import { Button } from "@/components/molecules/Button";
+import { BackgroundThree } from "./BackgroundThree";
 
 const cards = [
   {
@@ -81,10 +82,10 @@ export default function WhatYouCanOrderSection() {
   };
 
   return (
+ <BackgroundThree>
     <section
       ref={sectionRef}
-      className="relative w-full h-screen overflow-hidden cursor-pointer pb-24 md:pb-0"
-      style={{ minHeight: "130svh" }}
+      className="relative w-full h-175 md:h-screen overflow-hidden cursor-pointer "
       onClick={handleClick}
     >
       {/* Tap hint — slides in from right */}
@@ -95,7 +96,7 @@ export default function WhatYouCanOrderSection() {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 100 }}
       transition={{ duration: 0.4 }}
-      className="absolute bottom-44 left-6 z-30 bg-[#006837] px-2 py-1 rounded-full pointer-events-none flex items-center gap-1"
+      className="absolute bottom-12 left-6 z-30 bg-recommend-green px-2 py-1 rounded-full pointer-events-none flex items-center gap-1"
     >
       <span className="text-base">🟠</span>
       <Text variant="tap-hint" color="white">
@@ -106,7 +107,7 @@ export default function WhatYouCanOrderSection() {
 </AnimatePresence>
 
       {/* Background heading */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 px-4">
+      <div className="absolute -inset-10 flex items-center justify-center pointer-events-none z-0 px-4">
         <Text
           variant="section-heading-96"
           color="orange"
@@ -135,7 +136,7 @@ export default function WhatYouCanOrderSection() {
                   <Text
                     variant="cta-sublabel"
                     color="green"
-                    className="text-left max-w-[160px] leading-snug"
+                    className="text-left max-w-40 leading-snug"
                   >
                     {cards[current].leftText}
                   </Text>
@@ -151,7 +152,7 @@ export default function WhatYouCanOrderSection() {
                   <Text
                     variant="cta-sublabel"
                     color="green"
-                    className="text-left max-w-[160px] leading-snug"
+                    className="text-left max-w-40 leading-snug"
                   >
                     {cards[current].rightText}
                   </Text>
@@ -163,7 +164,7 @@ export default function WhatYouCanOrderSection() {
                 <Text
                   variant="cta-sublabel"
                   color="green"
-                  className="text-left max-w-[200px] leading-snug"
+                  className="text-left max-w-50 leading-snug"
                 >
                   {cards[current].leftText}
                 </Text>
@@ -175,7 +176,7 @@ export default function WhatYouCanOrderSection() {
                 <Text
                   variant="cta-sublabel"
                   color="green"
-                  className="text-center max-w-[200px] leading-snug"
+                  className="text-center max-w-50 leading-snug"
                 >
                   {cards[current].rightText}
                 </Text>
@@ -187,7 +188,7 @@ export default function WhatYouCanOrderSection() {
       </div>
 
       {/* Button — bottom right */}
-      <div className="absolute bottom-14 right-8 z-20 pointer-events-auto">
+      <div className="absolute bottom-0 right-8 z-20 pointer-events-auto">
         <Button
           text="Start Ordering"
           icon={<WhatsAppIcon />}
@@ -196,5 +197,6 @@ export default function WhatYouCanOrderSection() {
       </div>
 
     </section>
+ </BackgroundThree>
   );
 }

@@ -20,7 +20,8 @@ export type TextColor =
   | "dark"
   | "green"
   | "white"
-  | "inherit";
+  | "inherit"
+  |"grey";
 
 export interface TextProps {
   variant: TextVariant;
