@@ -4,10 +4,10 @@ import { NewsletterInput } from "@/components/molecules/NewsletterInput";
 import { FooterNavColumn } from "@/components/molecules/FooterNavColumn";
 
 const neighborhoods = [
-  "Sapele Road", "Ihama", "All GRA", "Ikpoba Hill",
-  "Aduwawa", "New Benin", "Ring Road", "Ugbowu",
-  "By Pass Sapele Road", "Upper Sakponba",
-  "Ekenwan Road", "Lucky Way", "University of Benin Campus",
+  "Lekki Phase 1", "Lekki Phase 2", "Ajah", "Victoria Island",
+  "Ikoyi", "Lagos Island", "Surulere", "Yaba",
+  "Ikeja", "Maryland",
+  "Ikorodu", "Ojodu Berger", "Sangotedo",
 ];
 
 const company = [
