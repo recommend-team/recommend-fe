@@ -10,7 +10,6 @@ export default function AboutHeroSection() {
     <BackgroundTwo>
       <div className="relative min-h-screen w-full px-6 md:px-14 pt-32 md:pt-40 pb-20">
 
-        {/* Sheep — top right */}
         <div className="absolute top-28 right-6 md:top-45 md:right-35 z-10">
           <Image
             src="/svg/sheep.svg"
@@ -21,7 +20,6 @@ export default function AboutHeroSection() {
           />
         </div>
 
-        {/* Heading */}
         <div className="relative z-10 max-w-xl">
           <Text variant="hero-heading" color="orange">
             One message.
@@ -32,14 +30,12 @@ export default function AboutHeroSection() {
           </Text>
         </div>
 
-        {/* Sticky note — desktop: absolute overlapping heading | mobile: below heading, right-aligned */}
         <div className="
           relative z-10
           -mt-17 flex justify-end pr-8
           md:mt-20 md:block
           md:absolute md:top-[50px] md:left-[29%]
         ">
-          {/* Sticky note + story text */}
           <div className="relative rotate-[-4deg] w-[280px] md:w-[480px]">
             <Image
               src="/svg/sticky-note.svg"
@@ -60,7 +56,6 @@ export default function AboutHeroSection() {
           </div>
         </div>
 
-        {/* Scroll hint — arrow left of text */}
         <div className="absolute bottom-10 right-6 md:right-10 flex flex-row items-center gap-2 z-10">
           <motion.div
             animate={{ y: [0, 8, 0] }}
