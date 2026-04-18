@@ -1,80 +1,87 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://recommend-staging.onrender.com";
+const DEFAULT_API_URL = "https://recommend-staging.onrender.com";
 
-export interface Vendor {
-  id: string;
-  businessName: string | null;
-  businessDescription: string | null;
-  businessCategory: string | null;
-  businessAreas: string[] | null;
-  businessLogoUrl: string | null;
-  businessBannerUrl: string | null;
-  whatsappNumber: string | null;
-  isOpen: boolean;
-  operatingHours: Record<
-    string,
-    { isOpen: boolean; open: string; close: string }
-  > | null;
-  slug: string | null;
-}
+function resolveApiUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL;
 
-export interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  imageUrl: string | null;
-  isAvailable: boolean;
-}
-
-export interface StorefrontData {
-  vendor: Vendor;
-  products: Product[];
-}
-
-export interface CreateOrderPayload {
-  productId: string;
-  quantity: number;
-  buyerPhone: string;
-  buyerName: string;
-  buyerEmail?: string;
-  fulfillmentType: "PICKUP" | "DELIVERY";
-  deliveryAddress?: string;
-  notes?: string;
-}
-
-export interface CreateOrderResponse {
-  orderId: string;
-  authorizationUrl: string;
-  reference: string;
-}
-
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  });
-
-  const json = await res.json();
-
-  if (!res.ok) {
-    throw new Error(json.message ?? `API error: ${res.status}`);
+  if (!fromEnv) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "NEXT_PUBLIC_API_URL is not set. Configure it in your environment before building for production."
+      );
+    }
+    return DEFAULT_API_URL;
   }
 
-  return json.data as T;
+  return fromEnv;
 }
 
-export async function getStorefront(slug: string): Promise<StorefrontData> {
-  return apiFetch<StorefrontData>(`/store/${slug}`);
+export const API_URL = resolveApiUrl();
+
+export interface ApiFieldError {
+  field: string;
+  message: string;
 }
 
-export async function createOrder(
-  payload: CreateOrderPayload
-): Promise<CreateOrderResponse> {
-  return apiFetch<CreateOrderResponse>("/orders", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+export class ApiError extends Error {
+  readonly status: number;
+  readonly fieldErrors?: ApiFieldError[];
+  readonly raw?: unknown;
+
+  constructor(
+    message: string,
+    status: number,
+    fieldErrors?: ApiFieldError[],
+    raw?: unknown
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.fieldErrors = fieldErrors;
+    this.raw = raw;
+  }
+}
+
+interface ApiEnvelope<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  error?: string;
+  statusCode?: number;
+  errors?: ApiFieldError[];
+}
+
+export async function request<T>(
+  path: string,
+  options?: RequestInit
+): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+    });
+  } catch (cause) {
+    throw new ApiError(
+      "Network request failed. Check your connection and try again.",
+      0,
+      undefined,
+      cause
+    );
+  }
+
+  const body = (await res.json().catch(() => ({}))) as ApiEnvelope<T>;
+
+  if (!res.ok || body.success === false) {
+    throw new ApiError(
+      body.message ?? body.error ?? `API error: ${res.status}`,
+      body.statusCode ?? res.status,
+      body.errors,
+      body
+    );
+  }
+
+  return body.data as T;
 }

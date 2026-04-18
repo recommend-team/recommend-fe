@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useStorefront } from "@/hooks/useStore";
+import { useStorefront } from "@/hooks";
 import Image from "next/image";
 import Link from "next/link";
 

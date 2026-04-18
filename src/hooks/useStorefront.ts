@@ -1,13 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getStorefront, type StorefrontData } from "@/lib/api";
+import { getStorefront } from "@/services";
+import type { StorefrontData } from "@/types";
+import { queryKeys } from "./queryKeys";
 
 export function useStorefront(slug: string) {
   return useQuery<StorefrontData>({
-    queryKey: ["storefront", slug],
+    queryKey: queryKeys.storefront(slug),
     queryFn: () => getStorefront(slug),
     enabled: !!slug,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2,
   });
 }
