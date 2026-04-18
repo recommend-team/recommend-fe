@@ -40,10 +40,26 @@ const variantStyles: Record<TextVariant, string> = {
     `font-dm font-extrabold ${sizeStyles["20"]} ${alignStyles.inherit} leading-none`,
   "neighborhoods-list":
     `font-dm font-extrabold ${sizeStyles["16"]} ${alignStyles.inherit} leading-none`,
-    "tap-hint":
-  `font-dm font-medium ${sizeStyles["12"]} ${alignStyles.center} leading-none tracking-wide`,
+  "tap-hint":
+    `font-dm font-medium ${sizeStyles["12"]} ${alignStyles.center} leading-none tracking-wide`,
   "footer-input-placeholder":
-  `font-dm font-normal ${sizeStyles["16"]} ${alignStyles.inherit} leading-none`,
+    `font-dm font-normal ${sizeStyles["16"]} ${alignStyles.inherit} leading-none`,
+  "stats-number":
+    `font-champ font-black ${sizeStyles["48"]} ${alignStyles.inherit} leading-none`,
+  "stats-label":
+    `font-dm font-medium ${sizeStyles["16"]} ${alignStyles.inherit} leading-tight`,
+  "section-label":
+    `font-dm font-medium ${sizeStyles["16"]} ${alignStyles.center} leading-none`,
+  "origin-card-heading":
+    `font-champ font-black ${sizeStyles["48"]} ${alignStyles.inherit} leading-tight`,
+  "origin-card-body":
+    `font-dm font-normal ${sizeStyles["16"]} ${alignStyles.inherit} leading-relaxed`,
+  "origin-closing":
+    `font-dm font-bold ${sizeStyles["16"]} ${alignStyles.inherit} leading-none`,
+  "faq-question":
+    `font-dm font-extrabold ${sizeStyles["20"]} ${alignStyles.inherit} leading-tight`,
+  "faq-answer":
+    `font-dm font-normal ${sizeStyles["16"]} ${alignStyles.inherit} leading-relaxed`,
 };
 
 const colorStyles: Record<TextColor, string> = {
@@ -52,7 +68,7 @@ const colorStyles: Record<TextColor, string> = {
   green:   "text-[#006837]",
   white:   "text-white",
   inherit: "text-inherit",
-  grey: "text-[#66665B]"
+  grey:    "text-[#66665B]",
 };
 
 const defaultTag: Record<TextVariant, React.ElementType> = {
@@ -69,6 +85,14 @@ const defaultTag: Record<TextVariant, React.ElementType> = {
   "neighborhoods-list":        "p",
   "tap-hint":                  "span",
   "footer-input-placeholder":  "span",
+  "stats-number":              "span",
+  "stats-label":               "p",
+  "section-label":             "p",
+  "origin-card-heading":       "h3",
+  "origin-card-body":          "p",
+  "origin-closing":            "span",
+  "faq-question":              "span",
+  "faq-answer":                "p",
 };
 
 export const Text: React.FC<TextProps> = ({
