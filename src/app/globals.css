@@ -24,13 +24,6 @@
   --color-recommend-green-active: #00552a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 @layer utilities {
   .bg-brand-gradient {
    background: linear-gradient(

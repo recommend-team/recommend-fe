@@ -11,7 +11,7 @@ const headerLabels = [
   { name: "Vendor", href: "/vendor" },
   { name: "Rider", href: "/rider" },
   { name: "About us", href: "/about" },
-  { name: "Contact", href: "/contact" },
+  { name: "Contact us", href: "/contact" },
 ];
 
 const MobileHeader = () => {

@@ -13,7 +13,7 @@ const MobileOnlyCaricatureSection = () => {
           color="dark"
           className="text-center text-lg"
         >
-          I want to order
+          I Want to Order
         </Text>
 
         <Text
@@ -21,7 +21,7 @@ const MobileOnlyCaricatureSection = () => {
           color="dark"
           className="text-center text-sm whitespace-nowrap"
         >
-          No app . FAST . Safe payment
+          No app · Fast · Safe payment
         </Text>
 
         {/* Video with fallback */}
@@ -53,7 +53,7 @@ const MobileOnlyCaricatureSection = () => {
           color="dark"
           className="text-center text-lg"
         >
-          I Am a Business
+          I&apos;m a Business
         </Text>
 
         <Text
@@ -61,7 +61,7 @@ const MobileOnlyCaricatureSection = () => {
           color="dark"
           className="text-center text-sm whitespace-nowrap"
         >
-          10M+ reach - Whatsapp storefront
+          10M+ reach · WhatsApp storefront
         </Text>
 
         <Image
@@ -115,7 +115,7 @@ const MobileOnlyCaricatureSection = () => {
           </video>
         </div>
 
-        <Button variant="gradient" text="Order now" icon={<WhatsAppIcon />} />
+        <Button variant="gradient" text="Become a Rider" icon={<WhatsAppIcon />} />
       </div>
     </div>
   );

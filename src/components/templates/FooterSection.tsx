@@ -4,10 +4,15 @@ import { NewsletterInput } from "@/components/molecules/NewsletterInput";
 import { FooterNavColumn } from "@/components/molecules/FooterNavColumn";
 
 const neighborhoods = [
-  "Lekki Phase 1", "Lekki Phase 2", "Ajah", "Victoria Island",
-  "Ikoyi", "Lagos Island", "Surulere", "Yaba",
-  "Ikeja", "Maryland",
-  "Ikorodu", "Ojodu Berger", "Sangotedo",
+  "Lekki",
+  "Admiralty Way",
+  "Ajah",
+  "Wole Ariyo Street",
+  "Freedom Way",
+  "Ikate & Jakande",
+  "Igbo Efon",
+  "Osapa London",
+  "Victoria Arobieke Street",
 ];
 
 const company = [

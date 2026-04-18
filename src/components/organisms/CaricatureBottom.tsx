@@ -72,7 +72,7 @@ const CaricatureBottom = () => {
 
         <Button
           variant="gradient"
-          text="Order now"
+          text="Become a Rider"
           icon={<WhatsAppIcon />}
           className="hidden md:block"
         />
@@ -90,7 +90,7 @@ const CaricatureBottom = () => {
             color="orange"
             className="text-center text-sm md:text-lg lg:text-2xl"
           >
-            I Am a Business
+            I&apos;m a Business
           </Text>
 
           <Text
@@ -98,7 +98,7 @@ const CaricatureBottom = () => {
             color="orange"
             className="text-center text-xs md:text-sm lg:text-base whitespace-nowrap"
           >
-            10M+ reach - Whatsapp storefront
+            10M+ reach · WhatsApp storefront
           </Text>
         </div>
 

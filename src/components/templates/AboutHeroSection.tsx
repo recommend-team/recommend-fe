@@ -10,6 +10,7 @@ export default function AboutHeroSection() {
     <BackgroundTwo>
       <div className="relative min-h-screen w-full px-6 md:px-14 pt-32 md:pt-40 pb-20">
 
+        {/* TODO: replace with cloud illustrations per design (two clouds: top-left and right) */}
         <div className="absolute top-28 right-6 md:top-45 md:right-35 z-10">
           <Image
             src="/svg/sheep.svg"

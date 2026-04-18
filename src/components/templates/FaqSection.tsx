@@ -17,7 +17,7 @@ const faqs = [
   {
     question: "Where do you deliver?",
     answer:
-      "We cover key neighborhoods across Benin City — Sapele Road, GRA, Ikpoba Hill, Ring Road, Aduwawa, New Benin, and more.",
+      "We cover key neighborhoods across Lagos — Lekki, Ajah, Admiralty Way, Wole Ariyo Street, Freedom Way, Ikate & Jakande, Igbo Efon, Osapa London, Victoria Arobieke Street, and more.",
   },
   {
     question: "How do I pay?",

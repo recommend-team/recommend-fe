@@ -5,7 +5,7 @@ export const BackgroundTwo = ({ children }: { children: ReactNode }) => {
   return (
     <div className="relative w-full overflow-x-hidden">
       {/* The Background Image */}
-      <div className="inset-0 z-10 bg-recommend-amber">
+      <div className="absolute inset-0 z-10 bg-recommend-amber">
         <Image
           src="bg-1-clouded.svg"
           alt="Background Pattern"

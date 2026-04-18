@@ -30,7 +30,7 @@ const CaricatureTop = () => {
             color="green"
             className="text-center text-sm md:text-lg lg:text-2xl"
           >
-            I want to order
+            I Want to Order
           </Text>
 
           <Text
@@ -38,7 +38,7 @@ const CaricatureTop = () => {
             color="green"
             className="text-center text-xs md:text-sm lg:text-base whitespace-nowrap"
           >
-            No app . FAST . Safe payment
+            No app · Fast · Safe payment
           </Text>
         </div>
 
