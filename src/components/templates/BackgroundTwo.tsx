@@ -7,7 +7,7 @@ export const BackgroundTwo = ({ children }: { children: ReactNode }) => {
       {/* The Background Image */}
       <div className="absolute inset-0 z-10 bg-recommend-amber">
         <Image
-          src="bg-1-clouded.svg"
+          src="/bg-1-clouded.svg"
           alt="Background Pattern"
           priority
           fill
@@ -16,7 +16,7 @@ export const BackgroundTwo = ({ children }: { children: ReactNode }) => {
       </div>
       <div className="absolute top-30 md:top-50 md:right-30 right-0 z-11">
         <Image
-          src="cloud.svg"
+          src="/cloud.svg"
           alt="cloud Pattern"
           priority
           width={130}

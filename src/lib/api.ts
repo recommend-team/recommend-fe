@@ -1,3 +1,5 @@
+import { getAccessToken } from "./auth";
+
 const DEFAULT_API_URL = "https://recommend-staging.onrender.com";
 
 function resolveApiUrl(): string {
@@ -54,12 +56,18 @@ export async function request<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
+  const token = getAccessToken();
+  const authHeader: Record<string, string> = token
+    ? { Authorization: `Bearer ${token}` }
+    : {};
+
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
+        ...authHeader,
         ...options?.headers,
       },
     });

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Text } from "../atoms/Text";
 import { Button } from "../molecules/Button";
 import WhatsAppIcon from "../atoms/WhatsAppIcon";
@@ -125,12 +126,13 @@ const CaricatureBottom = () => {
           className="w-10 md:w-16 lg:w-24 h-auto"/>
           </div>
 
-        <Button
-          variant="gradient"
-          text="Join as a Business"
-          icon={<WhatsAppIcon />}
-          className="hidden md:block"
-        />
+        <Link href="/vendor/signup" className="hidden md:block">
+          <Button
+            variant="gradient"
+            text="Join as a Business"
+            icon={<WhatsAppIcon />}
+          />
+        </Link>
       </div>
 
     </div>

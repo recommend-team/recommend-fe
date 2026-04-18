@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "../molecules/Button";
 import { Text } from "../atoms/Text";
 import WhatsAppIcon from "../atoms/WhatsAppIcon";
@@ -72,11 +73,13 @@ const MobileOnlyCaricatureSection = () => {
           className="w-24 h-24 object-cover rounded-full"
         />
 
-        <Button
-          variant="gradient"
-          text="Join as a Business"
-          icon={<WhatsAppIcon />}
-        />
+        <Link href="/vendor/signup">
+          <Button
+            variant="gradient"
+            text="Join as a Business"
+            icon={<WhatsAppIcon />}
+          />
+        </Link>
       </div>
       {/* Caricature block 3 */}
       <div className="flex flex-col items-center gap-3">
