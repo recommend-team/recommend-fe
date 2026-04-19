@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, X, Search } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
@@ -16,6 +17,7 @@ import type { PendingApproval } from "@/types";
 const PAGE_SIZE = 20;
 
 export default function RidersPage() {
+  const router = useRouter();
   const confirm = useConfirm();
   const prompt = usePrompt();
   const [page, setPage] = useState(1);
@@ -139,7 +141,8 @@ export default function RidersPage() {
                 filtered.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-b border-gray-100 hover:bg-amber-50/40 align-top"
+                    onClick={() => router.push(`/admin/riders/${r.id}`)}
+                    className="border-b border-gray-100 hover:bg-amber-50/40 align-top cursor-pointer"
                   >
                     <td className="py-3 pr-4">
                       <div className="flex flex-col">
@@ -164,7 +167,7 @@ export default function RidersPage() {
                     <td className="py-3 pr-4 text-gray-500">
                       {new Date(r.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pr-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2">
                         <button
                           onClick={() => onApprove(r)}

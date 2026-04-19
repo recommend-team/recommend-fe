@@ -101,6 +101,13 @@ export async function getVendorDetail(
   return request<AdminVendorDetail>(`/admin/vendors/${id}`);
 }
 
+// Any user by id (works for riders, buyers, vendors alike)
+export async function getUserDetail(
+  id: string
+): Promise<import("@/types").AdminUserDetail> {
+  return request<import("@/types").AdminUserDetail>(`/admin/users/${id}`);
+}
+
 // Generic user actions (vendors, riders, buyers share the same suspend/activate endpoints)
 export async function suspendUser(id: string): Promise<unknown> {
   return request<unknown>(`/admin/users/${id}/suspend`, { method: "PATCH" });

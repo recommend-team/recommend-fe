@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, ChevronRight } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
@@ -20,6 +20,7 @@ const STATUSES: Array<UserStatus | "ALL"> = [
 const PAGE_SIZE = 20;
 
 export default function VendorsPage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<UserStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
@@ -117,7 +118,8 @@ export default function VendorsPage() {
                 filtered.map((v) => (
                   <tr
                     key={v.id}
-                    className="border-b border-gray-100 hover:bg-amber-50/40"
+                    onClick={() => router.push(`/admin/vendors/${v.id}`)}
+                    className="border-b border-gray-100 hover:bg-amber-50/40 cursor-pointer"
                   >
                     <td className="py-3 pr-4">
                       <div className="flex flex-col">
@@ -143,13 +145,8 @@ export default function VendorsPage() {
                     <td className="py-3 pr-4 text-gray-500">
                       {new Date(v.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="py-3 pr-4">
-                      <Link
-                        href={`/admin/vendors/${v.id}`}
-                        className="text-xs font-bold font-dm text-recommend-orange underline"
-                      >
-                        View
-                      </Link>
+                    <td className="py-3 pr-4 text-right">
+                      <ChevronRight size={16} className="text-gray-400" />
                     </td>
                   </tr>
                 ))

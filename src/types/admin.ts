@@ -97,10 +97,26 @@ export interface AdminVendorDetail {
     businessDescription: string | null;
     businessBannerUrl: string | null;
     businessAreas: string[] | null;
+    whatsappNumber: string | null;
     operatingHours: Record<
       string,
       { isOpen: boolean; open: string; close: string }
     > | null;
+    // Payout
+    bankName?: string | null;
+    bankCode?: string | null;
+    bankAccountNumber?: string | null;
+    bankAccountName?: string | null;
+    // KYC documents (admin can review everything submitted)
+    cacDocumentUrl?: string | null;
+    tinDocumentUrl?: string | null;
+    ninDocumentUrl?: string | null;
+    passportPhotoUrl?: string | null;
+    bankStatementUrl?: string | null;
+    utilityBillUrl?: string | null;
+    // Quota
+    orderQuota?: number | null;
+    monthlyOrderCount?: number;
   };
   products: Product[];
   productCount: number;
@@ -149,6 +165,62 @@ export interface AdminBuyerDetail {
   buyer: AdminBuyerSummary;
   orders: AdminOrderSummary[];
   orderCount: number;
+}
+
+export interface AdminUserDetail {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  role: "SELLER" | "RIDER" | "BUYER" | "ADMIN" | "SUPER_ADMIN";
+  status: UserStatus;
+  profilePicture?: string | null;
+  isEmailVerified: boolean;
+  emailVerifiedAt?: string | null;
+  lastLoginAt?: string | null;
+  createdAt: string;
+
+  // Vendor fields
+  vendorType?: VendorType | null;
+  businessName?: string | null;
+  businessAddress?: string | null;
+  businessCategory?: string | null;
+  businessAreas?: string[] | null;
+  businessLogoUrl?: string | null;
+  businessBannerUrl?: string | null;
+  businessDescription?: string | null;
+  whatsappNumber?: string | null;
+  isOpen?: boolean;
+  operatingHours?: Record<
+    string,
+    { isOpen: boolean; open: string; close: string }
+  > | null;
+  slug?: string | null;
+  cacDocumentUrl?: string | null;
+  tinDocumentUrl?: string | null;
+  ninDocumentUrl?: string | null;
+  passportPhotoUrl?: string | null;
+  bankStatementUrl?: string | null;
+  utilityBillUrl?: string | null;
+
+  // Rider fields
+  riderType?: RiderType | null;
+  bvn?: string | null;
+  guarantorName?: string | null;
+  guarantorPhone?: string | null;
+  governmentIdUrl?: string | null;
+  selfieUrl?: string | null;
+
+  // Payout
+  bankName?: string | null;
+  bankCode?: string | null;
+  bankAccountNumber?: string | null;
+  bankAccountName?: string | null;
+
+  // Quota
+  orderQuota?: number | null;
+  monthlyOrderCount?: number;
 }
 
 export interface VendorListFilters extends PaginationParams {

@@ -1,51 +1,61 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Search, ChevronRight } from "lucide-react";
-import StatusPill from "@/components/atoms/admin/StatusPill";
-import Paginator from "@/components/atoms/admin/Paginator";
+import Link from "next/link";
+import { Search } from "lucide-react";
 import PageHeader from "@/components/atoms/admin/PageHeader";
-import { useBuyers } from "@/hooks";
-import type { UserStatus } from "@/types";
+import Paginator from "@/components/atoms/admin/Paginator";
+import StatusPill from "@/components/atoms/admin/StatusPill";
+import { useMyVendorOrders } from "@/hooks";
+import type { AdminOrderSummary } from "@/types";
 
-const STATUSES: Array<UserStatus | "ALL"> = [
+const STATUSES: Array<AdminOrderSummary["status"] | "ALL"> = [
   "ALL",
-  "APPROVED",
-  "SUSPENDED",
-  "DEACTIVATED",
+  "PENDING",
+  "PAID",
+  "PROCESSING",
+  "COMPLETED",
+  "CANCELLED",
+  "FAILED",
 ];
 
 const PAGE_SIZE = 20;
 
-export default function BuyersPage() {
-  const router = useRouter();
+function formatNaira(raw: string | number): string {
+  const n = typeof raw === "string" ? Number(raw) : raw;
+  if (!Number.isFinite(n)) return "₦0";
+  return `₦${n.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
+}
+
+export default function VendorOrdersPage() {
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<UserStatus | "ALL">("ALL");
+  const [status, setStatus] = useState<AdminOrderSummary["status"] | "ALL">(
+    "ALL"
+  );
   const [search, setSearch] = useState("");
 
-  const buyers = useBuyers({
+  const orders = useMyVendorOrders({
     page,
     limit: PAGE_SIZE,
     status: status === "ALL" ? undefined : status,
   });
 
-  const rows = buyers.data?.items ?? [];
-  const filtered = rows.filter((b) => {
+  const rows = orders.data?.items ?? [];
+  const filtered = rows.filter((o) => {
     if (!search) return true;
     const needle = search.toLowerCase();
     return (
-      (b.email ?? "").toLowerCase().includes(needle) ||
-      b.phoneNumber.includes(needle) ||
-      `${b.firstName ?? ""} ${b.lastName ?? ""}`.toLowerCase().includes(needle)
+      o.buyerName.toLowerCase().includes(needle) ||
+      o.buyerPhone.includes(needle) ||
+      o.product.name.toLowerCase().includes(needle)
     );
   });
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Buyers"
-        description="WhatsApp customer accounts. Buyers register via the bot, not the website."
+        title="Orders"
+        description="Every order placed on your products. Updates arrive here in real time."
       />
 
       <div className="rounded-2xl bg-white border border-[#FFD91D] p-5 md:p-6 flex flex-col gap-4">
@@ -58,7 +68,7 @@ export default function BuyersPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name, email, or phone"
+              placeholder="Search buyer, phone, or product"
               className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 bg-white font-dm text-sm focus:outline-none focus:border-recommend-green"
             />
           </div>
@@ -82,9 +92,9 @@ export default function BuyersPage() {
           </div>
         </div>
 
-        {buyers.isError && (
+        {orders.isError && (
           <p className="text-sm font-dm text-red-600 bg-red-50 rounded-lg p-3">
-            Couldn&apos;t load buyers.
+            Couldn&apos;t load orders.
           </p>
         )}
 
@@ -92,53 +102,62 @@ export default function BuyersPage() {
           <table className="w-full text-sm font-dm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                <th className="py-3 pr-4">Product</th>
                 <th className="py-3 pr-4">Buyer</th>
-                <th className="py-3 pr-4">Phone</th>
+                <th className="py-3 pr-4">Qty</th>
+                <th className="py-3 pr-4">Total</th>
                 <th className="py-3 pr-4">Status</th>
-                <th className="py-3 pr-4">Joined</th>
+                <th className="py-3 pr-4">Placed</th>
                 <th className="py-3 pr-4 w-24">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {buyers.isLoading ? (
+              {orders.isLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-gray-400">
-                    Loading buyers…
+                  <td colSpan={7} className="py-6 text-center text-gray-400">
+                    Loading orders…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-gray-400">
-                    {search ? "No buyers match." : "No buyers yet."}
+                  <td colSpan={7} className="py-6 text-center text-gray-400">
+                    {search ? "No orders match." : "No orders yet."}
                   </td>
                 </tr>
               ) : (
-                filtered.map((b) => (
+                filtered.map((o) => (
                   <tr
-                    key={b.id}
-                    onClick={() => router.push(`/admin/buyers/${b.id}`)}
-                    className="border-b border-gray-100 hover:bg-amber-50/40 cursor-pointer"
+                    key={o.id}
+                    className="border-b border-gray-100 hover:bg-amber-50/40"
                   >
+                    <td className="py-3 pr-4 font-bold text-gray-900">
+                      {o.product.name}
+                    </td>
                     <td className="py-3 pr-4">
                       <div className="flex flex-col">
-                        <span className="font-bold text-gray-900">
-                          {`${b.firstName ?? ""} ${b.lastName ?? ""}`.trim() ||
-                            "Unnamed buyer"}
-                        </span>
+                        <span className="text-gray-800">{o.buyerName}</span>
                         <span className="text-xs text-gray-500">
-                          {b.email ?? "No email"}
+                          {o.buyerPhone}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 pr-4 text-gray-700">{b.phoneNumber}</td>
+                    <td className="py-3 pr-4 text-gray-700">{o.quantity}</td>
+                    <td className="py-3 pr-4 font-bold text-gray-900">
+                      {formatNaira(o.totalAmount)}
+                    </td>
                     <td className="py-3 pr-4">
-                      <StatusPill status={b.status} />
+                      <StatusPill status={o.status} />
                     </td>
                     <td className="py-3 pr-4 text-gray-500">
-                      {new Date(b.createdAt).toLocaleDateString()}
+                      {new Date(o.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="py-3 pr-4 text-right">
-                      <ChevronRight size={16} className="text-gray-400" />
+                    <td className="py-3 pr-4">
+                      <Link
+                        href={`/vendor/dashboard/orders/${o.id}`}
+                        className="text-xs font-bold font-dm text-recommend-orange underline"
+                      >
+                        Details
+                      </Link>
                     </td>
                   </tr>
                 ))
@@ -147,14 +166,14 @@ export default function BuyersPage() {
           </table>
         </div>
 
-        {buyers.data && buyers.data.total > 0 && (
+        {orders.data && orders.data.total > 0 && (
           <Paginator
             page={page}
-            total={buyers.data.total}
+            total={orders.data.total}
             pageSize={PAGE_SIZE}
             loadedOnThisPage={rows.length}
             onChange={setPage}
-            label="buyers"
+            label="orders"
           />
         )}
       </div>

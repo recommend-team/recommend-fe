@@ -28,11 +28,18 @@ export default function VendorLoginPage() {
   const onSubmit = async (values: FormValues) => {
     setSubmitError(null);
     try {
-      await login.mutateAsync({
+      const result = await login.mutateAsync({
         email: values.email.trim().toLowerCase(),
         password: values.password,
       });
-      router.push("/");
+      const role = result.user.role;
+      if (role === "ADMIN" || role === "SUPER_ADMIN") {
+        router.replace("/admin");
+      } else if (role === "SELLER") {
+        router.replace("/vendor/dashboard");
+      } else {
+        router.replace("/");
+      }
     } catch (err) {
       setSubmitError(
         err && typeof err === "object" && "message" in err

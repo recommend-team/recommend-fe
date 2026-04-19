@@ -6,60 +6,54 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
-  Store,
-  Bike,
+  Package,
   ShoppingBag,
+  Store,
+  Coins,
   ShieldCheck,
-  Users,
-  UserCog,
   LogOut,
+  UserCircle,
   Menu,
   X,
 } from "lucide-react";
-import { useCurrentUser, useLogout } from "@/hooks";
+import { useCurrentUser, useLogout, useMyVendorProfile } from "@/hooks";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
-  requireSuperAdmin?: boolean;
 }
 
 const items: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Vendors", href: "/admin/vendors", icon: Store },
-  { label: "Riders", href: "/admin/riders", icon: Bike },
-  { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
-  { label: "KYC Verifications", href: "/admin/kyc", icon: ShieldCheck },
-  { label: "Buyers", href: "/admin/buyers", icon: Users },
-  {
-    label: "Admin Management",
-    href: "/admin/admins",
-    icon: UserCog,
-    requireSuperAdmin: true,
-  },
+  { label: "Dashboard", href: "/vendor/dashboard", icon: LayoutDashboard },
+  { label: "Products", href: "/vendor/dashboard/products", icon: Package },
+  { label: "Orders", href: "/vendor/dashboard/orders", icon: ShoppingBag },
+  { label: "Store", href: "/vendor/dashboard/store", icon: Store },
+  { label: "Earnings", href: "/vendor/dashboard/earnings", icon: Coins },
+  { label: "KYC", href: "/vendor/dashboard/kyc", icon: ShieldCheck },
+  { label: "Profile", href: "/vendor/dashboard/profile", icon: UserCircle },
 ];
 
-export default function AdminSidebar() {
+export default function VendorSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: user } = useCurrentUser();
+  const profile = useMyVendorProfile();
   const logout = useLogout();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close the drawer automatically when the route changes
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
   const handleLogout = () => {
     logout();
-    router.replace("/admin/login");
+    router.replace("/vendor/login");
   };
 
-  const visibleItems = items.filter(
-    (item) => !item.requireSuperAdmin || user?.role === "SUPER_ADMIN"
-  );
+  const businessName =
+    profile.data?.businessName ??
+    (user ? `${user.firstName} ${user.lastName}`.trim() : "Vendor");
 
   const Brand = () => (
     <div className="flex items-center gap-2">
@@ -72,10 +66,10 @@ export default function AdminSidebar() {
       />
       <div className="flex flex-col min-w-0">
         <span className="text-sm font-bold font-dm text-recommend-orange truncate">
-          Recommend Admin
+          {businessName}
         </span>
         <span className="text-[10px] font-dm text-gray-500">
-          Ecosystem Management
+          Vendor dashboard
         </span>
       </div>
     </div>
@@ -83,11 +77,12 @@ export default function AdminSidebar() {
 
   const NavList = ({ onNavigate }: { onNavigate?: () => void }) => (
     <nav className="flex flex-col gap-1">
-      {visibleItems.map((item) => {
+      {items.map((item) => {
         const Icon = item.icon;
         const active =
           pathname === item.href ||
-          (item.href !== "/admin" && pathname.startsWith(item.href));
+          (item.href !== "/vendor/dashboard" &&
+            pathname.startsWith(item.href));
         return (
           <Link
             key={item.href}
@@ -115,7 +110,7 @@ export default function AdminSidebar() {
             {user.firstName} {user.lastName}
           </p>
           <p className="text-xs font-dm text-gray-500 truncate">
-            {user.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
+            {user.email}
           </p>
         </div>
       )}
@@ -133,7 +128,7 @@ export default function AdminSidebar() {
     <>
       {/* Mobile top bar — fixed, always visible on small screens */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between bg-white/95 backdrop-blur-sm border-b border-[#FFD91D] px-4 h-14">
-        <Link href="/admin">
+        <Link href="/vendor/dashboard">
           <Brand />
         </Link>
         <button
@@ -177,7 +172,10 @@ export default function AdminSidebar() {
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-64 shrink-0 flex-col gap-2 bg-white/70 backdrop-blur-sm border-r border-[#FFD91D] p-4 min-h-screen sticky top-0">
-        <Link href="/admin" className="mb-4 flex items-center gap-2 px-2">
+        <Link
+          href="/vendor/dashboard"
+          className="mb-4 flex items-center gap-2 px-2"
+        >
           <Brand />
         </Link>
         <NavList />
