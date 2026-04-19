@@ -1,5 +1,6 @@
 import AdminGuard from "@/components/organisms/AdminGuard";
 import AdminSidebar from "@/components/organisms/AdminSidebar";
+import { DialogProvider } from "@/components/organisms/DialogProvider";
 
 export const metadata = {
   title: "Recommend Admin",
@@ -13,10 +14,12 @@ export default function AdminGuardedLayout({
 }) {
   return (
     <AdminGuard>
-      <div className="flex min-h-screen bg-recommend-amber">
-        <AdminSidebar />
-        <main className="flex-1 min-w-0 p-4 md:p-8">{children}</main>
-      </div>
+      <DialogProvider>
+        <div className="flex min-h-screen bg-recommend-amber">
+          <AdminSidebar />
+          <main className="flex-1 min-w-0 p-4 md:p-8">{children}</main>
+        </div>
+      </DialogProvider>
     </AdminGuard>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, X, Ban, Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useAdmins, useCreateAdmin, useSuspendAdmin, useCurrentUser } from "@/hooks";
+import { useConfirm } from "@/components/organisms/DialogProvider";
 import type { AdminUser } from "@/types";
 
 interface CreateAdminFormValues {
@@ -42,9 +43,11 @@ function roleBadgeStyle(role: string): string {
 
 export default function AdminManagementPage() {
   const { data: currentUser } = useCurrentUser();
+  const confirm = useConfirm();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const admins = useAdmins(page, 20);
   const suspend = useSuspendAdmin();
@@ -62,11 +65,19 @@ export default function AdminManagementPage() {
   });
 
   const handleSuspend = async (admin: AdminUser) => {
-    if (!confirm(`Suspend ${admin.firstName} ${admin.lastName}?`)) return;
+    const ok = await confirm({
+      title: `Suspend ${admin.firstName} ${admin.lastName}?`,
+      message:
+        "They will be signed out immediately and unable to log in until reactivated.",
+      confirmLabel: "Suspend",
+      variant: "danger",
+    });
+    if (!ok) return;
+    setActionError(null);
     try {
       await suspend.mutateAsync(admin.id);
     } catch (err) {
-      alert(
+      setActionError(
         err && typeof err === "object" && "message" in err
           ? (err as { message: string }).message
           : "Could not suspend admin."
@@ -110,6 +121,11 @@ export default function AdminManagementPage() {
           )}
         </div>
 
+        {actionError && (
+          <p className="text-sm font-dm text-red-600 bg-red-50 rounded-lg p-3">
+            {actionError}
+          </p>
+        )}
         {admins.isError && (
           <p className="text-sm font-dm text-red-600 bg-red-50 rounded-lg p-3">
             Couldn&apos;t load admins. Refresh to try again.

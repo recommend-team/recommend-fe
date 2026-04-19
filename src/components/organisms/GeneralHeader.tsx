@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { LandingHeader } from "./Header";
 
 export default function GeneralHeader() {
+  const pathname = usePathname();
   const [isHidden, setIsHidden] = useState(false);
   const [isHoveringTop, setIsHoveringTop] = useState(false);
   const lastScrollY = useRef(0);
+
+  // The admin area has its own sidebar — don't overlay the public-site header.
+  const hideOnRoute = pathname?.startsWith("/admin") ?? false;
 
   useEffect(() => {
     const SCROLL_THRESHOLD = 100;
@@ -40,6 +45,8 @@ export default function GeneralHeader() {
   }, []);
 
   const shouldBeVisible = !isHidden || isHoveringTop;
+
+  if (hideOnRoute) return null;
 
   return (
     <>
