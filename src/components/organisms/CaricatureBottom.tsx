@@ -71,12 +71,13 @@ const CaricatureBottom = () => {
           </video>
         </div>
 
-        <Button
-          variant="gradient"
-          text="Become a Rider"
-          icon={<WhatsAppIcon />}
-          className="hidden md:block"
-        />
+        <Link href="/rider/signup" className="hidden md:block">
+          <Button
+            variant="gradient"
+            text="Become a Rider"
+            icon={<WhatsAppIcon />}
+          />
+        </Link>
       </div>
 
       {/* separator */}

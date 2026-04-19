@@ -118,7 +118,9 @@ const MobileOnlyCaricatureSection = () => {
           </video>
         </div>
 
-        <Button variant="gradient" text="Become a Rider" icon={<WhatsAppIcon />} />
+        <Link href="/rider/signup">
+          <Button variant="gradient" text="Become a Rider" icon={<WhatsAppIcon />} />
+        </Link>
       </div>
     </div>
   );

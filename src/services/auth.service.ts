@@ -6,6 +6,8 @@ import type {
   LoginResponse,
   RefreshTokenPayload,
   AuthTokens,
+  RegisterRiderPayload,
+  RegisterRiderResponse,
   RegisterVendorPayload,
   RegisterVendorResponse,
   ResendVerificationPayload,
@@ -18,6 +20,15 @@ export async function registerVendor(
   payload: RegisterVendorPayload
 ): Promise<RegisterVendorResponse> {
   return request<RegisterVendorResponse>("/auth/register/vendor", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function registerRider(
+  payload: RegisterRiderPayload
+): Promise<RegisterRiderResponse> {
+  return request<RegisterRiderResponse>("/auth/register/rider", {
     method: "POST",
     body: JSON.stringify(payload),
   });

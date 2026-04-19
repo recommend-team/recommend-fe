@@ -1,6 +1,7 @@
 export * from "./useStorefront";
 export * from "./useCreateOrder";
 export * from "./useRegisterVendor";
+export * from "./useRegisterRider";
 export * from "./useLogin";
 export * from "./useVerifyEmail";
 export * from "./useResendVerification";

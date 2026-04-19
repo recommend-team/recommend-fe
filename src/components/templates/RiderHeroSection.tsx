@@ -2,74 +2,87 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Text } from "@/components/atoms/Text";
+import { Text } from "../atoms/Text";
+import { BackgroundTwo } from "./BackgroundTwo";
 
 export default function RiderHeroSection() {
   return (
-    <section className="relative min-h-screen bg-[#FFFFDC] overflow-hidden flex items-center px-6 md:px-16">
+    <BackgroundTwo>
+      <div className="relative w-full px-6 md:px-14 pt-28 md:pt-36 pb-16 md:pb-24">
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center max-w-7xl mx-auto">
+          {/* Left: headline + CTAs */}
+          <div className="flex flex-col gap-6">
+            <Text variant="hero-heading" color="orange">
+              Spread
+              <br />
+              Happiness.
+              <br />
+              Earn Fast.
+            </Text>
 
-      {/* left content */}
-      <div className="relative z-10 flex flex-col gap-6 max-w-[560px]">
-        <div>
-          <Text variant="section-heading-48" color="orange">
-            Spread Happiness.
-          </Text>
-          <Text variant="section-heading-48" color="orange">
-            Earn Fast.
-          </Text>
-        </div>
+            <Text variant="faq-answer" color="dark">
+              Join Recommend as a rider
+            </Text>
 
-        <Text variant="faq-answer" color="dark">
-          Join Recommend as a rider
-        </Text>
+            {/* TODO: replace href="#" with real store links once apps are published */}
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="#"
+                aria-label="Download on Google Play (coming soon)"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-[#1A1A1A] bg-white hover:bg-gray-100 transition-colors"
+              >
+                <Image
+                  src="/svg/google-play-icon.svg"
+                  alt=""
+                  width={18}
+                  height={18}
+                  aria-hidden="true"
+                />
+                <span className="font-bold text-sm font-dm text-[#1A1A1A]">
+                  Download on Google Play
+                </span>
+              </Link>
 
-        <div className="flex flex-wrap gap-4">
-          <Link
-            href="#"
-            className="flex items-center gap-2 px-5 py-3 rounded-full border-2 border-[#1A1A1A] bg-transparent hover:bg-[#1A1A1A] hover:text-white transition-colors group"
-          >
-            <Image
-              src="/svg/google-play-icon.svg"
-              alt=""
-              width={20}
-              height={20}
-              aria-hidden="true"
-            />
-            <span className="font-semibold text-sm text-[#1A1A1A] group-hover:text-white">
-              Download on Google Play
-            </span>
-          </Link>
+              <Link
+                href="#"
+                aria-label="Download on App Store (coming soon)"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-recommend-green hover:bg-recommend-green-hover transition-colors"
+              >
+                <Image
+                  src="/svg/apple-icon.svg"
+                  alt=""
+                  width={18}
+                  height={18}
+                  aria-hidden="true"
+                />
+                <span className="font-bold text-sm font-dm text-white">
+                  Download on App Store
+                </span>
+              </Link>
+            </div>
 
-          <Link
-            href="#"
-            className="flex items-center gap-2 px-5 py-3 rounded-full bg-[#1A3A2A] hover:bg-[#0f2a1a] transition-colors"
-          >
-            <Image
-              src="/svg/apple-icon.svg"
-              alt=""
-              width={20}
-              height={20}
-              aria-hidden="true"
-            />
-            <span className="font-semibold text-sm text-white">
-              Download on App Store
-            </span>
-          </Link>
+            <Link
+              href="/rider/signup"
+              className="text-sm font-dm text-recommend-orange font-bold underline w-fit"
+            >
+              Or register as a rider here →
+            </Link>
+          </div>
+
+          {/* Right: rider photo */}
+          <div className="relative flex justify-center md:justify-end">
+            <div className="relative w-[280px] h-[340px] md:w-[420px] md:h-[520px]">
+              <Image
+                src="/images/rider-hero.png"
+                alt="Recommend rider"
+                fill
+                className="object-contain object-bottom"
+                priority
+              />
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* rider photo — right side, bleeds to edge */}
-      <div className="absolute right-0 bottom-0 h-full flex items-end pointer-events-none">
-        <Image
-          src="/images/rider-hero.png"
-          alt="Recommend rider"
-          width={600}
-          height={700}
-          className="object-contain object-bottom h-full w-auto max-w-[55vw]"
-          priority
-        />
-      </div>
-
-    </section>
+    </BackgroundTwo>
   );
 }

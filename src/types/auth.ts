@@ -1,5 +1,7 @@
 export type VendorType = "REGISTERED" | "NON_REGISTERED";
 
+export type RiderType = "INDIVIDUAL" | "COMPANY";
+
 export type UserRole = "SELLER" | "RIDER" | "BUYER" | "ADMIN" | "SUPER_ADMIN";
 
 export type UserStatus = "PENDING" | "APPROVED" | "SUSPENDED" | "DEACTIVATED";
@@ -21,6 +23,22 @@ export interface RegisterVendorResponse {
   email: string;
 }
 
+export interface RegisterRiderPayload {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  riderType: RiderType;
+  bvn?: string;
+  guarantorName?: string;
+  guarantorPhone?: string;
+}
+
+export interface RegisterRiderResponse {
+  email: string;
+}
+
 export interface LoginPayload {
   email: string;
   password: string;
@@ -35,6 +53,7 @@ export interface AuthUser {
   role: UserRole;
   status: UserStatus;
   vendorType?: VendorType | null;
+  riderType?: RiderType | null;
   businessName?: string | null;
   businessAddress?: string | null;
   businessCategory?: string | null;
