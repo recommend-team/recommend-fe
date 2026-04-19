@@ -23,7 +23,6 @@ export default function NoAppSection() {
               <span className="text-[#1A1A1A] block">Hey Recommend</span>
             </Text>
           </div>
-
           <div className="md:hidden text-center mb-10">
             <Text
               as="h2"
@@ -36,15 +35,13 @@ export default function NoAppSection() {
             </Text>
           </div>
         </div>
-
         <div className="relative w-full flex justify-center items-center">
           <div className="hidden md:block absolute left-[20%] top-[32%] z-20">
             <ChatBubble
               text="Hello Recommend"
-              avatar="/images/gravatar-1.png"
+              avatar="/images/gravatar-1.webp"
             />
           </div>
-
           <div className="relative w-65 md:w-[320px] lg:w-90 z-10">
             <Image
               src="/images/Silver.png"
@@ -63,7 +60,6 @@ export default function NoAppSection() {
               />
             </div>
           </div>
-
           <div className="hidden md:flex flex-col items-start gap-6 absolute right-[12%] top-1/2 -translate-y-1/2 z-20">
             <ChatBubble
               text="Recommend I want to dry clean my clothes"
@@ -76,7 +72,6 @@ export default function NoAppSection() {
             />
           </div>
         </div>
-
         <div className="flex md:hidden justify-center mt-10">
           <Button
             text="Start Ordering"

@@ -13,7 +13,15 @@ export type TextVariant =
   | "neighborhoods-title"
   | "neighborhoods-list"
   | "tap-hint"
-  | "footer-input-placeholder";
+  | "footer-input-placeholder"
+  | "stats-number"
+  | "stats-label"
+  | "section-label"
+  | "origin-card-heading"
+  | "origin-card-body"
+  | "origin-closing"
+  | "faq-question"
+  | "faq-answer";
 
 export type TextColor =
   | "orange"
@@ -21,7 +29,7 @@ export type TextColor =
   | "green"
   | "white"
   | "inherit"
-  |"grey";
+  | "grey";
 
 export interface TextProps {
   variant: TextVariant;

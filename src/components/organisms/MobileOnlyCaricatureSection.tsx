@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "../molecules/Button";
 import { Text } from "../atoms/Text";
 import WhatsAppIcon from "../atoms/WhatsAppIcon";
@@ -13,7 +14,7 @@ const MobileOnlyCaricatureSection = () => {
           color="dark"
           className="text-center text-lg"
         >
-          I want to order
+          I Want to Order
         </Text>
 
         <Text
@@ -21,7 +22,7 @@ const MobileOnlyCaricatureSection = () => {
           color="dark"
           className="text-center text-sm whitespace-nowrap"
         >
-          No app . FAST . Safe payment
+          No app · Fast · Safe payment
         </Text>
 
         {/* Video with fallback */}
@@ -53,7 +54,7 @@ const MobileOnlyCaricatureSection = () => {
           color="dark"
           className="text-center text-lg"
         >
-          I Am a Business
+          I&apos;m a Business
         </Text>
 
         <Text
@@ -61,7 +62,7 @@ const MobileOnlyCaricatureSection = () => {
           color="dark"
           className="text-center text-sm whitespace-nowrap"
         >
-          10M+ reach - Whatsapp storefront
+          10M+ reach · WhatsApp storefront
         </Text>
 
         <Image
@@ -72,11 +73,13 @@ const MobileOnlyCaricatureSection = () => {
           className="w-24 h-24 object-cover rounded-full"
         />
 
-        <Button
-          variant="gradient"
-          text="Join as a Business"
-          icon={<WhatsAppIcon />}
-        />
+        <Link href="/vendor/signup">
+          <Button
+            variant="gradient"
+            text="Join as a Business"
+            icon={<WhatsAppIcon />}
+          />
+        </Link>
       </div>
       {/* Caricature block 3 */}
       <div className="flex flex-col items-center gap-3">
@@ -115,7 +118,9 @@ const MobileOnlyCaricatureSection = () => {
           </video>
         </div>
 
-        <Button variant="gradient" text="Order now" icon={<WhatsAppIcon />} />
+        <Link href="/rider/signup">
+          <Button variant="gradient" text="Become a Rider" icon={<WhatsAppIcon />} />
+        </Link>
       </div>
     </div>
   );

@@ -1,12 +1,23 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { LandingHeader } from "./Header";
 
 export default function GeneralHeader() {
+  const pathname = usePathname();
   const [isHidden, setIsHidden] = useState(false);
   const [isHoveringTop, setIsHoveringTop] = useState(false);
   const lastScrollY = useRef(0);
+
+  // Hide the public-site header in areas that have their own chrome or run
+  // inside the WhatsApp in-app browser (storefront + order flow + admin +
+  // vendor dashboard).
+  const hideOnRoute =
+    (pathname?.startsWith("/admin") ?? false) ||
+    (pathname?.startsWith("/vendor/dashboard") ?? false) ||
+    (pathname?.startsWith("/store") ?? false) ||
+    (pathname?.startsWith("/order") ?? false);
 
   useEffect(() => {
     const SCROLL_THRESHOLD = 100;
@@ -40,6 +51,8 @@ export default function GeneralHeader() {
   }, []);
 
   const shouldBeVisible = !isHidden || isHoveringTop;
+
+  if (hideOnRoute) return null;
 
   return (
     <>

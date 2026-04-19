@@ -13,7 +13,7 @@ const CaricatureMiddle = () => {
         color="orange"
         className="text-center"
       >
-        Find Your Place In <br className="hidden sm:block" /> Recommend
+        Find Your Place in <br className="hidden sm:block" /> Recommend
       </Text>
 
       {/* right line */}
