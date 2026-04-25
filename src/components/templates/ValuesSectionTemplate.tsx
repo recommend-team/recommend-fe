@@ -6,78 +6,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Text } from "../atoms/Text";
 import { BackgroundThree } from "./BackgroundThree";
 
-const images = [
-  "/images/stopwatch.png",
-  "/images/trusted.png",
-  "/images/simple.png",
-  "/images/local.png",
-];
+export type ValuesFAQ = {
+  title: string;
+  description: string;
+};
 
-const faqs = [
-  {
-    title: "Fast",
-    description:
-      "Seconds, not minutes. Every feature we build asks one question: does this make it faster?",
-  },
-  {
-    title: "Trusted",
-    description:
-      "Every vendor verified. Every transaction protected. We don't just connect — we stand behind every order.",
-  },
-  {
-    title: "Simple",
-    description:
-      "No app. No forms. No fees. Just WhatsApp, the app 90% of Nigerians already have.",
-  },
-  {
-    title: "Local",
-    description:
-      "Built in your city, for your street. We actually know your neighbourhood.",
-  },
-];
-
-function ImageCarousel() {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div className="relative w-full aspect-[4/5] rounded-2xl border border-recommend-orange">
-
-      {images.map((src, i) => (
-        <motion.div
-          key={src}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: i === index ? 1 : 0 }}
-          transition={{ duration: 1.8, ease: "easeInOut" }}
-          className="absolute inset-0 rounded-2xl overflow-hidden"
-        >
-          <Image
-            src={src}
-            alt="Rotating image"
-            fill
-            className="object-cover rounded-2xl"
-          />
-        </motion.div>
-      ))}
-
-      <div className="absolute -bottom-10 -right-8 z-20">
-        <Image
-          src="/svg/joyleap.svg"
-          alt=""
-          width={100}
-          height={100}
-          className="w-20 md:w-28 h-auto"
-        />
-      </div>
-    </div>
-  );
-}
+export type ValuesSectionProps = {
+  headingLine1: string;
+  headingLine1Color: "dark" | "orange" | "grey";
+  headingLine2: string;
+  headingLine2Color: "dark" | "orange" | "grey";
+  strengthIcon?: string;
+  centerImages: string[];        // for AboutValuesSection: rotating carousel; for RiderValuesSection: single image
+  centerImageAlt?: string;
+  joyleapIcon?: string;
+  faqs: ValuesFAQ[];
+};
 
 function Divider() {
   return (
@@ -93,7 +37,61 @@ function Divider() {
   );
 }
 
-function FAQDesktop() {
+function CenterImage({
+  images,
+  alt,
+  joyleapIcon,
+}: {
+  images: string[];
+  alt?: string;
+  joyleapIcon?: string;
+}) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <div className="relative w-full aspect-[4/5] rounded-2xl border border-recommend-orange overflow-hidden">
+      {images.map((src, i) => (
+        <motion.div
+          key={src}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: i === index ? 1 : 0 }}
+          transition={{ duration: images.length > 1 ? 1.8 : 0, ease: "easeInOut" }}
+          className="absolute inset-0 rounded-2xl overflow-hidden"
+        >
+          <Image
+            src={src}
+            alt={alt ?? ""}
+            fill
+            className="object-cover rounded-2xl"
+          />
+        </motion.div>
+      ))}
+
+      {joyleapIcon && (
+        <div className="absolute -bottom-10 -right-8 z-20">
+          <Image
+            src={joyleapIcon}
+            alt=""
+            width={100}
+            height={100}
+            className="w-20 md:w-28 h-auto"
+            aria-hidden="true"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FAQDesktop({ faqs }: { faqs: ValuesFAQ[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -101,7 +99,7 @@ function FAQDesktop() {
       setActiveIndex((prev) => (prev + 1) % faqs.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [faqs.length]);
 
   return (
     <div className="flex flex-col w-full">
@@ -152,7 +150,7 @@ function FAQDesktop() {
   );
 }
 
-function FAQMobile() {
+function FAQMobile({ faqs }: { faqs: ValuesFAQ[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -160,11 +158,10 @@ function FAQMobile() {
       setActiveIndex((prev) => (prev + 1) % faqs.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [faqs.length]);
 
   return (
     <div className="w-full mt-8">
-      {/* Slider indicator */}
       <div className="flex gap-1 mb-6">
         {faqs.map((_, index) => (
           <motion.div
@@ -187,18 +184,10 @@ function FAQMobile() {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.4 }}
         >
-          <Text
-            variant="neighborhoods-title"
-            color="dark"
-            className="font-bold mb-2"
-          >
+          <Text variant="neighborhoods-title" color="dark" className="font-bold mb-2">
             {faqs[activeIndex].title}
           </Text>
-          <Text
-            variant="neighborhoods-list"
-            color="grey"
-            className="leading-relaxed"
-          >
+          <Text variant="neighborhoods-list" color="grey" className="leading-relaxed">
             {faqs[activeIndex].description}
           </Text>
         </motion.div>
@@ -207,69 +196,93 @@ function FAQMobile() {
   );
 }
 
-export default function AboutValuesSection() {
+export default function ValuesSectionTemplate({
+  headingLine1,
+  headingLine1Color,
+  headingLine2,
+  headingLine2Color,
+  strengthIcon,
+  centerImages,
+  centerImageAlt,
+  joyleapIcon,
+  faqs,
+}: ValuesSectionProps) {
   return (
     <BackgroundThree>
       <div className="relative w-full px-6 md:px-14 py-16 md:py-24">
 
+        {/* Desktop */}
         <div className="hidden md:grid grid-cols-3 gap-10 max-w-6xl mx-auto items-center">
-
           <div className="relative flex flex-col gap-4">
             <div>
-              <Text variant="section-heading-48" color="dark">
-                Four words.
+              <Text variant="section-heading-48" color={headingLine1Color}>
+                {headingLine1}
               </Text>
-              <Text variant="section-heading-48" color="orange">
-                Everything we do.
+              <Text variant="section-heading-48" color={headingLine2Color}>
+                {headingLine2}
               </Text>
             </div>
-            <div className="absolute -top-17 right-2">
-              <Image
-                src="/svg/strength.svg"
-                alt=""
-                width={56}
-                height={56}
-                className="w-28 h-auto"
-              />
-            </div>
+            {strengthIcon && (
+              <div className="absolute -top-17 right-2">
+                <Image
+                  src={strengthIcon}
+                  alt=""
+                  width={56}
+                  height={56}
+                  className="w-28 h-auto"
+                  aria-hidden="true"
+                />
+              </div>
+            )}
           </div>
 
           <div className="relative">
-            <ImageCarousel />
+            <CenterImage
+              images={centerImages}
+              alt={centerImageAlt}
+              joyleapIcon={joyleapIcon}
+            />
           </div>
 
           <div className="flex flex-col justify-center">
-            <FAQDesktop />
+            <FAQDesktop faqs={faqs} />
           </div>
         </div>
 
+        {/* Mobile */}
         <div className="flex md:hidden flex-col gap-6">
-
           <div className="relative inline-block">
-            <Text variant="section-heading-48" color="dark">
-              Four words.
+            <Text variant="section-heading-48" color={headingLine1Color}>
+              {headingLine1}
             </Text>
             <div className="flex items-center gap-2">
-              <Text variant="section-heading-48" color="orange">
-                Everything we do.
+              <Text variant="section-heading-48" color={headingLine2Color}>
+                {headingLine2}
               </Text>
-              <div className="flex-shrink-0">
-                <Image
-                  src="/svg/strength.svg"
-                  alt=""
-                  width={44}
-                  height={44}
-                  className="w-18 h-auto"
-                />
-              </div>
+              {strengthIcon && (
+                <div className="flex-shrink-0">
+                  <Image
+                    src={strengthIcon}
+                    alt=""
+                    width={44}
+                    height={44}
+                    className="w-18 h-auto"
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           <div className="relative w-full">
-            <ImageCarousel />
+            <CenterImage
+              images={centerImages}
+              alt={centerImageAlt}
+              joyleapIcon={joyleapIcon}
+            />
           </div>
 
-          <FAQMobile />
+          <FAQMobile faqs={faqs} />
         </div>
 
       </div>
