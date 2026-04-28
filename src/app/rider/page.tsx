@@ -1,5 +1,5 @@
 import RiderHeroSection from "@/components/templates/RiderHeroSection";
-import RiderValuesSection from "@/components/templates/RiderValuesSection";
+import RiderValuesSection from "@/components/organisms/RiderValuesSection";
 import AccountTypesSection from "@/components/templates/AccountTypesSection";
 import { SlidingLocations } from "@/components/templates/SlidingLocations";
 import FaqSection from "@/components/templates/FaqSection";
