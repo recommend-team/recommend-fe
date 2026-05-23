@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Clock, Ban, CheckCircle2 } from "lucide-react";
+import { Ban } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks";
 import type { AuthUser } from "@/types";
 
@@ -101,33 +101,6 @@ export default function VendorGuard({
     );
   }
 
-  // Pending vendors: KYC review hasn't finished
-  if (user.status === "PENDING") {
-    return (
-      <StatusScreen
-        icon={<Clock size={24} />}
-        title="Your account is pending review"
-        description="We're reviewing your KYC documents. You'll get an email once approved — usually within 24 hours. Once approved, this dashboard unlocks."
-        action={
-          <div className="flex gap-3">
-            <button
-              onClick={handleLogout}
-              className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-bold font-dm text-gray-700 hover:bg-gray-50"
-            >
-              Log out
-            </button>
-            <Link
-              href="/vendor"
-              className="rounded-full bg-recommend-green text-white px-4 py-2 text-sm font-bold font-dm hover:bg-recommend-green-hover"
-            >
-              Back to site
-            </Link>
-          </div>
-        }
-      />
-    );
-  }
-
   // Suspended / deactivated
   if (user.status === "SUSPENDED" || user.status === "DEACTIVATED") {
     return (
@@ -155,17 +128,6 @@ export default function VendorGuard({
             </button>
           </div>
         }
-      />
-    );
-  }
-
-  // APPROVED — let them in (but acknowledge non-obvious state for safety)
-  if (user.status !== "APPROVED") {
-    return (
-      <StatusScreen
-        icon={<CheckCircle2 size={24} />}
-        title="Account status unknown"
-        description="Your account status isn't APPROVED. Refresh — if this persists, contact support."
       />
     );
   }

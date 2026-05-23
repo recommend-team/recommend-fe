@@ -20,7 +20,7 @@ export default function RiderSignupPendingPage() {
           </div>
 
           <Text variant="section-heading-48-center" color="orange">
-            You&apos;re in the queue.
+            You&apos;re in.
           </Text>
 
           <Text
@@ -28,10 +28,9 @@ export default function RiderSignupPendingPage() {
             color="grey"
             className="leading-relaxed max-w-lg"
           >
-            Your email is verified. Your rider account is now pending KYC
-            review — we check every application so customers can trust every
-            Recommend rider. We&apos;ll email you once approved (usually within
-            24 hours).
+            Your email is verified — log in to access your rider dashboard.
+            Your KYC review is in progress (usually within 24 hours). You can
+            start accepting deliveries once approved.
           </Text>
 
           <div className="bg-[#FFF8B8] border border-[#FFD91D] rounded-2xl p-5 md:p-6 w-full text-left">
@@ -43,15 +42,23 @@ export default function RiderSignupPendingPage() {
               What happens next
             </Text>
             <ol className="space-y-2 text-sm font-dm text-gray-800 list-decimal list-inside">
+              <li>Log in to complete your rider profile and upload documents.</li>
               <li>We review your ID, BVN, and rider details.</li>
-              <li>You get an approval email with a link to log in.</li>
-              <li>Accept your first order and start earning.</li>
+              <li>Once approved, accept your first order and start earning.</li>
             </ol>
           </div>
 
-          <Link href="/">
-            <Button variant="green" text="Back to home" />
-          </Link>
+          <div className="flex gap-3 flex-wrap justify-center">
+            <Link href="/rider/login">
+              <Button variant="green" text="Log in" />
+            </Link>
+            <Link
+              href="/"
+              className="rounded-full border border-gray-300 bg-white px-6 py-2 text-sm font-bold font-dm text-gray-700 hover:bg-gray-50 self-center"
+            >
+              Back to home
+            </Link>
+          </div>
         </div>
       </div>
     </BackgroundTwo>

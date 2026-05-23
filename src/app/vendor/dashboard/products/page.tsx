@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Lock } from "lucide-react";
 import PageHeader from "@/components/atoms/admin/PageHeader";
 import Paginator from "@/components/atoms/admin/Paginator";
 import { useConfirm } from "@/components/organisms/DialogProvider";
-import { useMyProducts, useDeleteProduct } from "@/hooks";
+import { useMyProducts, useDeleteProduct, useCurrentUser } from "@/hooks";
 import type { Product } from "@/types";
 
 const PAGE_SIZE = 20;
@@ -24,6 +24,8 @@ export default function VendorProductsPage() {
   const [search, setSearch] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const { data: user } = useCurrentUser();
+  const isApproved = user?.status === "APPROVED";
   const products = useMyProducts({ page, limit: PAGE_SIZE });
   const del = useDeleteProduct();
 
@@ -64,15 +66,47 @@ export default function VendorProductsPage() {
         title="Products"
         description="Manage your catalog. You can have up to 20 products at a time."
         right={
-          <Link
-            href="/vendor/dashboard/products/new"
-            className="flex items-center gap-2 rounded-full bg-recommend-orange text-white px-4 py-2 text-sm font-bold font-dm hover:bg-orange-600"
-          >
-            <Plus size={16} />
-            Add product
-          </Link>
+          isApproved ? (
+            <Link
+              href="/vendor/dashboard/products/new"
+              className="flex items-center gap-2 rounded-full bg-recommend-orange text-white px-4 py-2 text-sm font-bold font-dm hover:bg-orange-600"
+            >
+              <Plus size={16} />
+              Add product
+            </Link>
+          ) : (
+            <Link
+              href="/vendor/dashboard/kyc"
+              className="flex items-center gap-2 rounded-full bg-gray-100 text-gray-600 px-4 py-2 text-sm font-bold font-dm hover:bg-gray-200"
+              title="KYC approval required before you can list products"
+            >
+              <Lock size={16} />
+              Complete KYC to add products
+            </Link>
+          )
         }
       />
+
+      {!isApproved && (
+        <div className="rounded-2xl bg-amber-50 border border-[#FFD91D] p-4 md:p-5 flex items-start gap-3">
+          <Lock size={18} className="text-recommend-orange shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-bold font-dm text-gray-900 text-sm">
+              Listing products is locked until KYC approval
+            </p>
+            <p className="text-sm font-dm text-gray-600 mt-1">
+              You can explore your dashboard while we review your KYC. Once
+              approved, you&apos;ll be able to add products.{" "}
+              <Link
+                href="/vendor/dashboard/kyc"
+                className="text-recommend-orange font-bold underline"
+              >
+                View KYC status
+              </Link>
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-2xl bg-white border border-[#FFD91D] p-5 md:p-6 flex flex-col gap-4">
         <div className="relative max-w-md">
@@ -124,12 +158,21 @@ export default function VendorProductsPage() {
                     ) : (
                       <div className="flex flex-col items-center gap-2">
                         <p className="text-gray-500">No products yet.</p>
-                        <Link
-                          href="/vendor/dashboard/products/new"
-                          className="text-recommend-orange font-bold underline text-sm"
-                        >
-                          Add your first product
-                        </Link>
+                        {isApproved ? (
+                          <Link
+                            href="/vendor/dashboard/products/new"
+                            className="text-recommend-orange font-bold underline text-sm"
+                          >
+                            Add your first product
+                          </Link>
+                        ) : (
+                          <Link
+                            href="/vendor/dashboard/kyc"
+                            className="text-recommend-orange font-bold underline text-sm"
+                          >
+                            Complete KYC to add your first product
+                          </Link>
+                        )}
                       </div>
                     )}
                   </td>

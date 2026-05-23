@@ -1,15 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductForm from "@/components/organisms/ProductForm";
-import { useCreateProduct } from "@/hooks";
+import { useCreateProduct, useCurrentUser } from "@/hooks";
 import type { CreateProductPayload } from "@/types";
 
 export default function NewProductPage() {
   const router = useRouter();
   const create = useCreateProduct();
+  const { data: user, isLoading: userLoading } = useCurrentUser();
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userLoading && user && user.status !== "APPROVED") {
+      router.replace("/vendor/dashboard/kyc");
+    }
+  }, [user, userLoading, router]);
 
   const handleSubmit = async (payload: CreateProductPayload) => {
     setSubmitError(null);
