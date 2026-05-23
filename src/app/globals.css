@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=BBH+Hegarty&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;800&display=swap');
 @import "tailwindcss";
 
@@ -24,6 +23,14 @@
   --color-recommend-green-active: #00552a;
 }
 
+@font-face {
+  font-family: 'Champ';
+  src: url('/fonts/Champ-Black.woff2') format('woff2'),
+       url('/fonts/Champ-Black.woff') format('woff');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 @layer utilities {
   .bg-brand-gradient {
    background: linear-gradient(
@@ -36,11 +43,11 @@
   }
 
   .font-champ {
-    font-family: "BBH Hegarty", "sans-serif";
+    font-family: "Champ", sans-serif;
   }
 
   .font-dm {
-    font-family: "DM Sans", "sans-serif";
+    font-family: "DM Sans", sans-serif;
   }
 
   .bg-heading {

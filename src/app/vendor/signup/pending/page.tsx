@@ -20,7 +20,7 @@ export default function SignupPendingPage() {
           </div>
 
           <Text variant="section-heading-48-center" color="orange">
-            You&apos;re in the queue.
+            You&apos;re in.
           </Text>
 
           <Text
@@ -28,10 +28,9 @@ export default function SignupPendingPage() {
             color="grey"
             className="leading-relaxed max-w-lg"
           >
-            Your email is verified. Your account is now pending KYC review — we
-            check everything manually so customers can trust every vendor on
-            Recommend. We&apos;ll email you once approved (usually within 24
-            hours).
+            Your email is verified — log in to access your dashboard. Your KYC
+            review is in progress (usually within 24 hours). You can list
+            products once approved.
           </Text>
 
           <div className="bg-[#FFF8B8] border border-[#FFD91D] rounded-2xl p-5 md:p-6 w-full text-left">
@@ -43,15 +42,23 @@ export default function SignupPendingPage() {
               What happens next
             </Text>
             <ol className="space-y-2 text-sm font-dm text-gray-800 list-decimal list-inside">
+              <li>Log in to set up your storefront and upload KYC documents.</li>
               <li>We review your business details and KYC documents.</li>
-              <li>You get an approval email with a link to log in.</li>
-              <li>Start taking orders.</li>
+              <li>Once approved, start listing products and taking orders.</li>
             </ol>
           </div>
 
-          <Link href="/">
-            <Button variant="green" text="Back to home" />
-          </Link>
+          <div className="flex gap-3 flex-wrap justify-center">
+            <Link href="/vendor/login">
+              <Button variant="green" text="Log in" />
+            </Link>
+            <Link
+              href="/"
+              className="rounded-full border border-gray-300 bg-white px-6 py-2 text-sm font-bold font-dm text-gray-700 hover:bg-gray-50 self-center"
+            >
+              Back to home
+            </Link>
+          </div>
         </div>
       </div>
     </BackgroundTwo>

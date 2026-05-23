@@ -17,7 +17,7 @@ export const SlidingLocations = () => {
   const duplicated = [...locations, ...locations];
 
   return (
-    <div className="w-full overflow-hidden py-16">
+    <div className="w-full overflow-hidden py-16 bg-[#FFFFDC]">
       {/* Container that moves */}
       <div className="flex w-max animate-slide gap-12 hover:[animation-play-state:paused]">
         {duplicated.map((location, index) => (

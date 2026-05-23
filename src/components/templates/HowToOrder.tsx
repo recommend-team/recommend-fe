@@ -33,7 +33,7 @@ export const HowToOrder = () => {
             <HowToOrderCard
               title="Step 1"
               description="Open whatsapp, and search for Recommend. then tap on the chat"
-              image="/images/oes1.png"
+              image="/images/oes1.jpeg"
             />
           </div>
 

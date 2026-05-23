@@ -47,34 +47,6 @@ export function StoryCard({
 
         {/* Illustration side */}
         <div className="relative flex-shrink-0 w-[30%] flex items-center justify-center">
-
-          {/* Slanting path lines — only on Card 1 */}
-          {isFirstCard && (
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              viewBox="0 0 120 120"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <line
-                x1="10" y1="55"
-                x2="75" y2="45"
-                stroke="#5a5a2a"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                opacity="0.4"
-              />
-              <line
-                x1="10" y1="65"
-                x2="75" y2="58"
-                stroke="#5a5a2a"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                opacity="0.4"
-              />
-            </svg>
-          )}
-
           <Image
             src={illustration}
             alt=""
