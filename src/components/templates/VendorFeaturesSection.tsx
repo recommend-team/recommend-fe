@@ -7,33 +7,79 @@ import { BackgroundThree } from "./BackgroundThree";
 interface Feature {
   title: string;
   description: string;
-  illustration: string;
+  illustration: React.ReactNode;
 }
+
+const LiveDashboardIllustration = (
+  <div className="relative flex-shrink-0 w-[60px] md:w-[80px]">
+    <div className="absolute -top-9 left-1/2 -translate-x-1/2 w-[20px]">
+      <Image
+        src="/svg/thinking-squiggle.svg"
+        alt=""
+        width={24}
+        height={24}
+        className="w-full h-auto"
+      />
+    </div>
+    <Image
+      src="/svg/faq-figure.svg"
+      alt=""
+      width={80}
+      height={120}
+      className="w-full h-auto"
+    />
+  </div>
+);
+
+const InventoryIllustration = (
+  <div className="relative w-full h-full flex items-end justify-center">
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[50px] md:w-[60px]">
+      <Image
+        src="/svg/dashed-path.svg"
+        alt=""
+        width={60}
+        height={24}
+        className="w-full h-auto"
+      />
+    </div>
+    <Image
+      src="/svg/delivery_scooter.svg"
+      alt="Delivery scooter"
+      width={110}
+      height={80}
+      className="w-[65px] md:w-[80px] h-auto relative z-10"
+    />
+  </div>
+);
 
 const features: Feature[] = [
   {
     title: "Order Management",
     description:
       "Accept or reject incoming orders, track rider status in real time from pickup to delivery.",
-    illustration: "/svg/story-figure.svg",
+    illustration: (
+      <Image src="/svg/joy_leap2.svg" alt="" width={100} height={100} className="h-full w-auto" aria-hidden="true" />
+    ),
   },
   {
     title: "Live Dashboard",
     description:
       "Track daily and weekly orders, top products, and earnings from one clean, simple view.",
-    illustration: "/svg/pushing-figure.svg",
+    illustration: LiveDashboardIllustration,
   },
   {
     title: "Inventory Control",
     description:
       "Manage your products, special offers, per-plate pricing, drinks, and promotions all in one place.",
-    illustration: "/svg/story-frown.svg",
+    illustration: InventoryIllustration,
   },
   {
     title: "Secure Payouts",
     description:
       "Request withdrawals to your bank account anytime. PIN-secured for your protection.",
-    illustration: "/svg/james-figure.svg",
+    illustration: (
+      <Image src="/svg/salaryman.svg" alt="" width={100} height={100} className="h-full w-auto" aria-hidden="true" />
+    ),
   },
 ];
 
@@ -81,14 +127,7 @@ export default function VendorFeaturesSection() {
                     {feature.description}
                   </Text>
                   <div className="relative w-full h-24 md:h-28 flex items-end justify-center">
-                    <Image
-                      src={feature.illustration}
-                      alt=""
-                      width={100}
-                      height={100}
-                      className="h-full w-auto"
-                      aria-hidden="true"
-                    />
+                    {feature.illustration}
                   </div>
                 </div>
               </div>
