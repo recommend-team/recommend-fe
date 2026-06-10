@@ -19,21 +19,36 @@ interface FormValues {
   confirmPassword: string;
   businessName: string;
   businessAddress: string;
-  businessCategory: string;
   businessDescription: string;
 }
 
-const PASSWORD_RULE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/;
+const PASSWORD_RULE =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/;
 const PHONE_RULE = /^\+?[1-9]\d{1,14}$/;
+
+// Maps URL param from step 1 to a human-readable label sent to the API
+const CATEGORY_LABELS: Record<string, string> = {
+  RESTAURANT: "Restaurant",
+  EVERYDAY_ESSENTIALS: "Everyday Essentials",
+  MEDICINE_WELLNESS: "Medicine & Wellness",
+  FRESH_FROM_MARKET: "Fresh From Market",
+  BEAUTY_FASHION: "Beauty & Fashion",
+};
 
 function RegisterFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // tier comes from step 2
   const tierParam = searchParams.get("tier") as VendorType | null;
   const tier: VendorType =
     tierParam === "REGISTERED" || tierParam === "NON_REGISTERED"
       ? tierParam
       : "NON_REGISTERED";
+
+  // category comes from step 1
+  const categoryParam = searchParams.get("category") ?? "";
+  const categoryLabel = CATEGORY_LABELS[categoryParam] ?? categoryParam;
 
   const register = useRegisterVendor();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -53,7 +68,6 @@ function RegisterFormInner() {
       confirmPassword: "",
       businessName: "",
       businessAddress: "",
-      businessCategory: "",
       businessDescription: "",
     },
   });
@@ -72,18 +86,18 @@ function RegisterFormInner() {
         vendorType: tier,
         businessName: values.businessName.trim(),
         businessAddress: values.businessAddress.trim(),
-        businessCategory: values.businessCategory.trim(),
+        businessCategory: categoryLabel || "GENERAL",
         businessDescription: values.businessDescription.trim() || undefined,
       });
       router.push(
         `/vendor/signup/verify?email=${encodeURIComponent(result.email)}`
       );
     } catch (err) {
-      if (err && typeof err === "object" && "message" in err) {
-        setSubmitError((err as { message: string }).message);
-      } else {
-        setSubmitError("Something went wrong. Please try again.");
-      }
+      setSubmitError(
+        err && typeof err === "object" && "message" in err
+          ? (err as { message: string }).message
+          : "Something went wrong. Please try again."
+      );
     }
   };
 
@@ -91,30 +105,34 @@ function RegisterFormInner() {
     <BackgroundTwo>
       <div className="relative z-10 min-h-screen w-full px-6 md:px-14 pt-28 md:pt-36 pb-16">
         <div className="max-w-xl mx-auto flex flex-col gap-6">
+
+          {/* Step indicator */}
           <div className="flex flex-col items-center gap-1 text-center">
             <Text variant="faq-answer" color="dark">
-              Step 2 of 3
+              Step 3 of 3
             </Text>
             <Text variant="section-heading-48-center" color="orange">
-              Create your account
+              Your next customer is already nearby.
             </Text>
-            <Text variant="neighborhoods-list" color="grey">
-              {tier === "REGISTERED"
-                ? "Registered business"
-                : "Non-registered business"}
-            </Text>
+            {(categoryLabel || tier) && (
+              <Text variant="neighborhoods-list" color="grey">
+                {categoryLabel && (
+                  <span className="font-bold text-gray-700">{categoryLabel} · </span>
+                )}
+                {tier === "REGISTERED" ? "Registered business" : "Non-registered business"}
+              </Text>
+            )}
           </div>
 
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 md:p-8 space-y-4 border border-[#FFD91D]"
           >
+            {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
-              <FormField
-                label="First name"
-                error={errors.firstName?.message}
-              >
+              <FormField label="First name" error={errors.firstName?.message}>
                 <input
+                  placeholder="Enter first name"
                   {...field("firstName", {
                     required: "Required",
                     minLength: { value: 2, message: "Min 2 characters" },
@@ -125,6 +143,7 @@ function RegisterFormInner() {
               </FormField>
               <FormField label="Last name" error={errors.lastName?.message}>
                 <input
+                  placeholder="Enter last name"
                   {...field("lastName", {
                     required: "Required",
                     minLength: { value: 2, message: "Min 2 characters" },
@@ -135,10 +154,10 @@ function RegisterFormInner() {
               </FormField>
             </div>
 
-            <FormField label="Email" error={errors.email?.message}>
+            <FormField label="Email address" error={errors.email?.message}>
               <input
                 type="email"
-                placeholder="you@business.com"
+                placeholder="Enter email address"
                 {...field("email", {
                   required: "Required",
                   pattern: {
@@ -157,7 +176,7 @@ function RegisterFormInner() {
             >
               <input
                 type="tel"
-                placeholder="+2348012345678"
+                placeholder="+234 80 0000 0000"
                 {...field("phoneNumber", {
                   required: "Required",
                   pattern: {
@@ -169,45 +188,9 @@ function RegisterFormInner() {
               />
             </FormField>
 
-            <FormField
-              label="Password"
-              error={errors.password?.message}
-              hint="8-50 chars, with uppercase, lowercase, digit, and special character"
-            >
-              <input
-                type="password"
-                autoComplete="new-password"
-                {...field("password", {
-                  required: "Required",
-                  pattern: {
-                    value: PASSWORD_RULE,
-                    message:
-                      "Needs upper + lower + digit + special (@$!%*?&), 8-50 chars",
-                  },
-                })}
-                className={inputStyles}
-              />
-            </FormField>
-
-            <FormField
-              label="Confirm password"
-              error={errors.confirmPassword?.message}
-            >
-              <input
-                type="password"
-                autoComplete="new-password"
-                {...field("confirmPassword", {
-                  required: "Required",
-                  validate: (v) => v === password || "Passwords don't match",
-                })}
-                className={inputStyles}
-              />
-            </FormField>
-
-            <div className="pt-2 border-t border-gray-200" />
-
             <FormField label="Business name" error={errors.businessName?.message}>
               <input
+                placeholder="Enter business name"
                 {...field("businessName", {
                   required: "Required",
                   minLength: { value: 2, message: "Min 2 characters" },
@@ -217,12 +200,9 @@ function RegisterFormInner() {
               />
             </FormField>
 
-            <FormField
-              label="Business address"
-              error={errors.businessAddress?.message}
-            >
+            <FormField label="Business address" error={errors.businessAddress?.message}>
               <input
-                placeholder="12 Broad Street, Lagos"
+                placeholder="Enter business address"
                 {...field("businessAddress", {
                   required: "Required",
                   minLength: { value: 5, message: "Min 5 characters" },
@@ -232,16 +212,36 @@ function RegisterFormInner() {
               />
             </FormField>
 
+            <div className="pt-2 border-t border-gray-200" />
+
             <FormField
-              label="Business category"
-              error={errors.businessCategory?.message}
-              hint="e.g. Restaurant, Grocery, Pharmacy"
+              label="Password"
+              error={errors.password?.message}
+              hint="Must contain one uppercase, one lowercase, one symbol, one number, and be at least 8 characters long."
             >
               <input
-                {...field("businessCategory", {
+                type="password"
+                placeholder="Enter password"
+                autoComplete="new-password"
+                {...field("password", {
                   required: "Required",
-                  minLength: { value: 2, message: "Min 2 characters" },
-                  maxLength: { value: 100, message: "Max 100 characters" },
+                  pattern: {
+                    value: PASSWORD_RULE,
+                    message: "Needs upper + lower + digit + special (@$!%*?&), 8-50 chars",
+                  },
+                })}
+                className={inputStyles}
+              />
+            </FormField>
+
+            <FormField label="Confirm password" error={errors.confirmPassword?.message}>
+              <input
+                type="password"
+                placeholder="Confirm password"
+                autoComplete="new-password"
+                {...field("confirmPassword", {
+                  required: "Required",
+                  validate: (v) => v === password || "Passwords don't match",
                 })}
                 className={inputStyles}
               />
@@ -257,7 +257,7 @@ function RegisterFormInner() {
                 {...field("businessDescription", {
                   maxLength: { value: 500, message: "Max 500 characters" },
                 })}
-                className={`${inputStyles} resize-none`}
+                className={`${inputStyles} h-auto resize-none`}
               />
             </FormField>
 
@@ -266,6 +266,18 @@ function RegisterFormInner() {
                 {submitError}
               </p>
             )}
+
+            <p className="text-xs font-dm text-gray-500 text-center">
+              By clicking the &quot;Create my account&quot; button, you agree to
+              Recommend&apos;s{" "}
+              <Link href="/privacy" className="text-recommend-orange font-bold underline">
+                Privacy policy
+              </Link>{" "}
+              and{" "}
+              <Link href="/terms" className="text-recommend-orange font-bold underline">
+                Terms of service
+              </Link>.
+            </p>
 
             <Button
               variant="green"
@@ -277,10 +289,7 @@ function RegisterFormInner() {
 
             <p className="text-xs text-center font-dm text-gray-500">
               Already have an account?{" "}
-              <Link
-                href="/vendor/login"
-                className="text-recommend-orange font-bold underline"
-              >
+              <Link href="/vendor/login" className="text-recommend-orange font-bold underline">
                 Log in
               </Link>
             </p>
