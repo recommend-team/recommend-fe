@@ -27,7 +27,7 @@ const VendorDashboardTab = ({
     <div
       onClick={() => setActiveTab(tab)}
       className={cn(
-        "flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity px-8 h-full rounded-t-lg",
+        "flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity px-8 py-2 md:py-0 h-full rounded-lg Md:rounded-t-lg  md:rounded-b-none w-44  md:w-auto",
         activeTab === tab ? "bg-white" : "bg-none",
       )}
     >

@@ -27,7 +27,7 @@ export default function VendorDashboardPage() {
   const isOpen = profile.data?.isOpen ?? false;
 
   return (
-    <div className="flex flex-col gap-6 p-20">
+    <div className="flex flex-col gap-6 p-0 md:p-20">
       <DashboardLayout
         dashboard={<div>This is the dashboard tab</div>}
         orders={<div>This is the orders tab</div>}

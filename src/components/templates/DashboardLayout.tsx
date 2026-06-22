@@ -64,8 +64,8 @@ const DashboardLayout = ({
   return (
     <Card hoverable={false} className="p-0 overflow-hidden">
       {/* Clickable header */}
-      <div className="w-full bg-[#F6F8FA] h-24 flex items-center">
-        <div className="flex flex-row  h-full justify-center items-center gap-6 pt-2">
+      <div className="w-full bg-[#F6F8FA] h-auto md:h-24 flex items-center pt-2 md:pt-0">
+        <div className="flex flex-row  flex-wrap h-full justify-start md:justify-center  items-center gap-2 md:gap-6 pt-0 md:pt-2">
           {dashboardvendorDashboardTabs.map((tab, index) => {
             const TabIcon = vendorDashboardTabs[tab].icon;
             const isActive = activeTab === tab;
