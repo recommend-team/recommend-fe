@@ -67,9 +67,9 @@ function VerifyInner() {
 
   return (
     <BackgroundTwo>
-      <div className="relative z-10 min-h-screen w-full px-6 md:px-14 pt-28 md:pt-36 pb-16">
+      <div className="relative z-10 min-h-screen w-full px-6 md:px-14 pt-22 md:pt-22 pb-16">
         <div className="max-w-md mx-auto flex flex-col gap-6">
-          <div className="flex flex-col items-center gap-1 text-center">
+          <div className="flex flex-col items-center gap-3 text-center">
             <Text variant="faq-answer" color="dark">
               Step 3 of 3
             </Text>
