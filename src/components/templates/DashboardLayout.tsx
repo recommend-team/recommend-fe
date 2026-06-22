@@ -85,7 +85,7 @@ const DashboardLayout = ({
         </div>
       </div>
       {/* Main Content Area */}
-      <div className="h-50 p-6 vertical-scroll-allow">{renderTabContent()}</div>
+      <div className="h-[60vh] p-6 vertical-scroll-allow">{renderTabContent()}</div>
     </Card>
   );
 };

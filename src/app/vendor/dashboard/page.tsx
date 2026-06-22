@@ -30,7 +30,7 @@ export default function VendorDashboardPage() {
   const isOpen = profile.data?.isOpen ?? false;
 
   return (
-    <div className="flex flex-col gap-6 p-0 md:p-20">
+    <div className="flex flex-col gap-6 p-0 md:p-[10vh]">
       <AlertBar
         icon={AlertTriangle}
         variant="inform"
