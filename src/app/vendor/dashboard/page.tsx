@@ -8,6 +8,8 @@ import {
   TrendingUp,
   Plus,
   ArrowRight,
+  LucideAlertTriangle,
+  AlertTriangle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import PageHeader from "@/components/atoms/admin/PageHeader";
@@ -19,6 +21,7 @@ import {
   useMyVendorOrders,
   useMyVendorEarnings,
 } from "@/hooks";
+import { AlertBar } from "@/components/organisms/AlertBar";
 
 function formatNaira(raw: string | number): string {
   const n = typeof raw === "string" ? Number(raw) : raw;
@@ -38,7 +41,9 @@ export default function VendorDashboardPage() {
   const isOpen = profile.data?.isOpen ?? false;
 
   return (
+    
     <div className="flex flex-col gap-6">
+      <AlertBar icon={AlertTriangle} variant="inform" AlertText="Your account is under review" iconColor="yellow"  hide={false}/>
       <PageHeader
         title={`Welcome back, ${user?.firstName ?? "vendor"}`}
         description={profile.data?.businessName ?? ""}
