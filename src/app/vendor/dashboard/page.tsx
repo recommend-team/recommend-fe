@@ -10,6 +10,8 @@ import {
 } from "@/hooks";
 import { AlertBar } from "@/components/organisms/AlertBar";
 import { DashboardLayout } from "@/components/templates/DashboardLayout";
+import OnboardingChecklist from "@/components/organisms/OnboardingChecklist";
+
 
 // Important function
 // function formatNaira(raw: string | number): string {
@@ -39,7 +41,7 @@ export default function VendorDashboardPage() {
         hide={false}
       />
       <DashboardLayout
-        dashboard={<div>This is the dashboard tab</div>}
+        dashboard={<OnboardingChecklist businessName={profile.data?.businessName ?? ""} />}
         orders={<div>This is the orders tab</div>}
         inventory={<div>This is the inventory tab</div>}
         payments={<div>This is the payments tab</div>}
