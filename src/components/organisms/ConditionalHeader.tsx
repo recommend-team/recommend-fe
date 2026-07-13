@@ -6,6 +6,7 @@ import GeneralHeader from "./GeneralHeader";
 const HIDDEN_ON = [
   "/vendor/signup",
   "/vendor/login",
+  "/vendor/dashboard",
   "/rider/signup",
   "/rider/login",
 ];
