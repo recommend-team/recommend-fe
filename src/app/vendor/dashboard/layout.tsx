@@ -1,5 +1,5 @@
 import VendorGuard from "@/components/organisms/VendorGuard";
-import VendorSidebar from "@/components/organisms/VendorSidebar";
+// import VendorSidebar from "@/components/organisms/VendorSidebar";
 import { DialogProvider } from "@/components/organisms/DialogProvider";
 
 export const metadata = {
@@ -16,8 +16,8 @@ export default function VendorDashboardLayout({
     <VendorGuard>
       <DialogProvider>
         <div className="flex min-h-screen bg-recommend-amber">
-          <VendorSidebar />
-          <main className="flex-1 min-w-0 p-4 md:p-8 pt-18 md:pt-8">
+          {/* <VendorSidebar />    to be removed*/}
+          <main className="flex-1 min-w-0 p-4 md:p-0 pt-18 md:pt-0">
             {children}
           </main>
         </div>
