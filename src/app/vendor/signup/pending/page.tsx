@@ -7,7 +7,7 @@ import { BackgroundTwo } from "@/components/templates/BackgroundTwo";
 export default function SignupPendingPage() {
   return (
     <BackgroundTwo>
-      <div className="relative z-10 min-h-screen w-full px-6 md:px-14 pt-28 md:pt-36 pb-16">
+      <div className="relative z-10 min-h-screen w-full px-6 md:px-14 pt-5 md:pt-8 pb-16">
         <div className="max-w-xl mx-auto flex flex-col items-center gap-6 text-center">
           <div className="w-20 h-20 md:w-28 md:h-28">
             <Image

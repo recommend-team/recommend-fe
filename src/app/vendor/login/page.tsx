@@ -51,7 +51,7 @@ export default function VendorLoginPage() {
 
   return (
     <BackgroundTwo>
-      <div className="relative z-10 min-h-screen w-full px-6 md:px-14 pt-28 md:pt-36 pb-16">
+      <div className="relative z-10 min-h-screen w-full px-6 md:px-14 pt-28 md:pt-26 pb-16">
         <div className="max-w-md mx-auto flex flex-col gap-6">
           <div className="flex flex-col items-center gap-1 text-center">
             <Text variant="section-heading-48-center" color="orange">
