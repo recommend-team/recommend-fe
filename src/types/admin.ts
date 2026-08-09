@@ -132,33 +132,85 @@ export interface AdminBuyerSummary {
   createdAt: string;
 }
 
+/** Mirrors `OrderStatus` on the backend. */
+export type OrderStatus =
+  | "PENDING_PAYMENT"
+  | "PAID"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "REFUNDED";
+
+/**
+ * One vendor's slice of a basket — the unit of fulfilment.
+ *
+ * An order holds many line items and no single product: rice and a drink from the same
+ * vendor is one order with two `items`. For the money view — one row per payment, with
+ * the delivery fee and the charge the buyer actually saw — use `AdminTransactionSummary`.
+ */
 export interface AdminOrderSummary {
   id: string;
   buyerName: string;
   buyerPhone: string;
   buyerEmail: string | null;
-  quantity: number;
-  unitPrice: string;
+  /** This vendor's goods subtotal. Delivery belongs to the checkout, not here. */
   totalAmount: string;
   platformFee: string;
   vendorAmount: string;
   fulfillmentType: "PICKUP" | "DELIVERY";
-  status: "PENDING" | "PAID" | "PROCESSING" | "COMPLETED" | "CANCELLED" | "FAILED";
-  paymentReference: string | null;
+  status: OrderStatus;
   deliveryAddress: string | null;
   notes: string | null;
   paidAt: string | null;
   createdAt: string;
-  product: {
+  items: {
     id: string;
-    name: string;
-  };
+    productId: string;
+    /** Snapshot taken at purchase — the product may have been renamed since. */
+    productName: string;
+    unitPrice: string;
+    quantity: number;
+    lineTotal: string;
+  }[];
+  /** The payment this order was part of. */
+  checkout: {
+    id: string;
+    reference: string;
+    totalAmount: string;
+    deliveryFee: string;
+  } | null;
   vendor: {
     id: string;
     firstName: string;
     lastName: string;
     businessName: string | null;
   };
+}
+
+/** One payment, and the vendor orders it covers. */
+export interface AdminTransactionSummary {
+  id: string;
+  reference: string;
+  status: OrderStatus;
+  buyerName: string;
+  buyerPhone: string;
+  buyerEmail: string | null;
+  fulfillmentType: "PICKUP" | "DELIVERY";
+  deliveryAddress: string | null;
+  goodsTotal: number;
+  deliveryFee: number;
+  totalAmount: number;
+  paidAt: string | null;
+  createdAt: string;
+  vendors: {
+    orderId: string;
+    vendorId: string;
+    vendorName: string | null;
+    status: OrderStatus;
+    subtotal: number;
+    vendorAmount: number;
+    items: { name: string; quantity: number; lineTotal: number }[];
+  }[];
 }
 
 export interface AdminBuyerDetail {
@@ -230,6 +282,12 @@ export interface VendorListFilters extends PaginationParams {
 export interface OrderListFilters extends PaginationParams {
   status?: AdminOrderSummary["status"];
   vendorId?: string;
+}
+
+export interface TransactionListFilters extends PaginationParams {
+  status?: OrderStatus;
+  /** Reference, buyer name or phone — matched server-side. */
+  search?: string;
 }
 
 export interface BuyerListFilters extends PaginationParams {

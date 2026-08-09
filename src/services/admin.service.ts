@@ -3,6 +3,7 @@ import type {
   AdminBuyerDetail,
   AdminBuyerSummary,
   AdminOrderSummary,
+  AdminTransactionSummary,
   AdminUser,
   AdminVendorDetail,
   AdminVendorSummary,
@@ -13,6 +14,7 @@ import type {
   PaginationParams,
   PendingApproval,
   PlatformStats,
+  TransactionListFilters,
   VendorListFilters,
 } from "@/types";
 
@@ -146,4 +148,33 @@ export async function getBuyers(
 
 export async function getBuyerDetail(id: string): Promise<AdminBuyerDetail> {
   return request<AdminBuyerDetail>(`/admin/buyers/${id}`);
+}
+
+// Transactions — one row per payment, unlike `/admin/orders` which is one per vendor.
+export async function getAdminTransactions(
+  params: TransactionListFilters = {}
+): Promise<PaginatedResult<AdminTransactionSummary>> {
+  return request<PaginatedResult<AdminTransactionSummary>>(
+    `/admin/transactions${qs({
+      page: params.page,
+      limit: params.limit,
+      status: params.status,
+      search: params.search,
+    })}`
+  );
+}
+
+/**
+ * Ask Paystack about one transaction now, rather than waiting for the scheduled sweep.
+ *
+ * Settles it through the same path as the webhook, so a recovery here also confirms the
+ * buyer in their chat and notifies the vendors.
+ */
+export async function verifyAdminTransaction(
+  reference: string
+): Promise<AdminTransactionSummary> {
+  return request<AdminTransactionSummary>(
+    `/admin/transactions/${encodeURIComponent(reference)}/verify`,
+    { method: "POST" }
+  );
 }
