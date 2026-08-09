@@ -12,13 +12,23 @@ type OrderStatus = AdminOrderSummary["status"];
 
 const STATUSES: Array<OrderStatus | "ALL"> = [
   "ALL",
-  "PENDING",
+  "PENDING_PAYMENT",
   "PAID",
   "PROCESSING",
   "COMPLETED",
   "CANCELLED",
-  "FAILED",
+  "REFUNDED",
 ];
+
+const STATUS_LABELS: Record<OrderStatus | "ALL", string> = {
+  ALL: "All",
+  PENDING_PAYMENT: "Awaiting payment",
+  PAID: "Paid",
+  PROCESSING: "Processing",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  REFUNDED: "Refunded",
+};
 
 const PAGE_SIZE = 20;
 
@@ -46,7 +56,8 @@ export default function AdminOrdersPage() {
     return (
       o.buyerName.toLowerCase().includes(needle) ||
       o.buyerPhone.includes(needle) ||
-      o.product.name.toLowerCase().includes(needle) ||
+      o.items.some((i) => i.productName.toLowerCase().includes(needle)) ||
+      (o.checkout?.reference ?? "").toLowerCase().includes(needle) ||
       (o.vendor.businessName ?? "").toLowerCase().includes(needle)
     );
   });
@@ -68,7 +79,7 @@ export default function AdminOrdersPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search buyer, phone, product, vendor"
+              placeholder="Search buyer, phone, item, reference, vendor"
               className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 bg-white font-dm text-sm focus:outline-none focus:border-recommend-green"
             />
           </div>
@@ -86,7 +97,7 @@ export default function AdminOrdersPage() {
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
+                {STATUS_LABELS[s]}
               </button>
             ))}
           </div>
@@ -102,10 +113,10 @@ export default function AdminOrdersPage() {
           <table className="w-full text-sm font-dm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
-                <th className="py-3 pr-4">Product</th>
+                <th className="py-3 pr-4">Items</th>
                 <th className="py-3 pr-4">Vendor</th>
                 <th className="py-3 pr-4">Buyer</th>
-                <th className="py-3 pr-4">Qty</th>
+                <th className="py-3 pr-4">Reference</th>
                 <th className="py-3 pr-4">Total</th>
                 <th className="py-3 pr-4">Status</th>
                 <th className="py-3 pr-4">Created</th>
@@ -130,8 +141,22 @@ export default function AdminOrdersPage() {
                     key={o.id}
                     className="border-b border-gray-100 hover:bg-amber-50/40"
                   >
-                    <td className="py-3 pr-4 font-bold text-gray-900">
-                      {o.product.name}
+                    <td className="py-3 pr-4">
+                      {/* An order holds many lines — listing them beats a Qty column
+                          that could only ever describe one of them. */}
+                      <div className="flex flex-col gap-0.5">
+                        {o.items.map((item) => (
+                          <span key={item.id} className="text-gray-900">
+                            <span className="font-bold text-gray-400">
+                              {item.quantity}×{" "}
+                            </span>
+                            {item.productName}
+                          </span>
+                        ))}
+                        {o.items.length === 0 && (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 pr-4 text-gray-700">
                       {o.vendor.businessName ??
@@ -145,7 +170,9 @@ export default function AdminOrdersPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 pr-4 text-gray-700">{o.quantity}</td>
+                    <td className="py-3 pr-4 font-mono text-xs text-gray-500">
+                      {o.checkout?.reference ?? "—"}
+                    </td>
                     <td className="py-3 pr-4 font-bold text-gray-900">
                       {formatNaira(o.totalAmount)}
                     </td>

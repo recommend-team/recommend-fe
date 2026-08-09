@@ -9,6 +9,7 @@ import {
   Store,
   Bike,
   ShoppingBag,
+  Receipt,
   ShieldCheck,
   Users,
   UserCog,
@@ -30,6 +31,7 @@ const items: NavItem[] = [
   { label: "Vendors", href: "/admin/vendors", icon: Store },
   { label: "Riders", href: "/admin/riders", icon: Bike },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
+  { label: "Transactions", href: "/admin/transactions", icon: Receipt },
   { label: "KYC Verifications", href: "/admin/kyc", icon: ShieldCheck },
   { label: "Buyers", href: "/admin/buyers", icon: Users },
   {

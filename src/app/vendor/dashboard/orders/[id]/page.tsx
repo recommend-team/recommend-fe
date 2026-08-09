@@ -59,11 +59,18 @@ export default function OrderDetailPage({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl bg-white border border-[#FFD91D] p-5 flex flex-col gap-2">
           <h3 className="text-base font-bold font-dm text-gray-900 mb-1">
-            Product
+            Items
           </h3>
-          <Row label="Name" value={order.product.name} />
-          <Row label="Quantity" value={String(order.quantity)} />
-          <Row label="Unit price" value={formatNaira(order.unitPrice)} />
+          {/* One order can carry several lines — a single Name/Quantity pair could
+              only ever show the first, and silently hid the rest. */}
+          {order.items.map((item) => (
+            <Row
+              key={item.id}
+              label={`${item.quantity} × ${item.productName}`}
+              value={formatNaira(item.lineTotal)}
+            />
+          ))}
+          {order.items.length === 0 && <Row label="Items" value="—" />}
           <Row label="Total" value={formatNaira(order.totalAmount)} />
           <Row label="Platform fee" value={formatNaira(order.platformFee)} />
           <Row
@@ -95,10 +102,8 @@ export default function OrderDetailPage({
           <h3 className="text-base font-bold font-dm text-gray-900 mb-1">
             Payment
           </h3>
-          <Row
-            label="Reference"
-            value={order.paymentReference ?? "—"}
-          />
+          {/* The reference belongs to the payment, which may cover other vendors too. */}
+          <Row label="Reference" value={order.checkout?.reference ?? "—"} />
           <Row
             label="Paid at"
             value={

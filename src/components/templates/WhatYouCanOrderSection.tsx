@@ -1,4 +1,5 @@
 "use client";
+import { CUSTOMER_APP_URL } from "@/lib/links";
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -288,6 +289,8 @@ export default function WhatYouCanOrderSection() {
         <div className="absolute bottom-0 right-8 z-20 pointer-events-auto">
           <Button
             text="Start Ordering"
+            href={CUSTOMER_APP_URL}
+            external
             icon={<WhatsAppIcon />}
             variant="green"
           />

@@ -1,4 +1,5 @@
 "use client";
+import { CUSTOMER_APP_URL } from "@/lib/links";
 import Image from "next/image";
 import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/molecules/Button";
@@ -67,6 +68,8 @@ export default function NoAppSection() {
             />
             <Button
               text="Start Ordering"
+              href={CUSTOMER_APP_URL}
+              external
               icon={<WhatsAppIcon />}
               variant="green"
             />
@@ -75,6 +78,8 @@ export default function NoAppSection() {
         <div className="flex md:hidden justify-center mt-10">
           <Button
             text="Start Ordering"
+            href={CUSTOMER_APP_URL}
+            external
             icon={<WhatsAppIcon />}
             variant="green"
           />

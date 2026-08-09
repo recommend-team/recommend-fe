@@ -1,4 +1,5 @@
 "use client";
+import { CUSTOMER_APP_URL } from "@/lib/links";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
@@ -79,6 +80,8 @@ const MobileHeader = () => {
             <Button
               variant="gradient"
               text="Start Ordering"
+              href={CUSTOMER_APP_URL}
+              external
               icon={
                 <Image
                   alt="whatsapp icon"
@@ -133,6 +136,8 @@ const DesktopHeader = () => {
         <Button
           variant="gradient"
           text="Start Ordering"
+          href={CUSTOMER_APP_URL}
+          external
           icon={
             <Image
               alt="whatsapp icon"

@@ -1,3 +1,4 @@
+import { CUSTOMER_APP_URL } from "@/lib/links";
 import Image from "next/image";
 import { Text } from "../atoms/Text";
 import { Button } from "../molecules/Button";
@@ -21,6 +22,8 @@ const LandingSectionOne = () => {
             <Button
               variant="gradient"
               text="Start Ordering"
+              href={CUSTOMER_APP_URL}
+              external
               icon={
                 <Image
                   alt="whatsapp icon"

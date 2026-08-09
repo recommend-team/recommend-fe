@@ -11,13 +11,23 @@ import type { AdminOrderSummary } from "@/types";
 
 const STATUSES: Array<AdminOrderSummary["status"] | "ALL"> = [
   "ALL",
-  "PENDING",
+  "PENDING_PAYMENT",
   "PAID",
   "PROCESSING",
   "COMPLETED",
   "CANCELLED",
-  "FAILED",
+  "REFUNDED",
 ];
+
+const STATUS_LABELS: Record<AdminOrderSummary["status"] | "ALL", string> = {
+  ALL: "All",
+  PENDING_PAYMENT: "Awaiting payment",
+  PAID: "Paid",
+  PROCESSING: "Processing",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  REFUNDED: "Refunded",
+};
 
 const PAGE_SIZE = 20;
 
@@ -47,7 +57,7 @@ export default function VendorOrdersPage() {
     return (
       o.buyerName.toLowerCase().includes(needle) ||
       o.buyerPhone.includes(needle) ||
-      o.product.name.toLowerCase().includes(needle)
+      o.items.some((i) => i.productName.toLowerCase().includes(needle))
     );
   });
 
@@ -86,7 +96,7 @@ export default function VendorOrdersPage() {
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
+                {STATUS_LABELS[s]}
               </button>
             ))}
           </div>
@@ -102,9 +112,8 @@ export default function VendorOrdersPage() {
           <table className="w-full text-sm font-dm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
-                <th className="py-3 pr-4">Product</th>
+                <th className="py-3 pr-4">Items</th>
                 <th className="py-3 pr-4">Buyer</th>
-                <th className="py-3 pr-4">Qty</th>
                 <th className="py-3 pr-4">Total</th>
                 <th className="py-3 pr-4">Status</th>
                 <th className="py-3 pr-4">Placed</th>
@@ -130,8 +139,20 @@ export default function VendorOrdersPage() {
                     key={o.id}
                     className="border-b border-gray-100 hover:bg-amber-50/40"
                   >
-                    <td className="py-3 pr-4 font-bold text-gray-900">
-                      {o.product.name}
+                    <td className="py-3 pr-4">
+                      <div className="flex flex-col gap-0.5">
+                        {o.items.map((item) => (
+                          <span key={item.id} className="text-gray-900">
+                            <span className="font-bold text-gray-400">
+                              {item.quantity}×{" "}
+                            </span>
+                            {item.productName}
+                          </span>
+                        ))}
+                        {o.items.length === 0 && (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 pr-4">
                       <div className="flex flex-col">
@@ -141,7 +162,6 @@ export default function VendorOrdersPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 pr-4 text-gray-700">{o.quantity}</td>
                     <td className="py-3 pr-4 font-bold text-gray-900">
                       {formatNaira(o.totalAmount)}
                     </td>

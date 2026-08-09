@@ -1,6 +1,7 @@
 import type {
   BuyerListFilters,
   OrderListFilters,
+  TransactionListFilters,
   VendorListFilters,
 } from "@/types";
 import type { ProductListFilters, VendorOrdersFilters } from "@/services";
@@ -19,6 +20,8 @@ export const queryKeys = {
   vendorDetail: (id: string) => ["admin", "vendors", id] as const,
   adminOrders: (filters: OrderListFilters) =>
     ["admin", "orders", filters] as const,
+  adminTransactions: (filters: TransactionListFilters) =>
+    ["admin", "transactions", filters] as const,
   buyers: (filters: BuyerListFilters) =>
     ["admin", "buyers", filters] as const,
   buyerDetail: (id: string) => ["admin", "buyers", id] as const,

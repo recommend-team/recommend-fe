@@ -1,3 +1,4 @@
+import { CUSTOMER_APP_URL } from "@/lib/links";
 import Image from "next/image";
 import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/molecules/Button";
@@ -67,6 +68,8 @@ export default function CTASection() {
         {/* Button */}
         <Button
           text="Start Ordering"
+          href={CUSTOMER_APP_URL}
+          external
           icon={<WhatsAppIcon />}
           variant="green" 
         />
