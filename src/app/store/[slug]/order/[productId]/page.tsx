@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useStorefront, useCreateOrder } from "@/hooks";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-import Image from "next/image";
+import { RemoteImage } from "@/components/atoms/RemoteImage";
 
 interface OrderFormValues {
   quantity: number;
@@ -119,7 +119,7 @@ export default function OrderPage() {
         <div className="flex items-center gap-3">
           <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 relative">
             {product.imageUrl ? (
-              <Image
+              <RemoteImage
                 src={product.imageUrl}
                 alt={product.name}
                 fill

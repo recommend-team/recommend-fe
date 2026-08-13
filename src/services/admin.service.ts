@@ -3,6 +3,7 @@ import type {
   AdminBuyerDetail,
   AdminBuyerSummary,
   AdminOrderSummary,
+  AdminStatusEvent,
   AdminTransactionSummary,
   AdminUser,
   AdminVendorDetail,
@@ -12,6 +13,7 @@ import type {
   OrderListFilters,
   PaginatedResult,
   PaginationParams,
+  OrderStatus,
   PendingApproval,
   PlatformStats,
   TransactionListFilters,
@@ -176,5 +178,57 @@ export async function verifyAdminTransaction(
   return request<AdminTransactionSummary>(
     `/admin/transactions/${encodeURIComponent(reference)}/verify`,
     { method: "POST" }
+  );
+}
+
+// ─── Order lifecycle ────────────────────────────────────────────────────────
+
+/** A rider has collected everything and left. Requires every vendor to be ready. */
+export async function dispatchTransaction(
+  reference: string
+): Promise<AdminTransactionSummary> {
+  return request<AdminTransactionSummary>(
+    `/admin/transactions/${encodeURIComponent(reference)}/dispatch`,
+    { method: "POST" }
+  );
+}
+
+/** The buyer has their order. Normally theirs or the rider's to say; admin stands in. */
+export async function completeTransaction(
+  reference: string
+): Promise<AdminTransactionSummary> {
+  return request<AdminTransactionSummary>(
+    `/admin/transactions/${encodeURIComponent(reference)}/complete`,
+    { method: "POST" }
+  );
+}
+
+/**
+ * Force an order to any status.
+ *
+ * The escape hatch for orders the ordinary rules have stranded — a vendor who never
+ * marked ready, a rider who never reported back, a decline handled over the phone. Every
+ * use is audited, so `note` is worth filling in: on an override the reason is the point.
+ */
+export async function overrideTransactionStatus(input: {
+  reference: string;
+  status: OrderStatus;
+  note?: string;
+}): Promise<AdminTransactionSummary> {
+  return request<AdminTransactionSummary>(
+    `/admin/transactions/${encodeURIComponent(input.reference)}/status`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ status: input.status, note: input.note }),
+    }
+  );
+}
+
+/** Who moved this order, from what to what, when, and why. */
+export async function getTransactionHistory(
+  reference: string
+): Promise<AdminStatusEvent[]> {
+  return request<AdminStatusEvent[]>(
+    `/admin/transactions/${encodeURIComponent(reference)}/history`
   );
 }

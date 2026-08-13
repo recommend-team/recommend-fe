@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { RemoteImage } from "@/components/atoms/RemoteImage";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -147,7 +147,7 @@ export default function VendorDetailPage({
       <section className="rounded-2xl bg-white border border-[#FFD91D] overflow-hidden">
         <div className="relative h-32 md:h-40 bg-gradient-to-br from-[#FFF8B8] to-[#FFD91D]/30">
           {v.businessBannerUrl && (
-            <Image
+            <RemoteImage
               src={v.businessBannerUrl}
               alt=""
               fill
@@ -160,7 +160,7 @@ export default function VendorDetailPage({
             <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-white bg-white shadow-sm overflow-hidden shrink-0">
               {v.businessLogoUrl ? (
                 <div className="relative w-full h-full">
-                  <Image
+                  <RemoteImage
                     src={v.businessLogoUrl}
                     alt={displayName}
                     fill
@@ -445,7 +445,7 @@ function OverviewTab({
               >
                 <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden relative shrink-0">
                   {p.imageUrl ? (
-                    <Image
+                    <RemoteImage
                       src={p.imageUrl}
                       alt={p.name}
                       fill
@@ -647,7 +647,7 @@ function ProfileTab({ vendor: v }: { vendor: AdminVendorDetail["vendor"] }) {
               Banner preview
             </p>
             <div className="relative aspect-[3/1] w-full rounded-lg overflow-hidden bg-gray-100">
-              <Image
+              <RemoteImage
                 src={v.businessBannerUrl}
                 alt="Store banner"
                 fill
@@ -1012,7 +1012,7 @@ function ProductDetailModal({
         <div className="relative">
           <div className="relative aspect-[16/9] bg-gray-100">
             {product.imageUrl ? (
-              <Image
+              <RemoteImage
                 src={product.imageUrl}
                 alt={product.name}
                 fill

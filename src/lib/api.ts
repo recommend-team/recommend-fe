@@ -1,6 +1,6 @@
 import { getAccessToken } from "./auth";
 
-const DEFAULT_API_URL = "https://recommend-staging.onrender.com/api/v1";
+const STAGING_API_URL = "https://recommend-staging.onrender.com/api/v1";
 
 function resolveApiUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_API_URL;
@@ -11,7 +11,7 @@ function resolveApiUrl(): string {
         "NEXT_PUBLIC_API_URL is not set. Configure it in your environment before building for production."
       );
     }
-    return DEFAULT_API_URL;
+    return STAGING_API_URL;
   }
 
   return fromEnv;

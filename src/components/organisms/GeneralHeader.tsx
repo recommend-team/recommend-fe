@@ -11,11 +11,9 @@ export default function GeneralHeader() {
   const lastScrollY = useRef(0);
 
   // Hide the public-site header in areas that have their own chrome or run
-  // inside the WhatsApp in-app browser (storefront + order flow + admin +
-  // vendor dashboard).
+  // inside the WhatsApp in-app browser (storefront + order flow + admin).
   const hideOnRoute =
     (pathname?.startsWith("/admin") ?? false) ||
-    (pathname?.startsWith("/vendor/dashboard") ?? false) ||
     (pathname?.startsWith("/store") ?? false) ||
     (pathname?.startsWith("/order") ?? false);
 

@@ -1,15 +1,13 @@
 import type { NextConfig } from "next";
+import { OPTIMISED_IMAGE_HOSTS } from "./src/lib/imageHosts";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      // Backend-issued uploads (vendor KYC docs, logos, banners, product images)
-      { protocol: "https", hostname: "res.cloudinary.com" },
-      // Common stock / demo image sources that appear in seed data
-      { protocol: "https", hostname: "cdn.pixabay.com" },
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "images.pexels.com" },
-    ],
+    // Built from the shared list so the optimiser and `RemoteImage` can never disagree.
+    remotePatterns: OPTIMISED_IMAGE_HOSTS.map((hostname) => ({
+      protocol: "https" as const,
+      hostname,
+    })),
   },
   turbopack: {
     root: __dirname,

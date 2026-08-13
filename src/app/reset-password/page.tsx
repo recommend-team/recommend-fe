@@ -9,6 +9,7 @@ import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/molecules/Button";
 import { BackgroundTwo } from "@/components/templates/BackgroundTwo";
 import { useResetPassword } from "@/hooks";
+import { vendorApp } from "@/lib/links";
 
 const PASSWORD_RULE =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/;
@@ -99,9 +100,11 @@ function ResetPasswordInner() {
               to go:
             </Text>
             <div className="flex flex-wrap gap-3 justify-center pt-2">
-              <Link href="/vendor/login">
-                <Button variant="green" text="Vendor login" />
-              </Link>
+              <Button
+                variant="green"
+                text="Vendor login"
+                href={vendorApp("/login")}
+              />
               <Link href="/rider/login">
                 <Button variant="gradient" text="Rider login" />
               </Link>

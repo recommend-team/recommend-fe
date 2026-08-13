@@ -15,6 +15,14 @@ const map: Record<string, { label: string; text: string; dot: string }> = {
     dot: "bg-gray-400",
   },
   PAID: { label: "Paid", text: "text-green-700", dot: "bg-green-500" },
+  READY: { label: "Ready", text: "text-blue-700", dot: "bg-blue-500" },
+  // "On its way" rather than "Dispatched": it is what the buyer was told, and a
+  // shared vocabulary is what makes a support call short.
+  DISPATCHED: {
+    label: "On its way",
+    text: "text-indigo-700",
+    dot: "bg-indigo-500",
+  },
   PROCESSING: {
     label: "Processing",
     text: "text-blue-700",

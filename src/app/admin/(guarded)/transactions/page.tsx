@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw, Truck, Check, History } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
-import { useAdminTransactions, useVerifyTransaction } from "@/hooks";
+import {
+  useAdminTransactions,
+  useCompleteTransaction,
+  useDispatchTransaction,
+  useOverrideTransactionStatus,
+  useTransactionHistory,
+  useVerifyTransaction,
+} from "@/hooks";
 import type { AdminTransactionSummary, OrderStatus } from "@/types";
 
 /**
@@ -21,6 +28,8 @@ const STATUSES: Array<OrderStatus | "ALL"> = [
   "ALL",
   "PENDING_PAYMENT",
   "PAID",
+  "READY",
+  "DISPATCHED",
   "PROCESSING",
   "COMPLETED",
   "CANCELLED",
@@ -31,6 +40,8 @@ const STATUS_LABELS: Record<OrderStatus | "ALL", string> = {
   ALL: "All",
   PENDING_PAYMENT: "Awaiting payment",
   PAID: "Paid",
+  READY: "Ready",
+  DISPATCHED: "On its way",
   PROCESSING: "Processing",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
@@ -178,7 +189,19 @@ function TransactionRow({
   onToggle: () => void;
 }) {
   const verify = useVerifyTransaction();
+  const dispatchOrder = useDispatchTransaction();
+  const completeOrder = useCompleteTransaction();
+
   const unpaid = transaction.status === "PENDING_PAYMENT";
+  const isPickup = transaction.fulfillmentType === "PICKUP";
+
+  // A pickup order is never dispatched — the buyer collects it — so it goes straight
+  // from ready to delivered.
+  const canDispatch = transaction.status === "READY" && !isPickup;
+  const canComplete =
+    transaction.status === "DISPATCHED" ||
+    (transaction.status === "READY" && isPickup);
+
   const itemCount = transaction.vendors.reduce(
     (sum, v) => sum + v.items.reduce((n, i) => n + i.quantity, 0),
     0
@@ -220,24 +243,58 @@ function TransactionRow({
           {new Date(transaction.createdAt).toLocaleString()}
         </td>
         <td className="py-3 pr-4">
-          {unpaid && (
-            <button
-              onClick={(e) => {
-                // The row toggles on click; the button must not do both.
-                e.stopPropagation();
-                verify.mutate(transaction.reference);
-              }}
-              disabled={verify.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold font-dm bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 whitespace-nowrap"
-              title="Ask Paystack whether this was actually paid"
-            >
-              <RefreshCw
-                size={13}
-                className={verify.isPending ? "animate-spin" : ""}
-              />
-              {verify.isPending ? "Checking…" : "Check Paystack"}
-            </button>
-          )}
+          {/* Only ever the one action this order is actually waiting for. A row of
+              greyed-out buttons is a puzzle; one button is an instruction. */}
+          <div className="flex flex-col gap-1.5 items-start">
+            {unpaid && (
+              <button
+                onClick={(e) => {
+                  // The row toggles on click; the button must not do both.
+                  e.stopPropagation();
+                  verify.mutate(transaction.reference);
+                }}
+                disabled={verify.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold font-dm bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 whitespace-nowrap"
+                title="Ask Paystack whether this was actually paid"
+              >
+                <RefreshCw
+                  size={13}
+                  className={verify.isPending ? "animate-spin" : ""}
+                />
+                {verify.isPending ? "Checking…" : "Check Paystack"}
+              </button>
+            )}
+
+            {canDispatch && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatchOrder.mutate(transaction.reference);
+                }}
+                disabled={dispatchOrder.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold font-dm bg-recommend-green text-white hover:bg-recommend-green-hover disabled:opacity-50 whitespace-nowrap"
+                title="A rider has collected everything and left"
+              >
+                <Truck size={13} />
+                {dispatchOrder.isPending ? "Saving…" : "Dispatch"}
+              </button>
+            )}
+
+            {canComplete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  completeOrder.mutate(transaction.reference);
+                }}
+                disabled={completeOrder.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold font-dm bg-recommend-green text-white hover:bg-recommend-green-hover disabled:opacity-50 whitespace-nowrap"
+                title="The buyer has their order"
+              >
+                <Check size={13} />
+                {completeOrder.isPending ? "Saving…" : "Delivered"}
+              </button>
+            )}
+          </div>
         </td>
       </tr>
 
@@ -306,10 +363,123 @@ function TransactionRow({
                   ? ` · paid ${new Date(transaction.paidAt).toLocaleString()}`
                   : " · not paid"}
               </div>
+
+              <OverrideControl reference={transaction.reference} />
+              <StatusHistory reference={transaction.reference} />
             </div>
           </td>
         </tr>
       )}
     </>
+  );
+}
+
+/**
+ * Force an order to any status.
+ *
+ * Kept inside the expanded row rather than on the row itself: this is the escape hatch,
+ * not an everyday action, and putting it a click away is the difference between a tool
+ * and a trap. It exists for the orders the ordinary rules have stranded — a vendor who
+ * never marked ready, a decline handled over the phone.
+ */
+function OverrideControl({ reference }: { reference: string }) {
+  const override = useOverrideTransactionStatus();
+  const [status, setStatus] = useState<OrderStatus | "">("");
+  const [note, setNote] = useState("");
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 pt-3">
+      <span className="text-xs font-bold uppercase tracking-wide text-gray-500">
+        Override
+      </span>
+
+      <select
+        value={status}
+        onChange={(e) => setStatus(e.target.value as OrderStatus | "")}
+        className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs font-dm focus:outline-none focus:border-recommend-green"
+      >
+        <option value="">Choose a status…</option>
+        {STATUSES.filter((s) => s !== "ALL").map((s) => (
+          <option key={s} value={s}>
+            {STATUS_LABELS[s]}
+          </option>
+        ))}
+      </select>
+
+      <input
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="Why? (recorded against your name)"
+        className="h-8 flex-1 min-w-[200px] rounded-lg border border-gray-200 bg-white px-2 text-xs font-dm focus:outline-none focus:border-recommend-green"
+      />
+
+      <button
+        onClick={() =>
+          status &&
+          override.mutate(
+            { reference, status, note: note.trim() || undefined },
+            { onSuccess: () => setNote("") }
+          )
+        }
+        disabled={!status || override.isPending}
+        className="h-8 rounded-lg bg-gray-800 px-3 text-xs font-bold font-dm text-white hover:bg-gray-900 disabled:opacity-40"
+      >
+        {override.isPending ? "Saving…" : "Force"}
+      </button>
+
+      {override.isError && (
+        <span className="text-xs text-red-600">Couldn&apos;t change it.</span>
+      )}
+    </div>
+  );
+}
+
+/** Who moved this order, from what to what, and why. */
+function StatusHistory({ reference }: { reference: string }) {
+  const [open, setOpen] = useState(false);
+  const history = useTransactionHistory(open ? reference : null);
+
+  return (
+    <div className="border-t border-gray-200 pt-3">
+      <button
+        onClick={() => setOpen((current) => !current)}
+        className="inline-flex items-center gap-1.5 text-xs font-bold font-dm text-gray-600 hover:text-gray-900"
+      >
+        <History size={13} />
+        {open ? "Hide history" : "Status history"}
+      </button>
+
+      {open && (
+        <div className="mt-2 flex flex-col gap-1">
+          {history.isLoading && (
+            <span className="text-xs text-gray-400">Loading…</span>
+          )}
+          {history.data?.length === 0 && (
+            <span className="text-xs text-gray-400">
+              Nothing has moved yet.
+            </span>
+          )}
+          {history.data?.map((event) => (
+            <div key={event.id} className="flex flex-wrap gap-2 text-xs">
+              <span className="text-gray-400 w-36 shrink-0">
+                {new Date(event.createdAt).toLocaleString()}
+              </span>
+              <span className="text-gray-500 w-16 shrink-0">
+                {/* A vendor order and the whole checkout can move on the same
+                    second; which one it was is the useful part. */}
+                {event.orderId ? "vendor" : "order"}
+              </span>
+              <span className="text-gray-800">
+                {event.fromStatus} → <b>{event.toStatus}</b>
+              </span>
+              <span className="text-gray-500">by {event.actorType}</span>
+              {event.note && (
+                <span className="text-gray-500 italic">“{event.note}”</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

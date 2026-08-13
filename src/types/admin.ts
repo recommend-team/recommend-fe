@@ -132,10 +132,21 @@ export interface AdminBuyerSummary {
   createdAt: string;
 }
 
-/** Mirrors `OrderStatus` on the backend. */
+/**
+ * Mirrors `OrderStatus` on the backend, in lifecycle order.
+ *
+ * `READY` and `DISPATCHED` mean different things at different levels: on a vendor's
+ * order `READY` is "I have the goods, a rider can collect"; on a checkout it means every
+ * vendor is. `DISPATCHED` and `COMPLETED` only ever appear on a checkout — with one
+ * rider carrying the whole basket, no single vendor knows collection has finished.
+ *
+ * `PROCESSING` predates the lifecycle and is written by nothing.
+ */
 export type OrderStatus =
   | "PENDING_PAYMENT"
   | "PAID"
+  | "READY"
+  | "DISPATCHED"
   | "PROCESSING"
   | "COMPLETED"
   | "CANCELLED"
@@ -282,6 +293,28 @@ export interface VendorListFilters extends PaginationParams {
 export interface OrderListFilters extends PaginationParams {
   status?: AdminOrderSummary["status"];
   vendorId?: string;
+}
+
+/** Who moved a status, and on whose behalf. */
+export type StatusActor =
+  | "VENDOR"
+  | "RIDER"
+  | "BUYER"
+  | "ADMIN"
+  /** No person — the payment webhook, the reconciliation sweep, a derived change. */
+  | "SYSTEM";
+
+/** One recorded transition. `orderId` is set for a vendor's order, null for a checkout. */
+export interface AdminStatusEvent {
+  id: string;
+  orderId: string | null;
+  checkoutId: string | null;
+  fromStatus: string;
+  toStatus: string;
+  actorType: StatusActor;
+  actorId: string | null;
+  note: string | null;
+  createdAt: string;
 }
 
 export interface TransactionListFilters extends PaginationParams {
