@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, RefreshCw, Truck, Check, History } from "lucide-react";
+import { Search, RefreshCw, Truck, Check, History, Copy } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
@@ -217,11 +217,15 @@ function TransactionRow({
           {transaction.reference}
         </td>
         <td className="py-3 pr-4">
-          <div className="flex flex-col">
+          <div className="flex flex-col items-start gap-1">
             <span className="text-gray-800">{transaction.buyerName}</span>
             <span className="text-xs text-gray-500">
               {transaction.buyerPhone}
             </span>
+            {/* Beside the phone number, because relaying it is a phone call. */}
+            {transaction.status === "DISPATCHED" && transaction.deliveryCode && (
+              <DeliveryCode code={transaction.deliveryCode} />
+            )}
           </div>
         </td>
         <td className="py-3 pr-4 text-gray-700">
@@ -371,6 +375,41 @@ function TransactionRow({
         </tr>
       )}
     </>
+  );
+}
+
+/**
+ * The six letters the customer reads out at the door.
+ *
+ */
+function DeliveryCode({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <button
+      onClick={(event) => {
+        // The row toggles on click; copying must not also expand it.
+        event.stopPropagation();
+        navigator.clipboard
+          .writeText(code)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          })
+          .catch(() => undefined);
+      }}
+      title="Copy the delivery code to send to the rider"
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-recommend-green/10 border border-recommend-green/30 hover:bg-recommend-green/20"
+    >
+      <span className="font-mono text-sm font-bold tracking-[0.15em] text-recommend-green">
+        {code}
+      </span>
+      {copied ? (
+        <Check size={12} className="text-recommend-green" />
+      ) : (
+        <Copy size={12} className="text-recommend-green/60" />
+      )}
+    </button>
   );
 }
 

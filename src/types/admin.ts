@@ -213,6 +213,7 @@ export interface AdminTransactionSummary {
   totalAmount: number;
   paidAt: string | null;
   createdAt: string;
+  deliveryCode: string | null;
   vendors: {
     orderId: string;
     vendorId: string;
