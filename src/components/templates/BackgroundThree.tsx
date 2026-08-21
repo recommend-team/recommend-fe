@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 
 export const BackgroundThree = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="relative w-full overflow-x-hidden">
+    <div className="relative w-full overflow-x-clip">
       {/* The Background Image */}
       <div className="absolute inset-0 z-10 bg-recommend-amber">
         <Image
