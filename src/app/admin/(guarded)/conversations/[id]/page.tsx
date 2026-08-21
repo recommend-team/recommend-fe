@@ -20,6 +20,8 @@ import {
   useTakeConversation,
   useTypingSignal,
 } from "@/hooks";
+import OrderBuilder from "@/components/organisms/OrderBuilder";
+import ConversationOrderStrip from "@/components/organisms/ConversationOrderStrip";
 import { ApiError } from "@/lib/api";
 import type { ConversationMessage } from "@/types";
 
@@ -198,6 +200,20 @@ export default function AdminConversationPage() {
           <div ref={endRef} />
         </div>
       </div>
+
+      {/* Only while you hold the conversation — ordering for a buyer the assistant is
+          still serving would write a checkout underneath a running flow, and the
+          endpoint refuses it anyway. */}
+      {(heldByMe || !!conversation.buyerPhone) && (
+        <div className="shrink-0 border-t border-black/10 bg-white px-4 pt-3">
+          <div className="mx-auto flex max-w-2xl flex-col gap-2">
+            {/* Visible to any admin looking, held or not — "did they pay?" is the
+                question anyone opening this thread is here to answer. */}
+            <ConversationOrderStrip conversationId={conversation.id} />
+            {heldByMe && <OrderBuilder conversation={conversation} />}
+          </div>
+        </div>
+      )}
 
       <form
         onSubmit={submit}

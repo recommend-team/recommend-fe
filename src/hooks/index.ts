@@ -11,6 +11,7 @@ export * from "./useVendorDetail";
 export * from "./useUserDetail";
 export * from "./useAdminOrders";
 export * from "./useAdminTransactions";
+export * from "./useAdminCatalog";
 export * from "./useBuyers";
 export * from "./useBuyerDetail";
 export * from "./useApprovePending";

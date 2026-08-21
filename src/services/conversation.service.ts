@@ -1,9 +1,16 @@
 import { request } from "@/lib/api";
 import type {
+  CatalogArea,
+  CatalogContext,
+  CatalogProduct,
+  CatalogStore,
   ConversationDetail,
   ConversationFeed,
   ConversationListFilters,
+  ConversationOrder,
   ConversationSummary,
+  PlaceAdminOrderPayload,
+  PlacedAdminOrder,
 } from "@/types";
 
 function qs(params: Record<string, string | number | boolean | undefined>) {
@@ -50,6 +57,80 @@ export async function releaseConversation(
   return request<ConversationSummary>(`/admin/conversations/${id}/release`, {
     method: "POST",
   });
+}
+
+/**
+ * The catalogue as this buyer would have been shown it.
+ *
+ * Not `/admin/products`, which lists everything on the platform regardless of whether the
+ * vendor is approved, open, or able to deliver to this address. Checkout does not validate
+ * service area, so what these return is the only thing keeping an admin from placing an
+ * undeliverable order.
+ */
+export async function getCatalogAreas(
+  id: string,
+  search?: string
+): Promise<CatalogContext> {
+  return request<CatalogContext>(
+    `/admin/conversations/${id}/catalog/areas${qs({ search })}`
+  );
+}
+
+/** Stored on the conversation, so the assistant stops asking too. */
+export async function setConversationArea(
+  id: string,
+  areaId: string
+): Promise<CatalogArea> {
+  return request<CatalogArea>(`/admin/conversations/${id}/area`, {
+    method: "POST",
+    body: JSON.stringify({ areaId }),
+  });
+}
+
+export async function getCatalogStores(
+  id: string,
+  params: { areaId?: string; search?: string } = {}
+): Promise<CatalogStore[]> {
+  return request<CatalogStore[]>(
+    `/admin/conversations/${id}/catalog/stores${qs(params)}`
+  );
+}
+
+export async function getCatalogProducts(
+  id: string,
+  params: { areaId?: string; vendorId?: string; search?: string } = {}
+): Promise<CatalogProduct[]> {
+  return request<CatalogProduct[]>(
+    `/admin/conversations/${id}/catalog/products${qs(params)}`
+  );
+}
+
+/**
+ * Build the basket for this buyer and get a payment link back.
+ *
+ * Buyer details left out are taken from what the conversation already knows, so the
+ * usual call is items alone. Requires the conversation to be yours.
+ */
+export async function placeConversationOrder(
+  id: string,
+  payload: PlaceAdminOrderPayload
+): Promise<PlacedAdminOrder> {
+  return request<PlacedAdminOrder>(`/admin/conversations/${id}/order`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * The order this conversation last placed, or null.
+ *
+ * Keyed on the orders the conversation owns rather than the pending-payment marker,
+ * which is cleared the moment the money lands — so it stays visible as it progresses.
+ */
+export async function getConversationOrder(
+  id: string
+): Promise<ConversationOrder | null> {
+  return request<ConversationOrder | null>(`/admin/conversations/${id}/order`);
 }
 
 export async function sendConversationMessage(

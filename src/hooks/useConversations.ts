@@ -5,7 +5,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { io, type Socket } from "socket.io-client";
 import {
   getConversation,
+  getConversationOrder,
   getConversations,
+  placeConversationOrder,
   releaseConversation,
   sendConversationMessage,
   setConversationTyping,
@@ -18,6 +20,9 @@ import type {
   ConversationFeed,
   ConversationListFilters,
   ConversationMessage,
+  ConversationOrder,
+  PlaceAdminOrderPayload,
+  PlacedAdminOrder,
 } from "@/types";
 
 const FEED_KEY = ["admin", "conversations"] as const;
@@ -74,6 +79,52 @@ export function useSendConversationMessage() {
       void queryClient.invalidateQueries({
         queryKey: ["admin", "conversation", id],
       });
+    },
+  });
+}
+
+const ORDER_KEY = (id: string) => ["admin", "conversation", id, "order"];
+
+/**
+ * The order this conversation last placed, kept live while it is unpaid.
+ *
+ * Polled rather than pushed: the socket carries messages, and the transcript is
+ * deliberately never refetched from it. Polling stops the moment the money lands, so an
+ * admin watching a thread all afternoon costs one request until something happens.
+ */
+export function useConversationOrder(id: string | null) {
+  return useQuery<ConversationOrder | null>({
+    queryKey: ORDER_KEY(id ?? ""),
+    queryFn: () => getConversationOrder(id!),
+    enabled: !!id,
+    refetchInterval: (query) =>
+      query.state.data?.status === "PENDING_PAYMENT" ? 10_000 : false,
+  });
+}
+
+/**
+ * Place an order for the buyer and get their payment link.
+ *
+ * Invalidates the transcript because the order changes what the conversation knows about
+ * the buyer, and the queue because its "last message" column is derived from the thread.
+ */
+export function usePlaceConversationOrder() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    PlacedAdminOrder,
+    Error,
+    { id: string; payload: PlaceAdminOrderPayload }
+  >({
+    mutationFn: ({ id, payload }) => placeConversationOrder(id, payload),
+    onSuccess: (_result, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: FEED_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: ["admin", "conversation", id],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["admin", "transactions"],
+      });
+      void queryClient.invalidateQueries({ queryKey: ORDER_KEY(id) });
     },
   });
 }

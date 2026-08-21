@@ -225,6 +225,105 @@ export interface AdminTransactionSummary {
   }[];
 }
 
+export interface CatalogArea {
+  id: string;
+  name: string;
+  stateName: string;
+}
+
+/** The area picker, with whatever the conversation already knows preselected. */
+export interface CatalogContext {
+  areaId: string | null;
+  area: CatalogArea | null;
+  areas: CatalogArea[];
+}
+
+/** A store as the buyer would be offered it — approved, and serving their area. */
+export interface CatalogStore {
+  id: string;
+  name: string;
+  slug: string | null;
+  category: string | null;
+  areas: { id: string; name: string }[];
+  isOpen: boolean;
+  logoUrl: string | null;
+}
+
+export interface CatalogProduct {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrl: string | null;
+  vendorId: string;
+  vendorName: string | null;
+  vendorSlug: string | null;
+}
+
+/** One line of a basket an admin is building for a buyer. */
+export interface AdminOrderLine {
+  productId: string;
+  quantity: number;
+}
+
+export interface PlaceAdminOrderPayload {
+  items: AdminOrderLine[];
+  buyerName?: string;
+  buyerPhone?: string;
+  buyerEmail?: string;
+  fulfillmentType?: "PICKUP" | "DELIVERY";
+  deliveryAddress?: string;
+  notes?: string;
+  /** Default true — the buyer gets the same inline payment card as any other checkout. */
+  sendToBuyer?: boolean;
+}
+
+/** What comes back once the order exists and Paystack has issued a link. */
+export interface PlacedAdminOrder {
+  checkoutId: string;
+  reference: string;
+  authorizationUrl: string;
+  accessCode: string;
+  paystackPublicKey: string | null;
+  goodsTotal: number;
+  deliveryFee: number;
+  totalAmount: number;
+  /** False when the card could not be delivered — the link still works by hand. */
+  sent: boolean;
+}
+
+/** The order a conversation last placed, as the admin watches it progress. */
+export interface ConversationOrder {
+  reference: string;
+  status: OrderStatus;
+  createdAt: string;
+  paidAt: string | null;
+  fulfillmentType: "PICKUP" | "DELIVERY";
+  deliveryAddress: string | null;
+  goodsTotal: number;
+  deliveryFee: number;
+  totalAmount: number;
+  canComplete: boolean;
+  vendors: {
+    vendorName: string | null;
+    status: OrderStatus;
+    items: { name: string; quantity: number; lineTotal: number }[];
+  }[];
+}
+
+/**
+ * Why the basket was refused. The platform re-reads every price and every vendor at
+ * checkout, so a basket assembled a minute ago can still be rejected — and the admin
+ * needs to know which item and why, not just that something failed.
+ */
+export interface CartChange {
+  productId: string;
+  productName: string | null;
+  reason: "REMOVED" | "UNAVAILABLE" | "VENDOR_CLOSED" | "PRICE_CHANGED";
+  expectedUnitPrice?: number;
+  currentUnitPrice?: number;
+}
+
 export interface AdminBuyerDetail {
   buyer: AdminBuyerSummary;
   orders: AdminOrderSummary[];
