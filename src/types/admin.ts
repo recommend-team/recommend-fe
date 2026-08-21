@@ -238,6 +238,12 @@ export interface CatalogContext {
   areas: CatalogArea[];
 }
 
+/** A kind of shop, counted. Derived from the vendors, not a fixed taxonomy. */
+export interface CatalogCategory {
+  name: string;
+  storeCount: number;
+}
+
 /** A store as the buyer would be offered it — approved, and serving their area. */
 export interface CatalogStore {
   id: string;

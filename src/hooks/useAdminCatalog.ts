@@ -8,12 +8,14 @@ import {
 } from "@tanstack/react-query";
 import {
   getCatalogAreas,
+  getCatalogCategories,
   getCatalogProducts,
   getCatalogStores,
   setConversationArea,
 } from "@/services";
 import type {
   CatalogArea,
+  CatalogCategory,
   CatalogContext,
   CatalogProduct,
   CatalogStore,
@@ -52,10 +54,24 @@ export function useSetConversationArea(conversationId: string) {
   });
 }
 
+/** The kinds of shop serving this buyer, so the filter never offers a dead end. */
+export function useCatalogCategories(
+  conversationId: string,
+  areaId: string | null,
+  enabled = true
+) {
+  return useQuery<CatalogCategory[]>({
+    queryKey: [...CATALOG_KEY(conversationId), "categories", areaId],
+    queryFn: () => getCatalogCategories(conversationId, areaId ?? undefined),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** Stores that can actually deliver to this buyer. */
 export function useCatalogStores(
   conversationId: string,
-  params: { areaId?: string; search?: string },
+  params: { areaId?: string; category?: string; search?: string },
   enabled = true
 ) {
   return useQuery<CatalogStore[]>({
@@ -69,7 +85,7 @@ export function useCatalogStores(
 /** What one store sells, or a search across every store serving the buyer. */
 export function useCatalogProducts(
   conversationId: string,
-  params: { areaId?: string; vendorId?: string; search?: string },
+  params: { areaId?: string; vendorId?: string; category?: string; search?: string },
   enabled = true
 ) {
   return useQuery<CatalogProduct[]>({

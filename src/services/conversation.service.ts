@@ -1,6 +1,7 @@
 import { request } from "@/lib/api";
 import type {
   CatalogArea,
+  CatalogCategory,
   CatalogContext,
   CatalogProduct,
   CatalogStore,
@@ -87,9 +88,19 @@ export async function setConversationArea(
   });
 }
 
+/** Only the kinds of shop that actually serve this buyer's area. */
+export async function getCatalogCategories(
+  id: string,
+  areaId?: string
+): Promise<CatalogCategory[]> {
+  return request<CatalogCategory[]>(
+    `/admin/conversations/${id}/catalog/categories${qs({ areaId })}`
+  );
+}
+
 export async function getCatalogStores(
   id: string,
-  params: { areaId?: string; search?: string } = {}
+  params: { areaId?: string; category?: string; search?: string } = {}
 ): Promise<CatalogStore[]> {
   return request<CatalogStore[]>(
     `/admin/conversations/${id}/catalog/stores${qs(params)}`
@@ -98,7 +109,12 @@ export async function getCatalogStores(
 
 export async function getCatalogProducts(
   id: string,
-  params: { areaId?: string; vendorId?: string; search?: string } = {}
+  params: {
+    areaId?: string;
+    vendorId?: string;
+    category?: string;
+    search?: string;
+  } = {}
 ): Promise<CatalogProduct[]> {
   return request<CatalogProduct[]>(
     `/admin/conversations/${id}/catalog/products${qs(params)}`

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
   useCatalogAreas,
+  useCatalogCategories,
   useCatalogProducts,
   useCatalogStores,
   usePlaceConversationOrder,
@@ -126,6 +127,7 @@ export default function OrderBuilder({
   /** Set only when the admin overrides what the conversation already believes. */
   const [areaOverride, setAreaOverride] = useState<string | null>(null);
   const [store, setStore] = useState<{ id: string; name: string } | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
 
   const place = usePlaceConversationOrder();
   const saveArea = useSetConversationArea(conversation.id);
@@ -146,9 +148,19 @@ export default function OrderBuilder({
     areaContext?.areas.find((option) => option.id === areaId) ??
     (areaId && areaId === areaContext?.areaId ? areaContext.area : null);
 
+  const { data: categories } = useCatalogCategories(
+    conversation.id,
+    areaId,
+    open && step === "stores"
+  );
+
   const { data: stores, isFetching: loadingStores } = useCatalogStores(
     conversation.id,
-    { areaId: areaId ?? undefined, search: step === "stores" ? search : "" },
+    {
+      areaId: areaId ?? undefined,
+      category: category ?? undefined,
+      search: step === "stores" ? search : "",
+    },
     open && step === "stores"
   );
 
@@ -157,6 +169,9 @@ export default function OrderBuilder({
     {
       areaId: areaId ?? undefined,
       vendorId: store?.id,
+      // Only when browsing the whole area — inside one store its own category is a
+      // tautology, and would silently empty the shelf if the store were miscategorised.
+      category: store ? undefined : category ?? undefined,
       search: step === "products" ? search : "",
     },
     open && step === "products"
@@ -206,6 +221,7 @@ export default function OrderBuilder({
     setCopied(false);
     setStep("stores");
     setStore(null);
+    setCategory(null);
   };
 
   /** Moving between shelves clears the search, never the basket. */
@@ -217,6 +233,8 @@ export default function OrderBuilder({
   const chooseArea = async (id: string) => {
     setAreaOverride(id);
     setStore(null);
+    // A category that made sense in Ikeja may not exist in Lekki at all.
+    setCategory(null);
     goTo("stores");
     // Saved to the conversation, not just this screen — DiscoveryService reads the same
     // field, so the assistant stops asking where the buyer is.
@@ -364,6 +382,39 @@ export default function OrderBuilder({
             )}
           </div>
 
+          {/* What kind of shop, from what actually serves this area. Free text on the
+              vendor, so the list is counted from the data rather than fixed. */}
+          {step === "stores" && !!areaId && (categories ?? []).length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-1">
+              <button
+                onClick={() => setCategory(null)}
+                className={`rounded-full px-2 py-1 font-dm text-[11px] ${
+                  category === null
+                    ? "bg-recommend-green text-white"
+                    : "bg-black/5 text-gray-600 hover:bg-black/10"
+                }`}
+              >
+                All
+              </button>
+              {(categories ?? []).map((option) => (
+                <button
+                  key={option.name}
+                  onClick={() =>
+                    setCategory(category === option.name ? null : option.name)
+                  }
+                  className={`rounded-full px-2 py-1 font-dm text-[11px] ${
+                    category === option.name
+                      ? "bg-recommend-green text-white"
+                      : "bg-black/5 text-gray-600 hover:bg-black/10"
+                  }`}
+                >
+                  {option.name}
+                  <span className="ml-1 opacity-60">{option.storeCount}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="relative mb-2">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
             <input
@@ -414,7 +465,8 @@ export default function OrderBuilder({
               (stores ?? []).length === 0 &&
               !isFetching && (
                 <li className="px-3 py-2 font-dm text-xs text-gray-400">
-                  No store serves {chosenArea?.name ?? "this area"}
+                  No {category ?? ""} store serves{" "}
+                  {chosenArea?.name ?? "this area"}
                   {search ? ` matching “${search}”` : ""}.
                 </li>
               )}
