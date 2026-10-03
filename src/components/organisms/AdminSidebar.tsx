@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks";
+import AdminAlertSettings from "./AdminAlertSettings";
 
 interface NavItem {
   label: string;
@@ -177,6 +178,9 @@ export default function AdminSidebar() {
             </div>
             <NavList onNavigate={() => setMobileOpen(false)} />
             <div className="mt-auto">
+              {/* Outside UserFooter, which is redefined on every render and would remount
+                  this — re-checking push state on every navigation. */}
+              <AdminAlertSettings />
               <UserFooter />
             </div>
           </aside>
@@ -190,6 +194,7 @@ export default function AdminSidebar() {
         </Link>
         <NavList />
         <div className="mt-auto">
+          <AdminAlertSettings />
           <UserFooter />
         </div>
       </aside>
