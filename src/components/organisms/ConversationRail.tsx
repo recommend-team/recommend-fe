@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Search, UserCheck } from "lucide-react";
+import { AlertTriangle, Hand, Search, UserCheck } from "lucide-react";
 import { useConversations } from "@/hooks";
 import type { ConversationSummary } from "@/types";
 
@@ -145,7 +145,11 @@ function RailRow({
   conversation: ConversationSummary;
   active: boolean;
 }) {
-  const flagged = !!conversation.needsAttentionAt;
+  // Handed over by the assistant, which is now silent: a buyer waiting on a person with a
+  // clock running. Outranks a flag — and a handed-over conversation is flagged too, so
+  // only one badge is shown.
+  const waiting = !!conversation.handoverRequestedAt && !conversation.heldByAdminId;
+  const flagged = !!conversation.needsAttentionAt && !waiting;
 
   return (
     <Link
@@ -161,20 +165,24 @@ function RailRow({
         aria-hidden
         className={[
           "-my-3 -ml-4 w-1 shrink-0",
-          flagged
-            ? "bg-recommend-orange"
-            : active
-              ? "bg-recommend-green"
-              : "bg-transparent",
+          waiting
+            ? "bg-red-500"
+            : flagged
+              ? "bg-recommend-orange"
+              : active
+                ? "bg-recommend-green"
+                : "bg-transparent",
         ].join(" ")}
       />
 
       <span
         className={[
           "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full font-dm text-xs font-bold",
-          flagged
-            ? "bg-recommend-orange/15 text-recommend-orange"
-            : "bg-recommend-green/10 text-recommend-green",
+          waiting
+            ? "bg-red-500/15 text-red-600"
+            : flagged
+              ? "bg-recommend-orange/15 text-recommend-orange"
+              : "bg-recommend-green/10 text-recommend-green",
         ].join(" ")}
       >
         {initials(conversation.buyerName)}
@@ -195,6 +203,12 @@ function RailRow({
         </span>
 
         <span className="mt-1 flex flex-wrap items-center gap-1.5">
+          {waiting && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-1.5 py-0.5 font-dm text-[10px] font-bold text-red-600">
+              <Hand className="h-2.5 w-2.5" />
+              Waiting for you · {ago(conversation.handoverRequestedAt)}
+            </span>
+          )}
           {flagged && (
             <span className="inline-flex items-center gap-1 rounded-full bg-recommend-orange/10 px-1.5 py-0.5 font-dm text-[10px] font-bold text-recommend-orange">
               <AlertTriangle className="h-2.5 w-2.5" />

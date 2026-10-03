@@ -9,6 +9,7 @@ import { request } from "./api";
  */
 
 export type AdminAlertKind =
+  | "CONVERSATION_HANDED_OVER"
   | "CONVERSATION_FLAGGED"
   | "HELD_CONVERSATION_MESSAGE"
   | "NEW_PAID_ORDER"
@@ -32,6 +33,7 @@ const SW_SCOPE = "/admin/";
 const FALLBACK_PATH = "/admin";
 
 const KINDS = new Set<string>([
+  "CONVERSATION_HANDED_OVER",
   "CONVERSATION_FLAGGED",
   "HELD_CONVERSATION_MESSAGE",
   "NEW_PAID_ORDER",

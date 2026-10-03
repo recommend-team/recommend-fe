@@ -56,6 +56,12 @@ describe("parseAlert", () => {
     });
   });
 
+  it("knows a handover", () => {
+    expect(parseAlert({ kind: "CONVERSATION_HANDED_OVER" }).kind).toBe(
+      "CONVERSATION_HANDED_OVER"
+    );
+  });
+
   it("drops a kind it does not know", () => {
     expect(parseAlert({ kind: "SOMETHING_NEW" }).kind).toBeNull();
   });

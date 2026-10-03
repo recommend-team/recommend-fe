@@ -25,6 +25,7 @@ const MAX_BANNERS = 3;
 
 /** What each kind of alert makes stale, so the page behind the banner is current too. */
 const STALE: Record<string, readonly (readonly string[])[]> = {
+  CONVERSATION_HANDED_OVER: [["admin", "conversations"]],
   CONVERSATION_FLAGGED: [["admin", "conversations"]],
   HELD_CONVERSATION_MESSAGE: [["admin", "conversations"]],
   NEW_PAID_ORDER: [

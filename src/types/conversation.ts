@@ -43,6 +43,12 @@ export interface ConversationSummary {
   /** When the assistant first struggled here. Orders the queue. */
   needsAttentionAt: string | null;
   attentionReason: string | null;
+  /**
+   * The assistant handed this buyer over and is silent until an admin takes it. Sorts
+   * above everything flagged.
+   */
+  handoverRequestedAt: string | null;
+  handoverReason: string | null;
   createdAt: string;
 }
 
@@ -57,6 +63,8 @@ export interface ConversationDetail {
   lastAdminMessageAt: string | null;
   needsAttentionAt: string | null;
   attentionReason: string | null;
+  handoverRequestedAt: string | null;
+  handoverReason: string | null;
   messages: ConversationMessage[];
 }
 

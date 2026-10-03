@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Bot,
+  Hand,
   Send,
   Sparkles,
   UserCheck,
@@ -73,6 +74,8 @@ export default function AdminConversationPage() {
     !!conversation?.heldByAdminId && conversation.heldByAdminId === me?.id;
   const heldByOther =
     !!conversation?.heldByAdminId && conversation.heldByAdminId !== me?.id;
+  const handedOver =
+    !!conversation?.handoverRequestedAt && !conversation.heldByAdminId;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -162,7 +165,16 @@ export default function AdminConversationPage() {
         )}
       </header>
 
-      {conversation.attentionReason && !heldByMe && (
+      {handedOver && (
+        <p className="flex shrink-0 items-center gap-2 bg-red-500/10 px-4 py-2.5 font-dm text-xs font-semibold text-red-700">
+          <Hand className="h-3.5 w-3.5 shrink-0" />
+          The assistant handed this buyer over and is waiting for you
+          {conversation.handoverReason ? ` — ${conversation.handoverReason}` : ""}.
+          Take over to answer.
+        </p>
+      )}
+
+      {conversation.attentionReason && !heldByMe && !handedOver && (
         <p className="flex shrink-0 items-center gap-2 bg-recommend-orange/10 px-4 py-2.5 font-dm text-xs font-semibold text-recommend-orange">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           {conversation.attentionReason}
