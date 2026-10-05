@@ -3,10 +3,12 @@ import { LandingSectionOne } from "@/components/organisms/LandingSection1";
 import { BackgroundOne } from "@/components/templates/BackgroundOne";
 import NoAppSection from "@/components/templates/NoAppSection";
 import WhatYouCanOrderSection from "@/components/templates/WhatYouCanOrderSection";
+import ChatToDoorSection from "@/components/templates/ChatToDoorSection";
 import { SlidingLocations } from "@/components/templates/SlidingLocations";
 import CTASection from "@/components/templates/CTASection";
 import FooterSection from "@/components/templates/FooterSection";
-import { HowToOrder } from "@/components/templates/HowToOrder";
+// Hidden for now: it still tells buyers to order on WhatsApp. NoAppSection shows the real flow.
+// import { HowToOrder } from "@/components/templates/HowToOrder";
 
 
 export default function Home() {
@@ -15,7 +17,8 @@ export default function Home() {
       <LandingSectionOne />
       <NoAppSection />
       <WhatYouCanOrderSection />
-      <HowToOrder/>
+      {/* <HowToOrder/> */}
+      <ChatToDoorSection />
       <SlidingLocations />
       <CaricatureSection />
       <CTASection />
