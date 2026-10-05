@@ -1,20 +1,29 @@
 import { act, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AdminAlerts from "@/components/organisms/AdminAlerts";
+import { liveAlertsState } from "@/lib/adminAlerts";
 
 // ─── Doubles ──────────────────────────────────────────────────────────────────
 
 type Handler = (payload: unknown) => void;
 const socketHandlers: Record<string, Handler> = {};
 const disconnect = jest.fn();
+const connect = jest.fn();
+/** The options the socket was opened with — `auth` is checked below. */
+let socketOptions: { auth?: (send: (data: unknown) => void) => void } = {};
 jest.mock("socket.io-client", () => ({
-  io: jest.fn(() => ({
-    on: (name: string, handler: Handler) => {
-      socketHandlers[name] = handler;
-    },
-    off: jest.fn(),
-    disconnect,
-  })),
+  io: jest.fn((_url: string, options: typeof socketOptions) => {
+    socketOptions = options;
+    return {
+      on: (name: string, handler: Handler) => {
+        socketHandlers[name] = handler;
+      },
+      off: jest.fn(),
+      removeAllListeners: jest.fn(),
+      connect,
+      disconnect,
+    };
+  }),
 }));
 
 const push = jest.fn();
@@ -35,7 +44,8 @@ jest.mock("@/lib/api", () => ({
   request: jest.fn(),
 }));
 
-jest.mock("@/lib/auth", () => ({ getAccessToken: () => "admin-token" }));
+let currentToken = "admin-token";
+jest.mock("@/lib/auth", () => ({ getAccessToken: () => currentToken }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -198,5 +208,47 @@ describe("AdminAlerts", () => {
     view.unmount();
 
     expect(disconnect).toHaveBeenCalled();
+  });
+
+  describe("the live connection", () => {
+    afterEach(() => {
+      currentToken = "admin-token";
+      jest.useRealTimers();
+    });
+
+    it("sends whatever token is current on each connect, not one captured at load", () => {
+      // A token refreshed while the panel was open used to be ignored, and an expired
+      // one left the panel deaf until a full reload.
+      mount();
+      currentToken = "refreshed-token";
+
+      let sent: unknown;
+      socketOptions.auth?.((data) => {
+        sent = data;
+      });
+
+      expect(sent).toEqual({ token: "refreshed-token" });
+    });
+
+    it("reports connected, and refused when the server rejects the login", () => {
+      mount();
+
+      act(() => socketHandlers["connect"](undefined));
+      expect(liveAlertsState()).toBe("connected");
+
+      act(() => socketHandlers["admin:error"]({ message: "That token is not valid" }));
+      expect(liveAlertsState()).toBe("refused");
+    });
+
+    it("tries again after the server closes the connection, which Socket.IO will not", () => {
+      jest.useFakeTimers();
+      mount();
+
+      act(() => socketHandlers["disconnect"]("io server disconnect"));
+      expect(connect).not.toHaveBeenCalled();
+
+      act(() => jest.advanceTimersByTime(15_000));
+      expect(connect).toHaveBeenCalledTimes(1);
+    });
   });
 });

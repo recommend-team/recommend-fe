@@ -13,6 +13,7 @@ export type AdminAlertKind =
   | "CONVERSATION_FLAGGED"
   | "HELD_CONVERSATION_MESSAGE"
   | "NEW_PAID_ORDER"
+  | "VENDOR_ORDER_READY"
   | "WITHDRAWAL_FAILED";
 
 export interface AdminAlert {
@@ -37,6 +38,7 @@ const KINDS = new Set<string>([
   "CONVERSATION_FLAGGED",
   "HELD_CONVERSATION_MESSAGE",
   "NEW_PAID_ORDER",
+  "VENDOR_ORDER_READY",
   "WITHDRAWAL_FAILED",
 ]);
 
@@ -98,6 +100,38 @@ export class SeenAlerts {
 export function isAboutCurrentPage(alert: AdminAlert, pathname: string): boolean {
   if (alert.url === FALLBACK_PATH) return false;
   return pathname === alert.url;
+}
+
+// ─── The live connection ──────────────────────────────────────────────────────
+
+/**
+ * Whether alerts can reach this panel live.
+ *
+ * - `connected` — the `/admin-chat` socket is up.
+ * - `connecting` — first attempt, or reconnecting after a drop.
+ * - `refused` — the server rejected the login token (expired, or not an admin). Retried
+ *   with whatever token is current, so signing in again recovers it.
+ */
+export type LiveAlertsState = "connecting" | "connected" | "refused";
+
+let liveState: LiveAlertsState = "connecting";
+const liveListeners = new Set<() => void>();
+
+export function liveAlertsState(): LiveAlertsState {
+  return liveState;
+}
+
+export function setLiveAlertsState(next: LiveAlertsState): void {
+  if (next === liveState) return;
+  liveState = next;
+  for (const listener of liveListeners) listener();
+}
+
+export function subscribeLiveAlerts(listener: () => void): () => void {
+  liveListeners.add(listener);
+  return () => {
+    liveListeners.delete(listener);
+  };
 }
 
 // ─── Web push ─────────────────────────────────────────────────────────────────

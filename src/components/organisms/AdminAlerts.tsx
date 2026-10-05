@@ -15,6 +15,7 @@ import {
   parseAlert,
   registerAdminWorker,
   safeAdminPath,
+  setLiveAlertsState,
   type AdminAlert,
 } from "@/lib/adminAlerts";
 import { armChime, playChime } from "@/lib/chime";
@@ -32,6 +33,10 @@ const STALE: Record<string, readonly (readonly string[])[]> = {
     ["admin", "transactions"],
     ["admin", "orders"],
     ["admin", "stats"],
+  ],
+  VENDOR_ORDER_READY: [
+    ["admin", "transactions"],
+    ["admin", "orders"],
   ],
   WITHDRAWAL_FAILED: [["admin", "vendors"]],
 };
@@ -96,20 +101,38 @@ export default function AdminAlerts() {
   }, []);
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) return;
-
     // The REST base carries `/api/v1`; the socket namespace hangs off the origin.
     const origin = API_URL.replace(/\/api\/v\d+\/?$/, "");
     const socket = io(`${origin}/admin-chat`, {
-      auth: { token },
+      // Read on every (re)connect, never captured once: an access token refreshed while
+      // the panel was open must be the one the next attempt sends. A captured token that
+      // had expired used to leave the panel silently deaf until a full reload.
+      auth: (send) => send({ token: getAccessToken() ?? "" }),
       transports: ["websocket", "polling"],
+    });
+
+    let retry: number | undefined;
+
+    socket.on("connect", () => setLiveAlertsState("connected"));
+    socket.on("connect_error", () => setLiveAlertsState("connecting"));
+    socket.on("admin:error", () => setLiveAlertsState("refused"));
+    socket.on("disconnect", (reason) => {
+      // Socket.IO reconnects by itself after a dropped connection, but not after the
+      // server closes it — which is what a rejected token does. Try again shortly, with
+      // whatever token is current by then.
+      if (reason === "io server disconnect") {
+        retry = window.setTimeout(() => socket.connect(), 15_000);
+      } else {
+        setLiveAlertsState("connecting");
+      }
     });
     socket.on("admin:alert", receive);
 
     return () => {
-      socket.off("admin:alert", receive);
+      window.clearTimeout(retry);
+      socket.removeAllListeners();
       socket.disconnect();
+      setLiveAlertsState("connecting");
     };
   }, [receive]);
 

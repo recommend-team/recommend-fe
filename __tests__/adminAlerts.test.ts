@@ -56,6 +56,12 @@ describe("parseAlert", () => {
     });
   });
 
+  it("knows a vendor marking ready", () => {
+    expect(parseAlert({ kind: "VENDOR_ORDER_READY" }).kind).toBe(
+      "VENDOR_ORDER_READY"
+    );
+  });
+
   it("knows a handover", () => {
     expect(parseAlert({ kind: "CONVERSATION_HANDED_OVER" }).kind).toBe(
       "CONVERSATION_HANDED_OVER"

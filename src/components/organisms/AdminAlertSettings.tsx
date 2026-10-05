@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Bell, BellOff } from "lucide-react";
 import {
   currentPushState,
   enablePush,
+  liveAlertsState,
+  subscribeLiveAlerts,
+  type LiveAlertsState,
   type PushState,
 } from "@/lib/adminAlerts";
-import { playChime } from "@/lib/chime";
+import { playChime, soundState, subscribeSound } from "@/lib/chime";
 import { useAlertSound } from "@/hooks/useAlertSound";
 
 /** What to say about push in each state, and whether there is anything to press. */
@@ -27,6 +30,16 @@ const PUSH_COPY: Record<PushState, string> = {
  */
 export default function AdminAlertSettings() {
   const { muted, setMuted } = useAlertSound();
+  const live = useSyncExternalStore(
+    subscribeLiveAlerts,
+    liveAlertsState,
+    () => "connecting" as const,
+  );
+  const sound = useSyncExternalStore(
+    subscribeSound,
+    soundState,
+    () => "locked" as const,
+  );
   const [push, setPush] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -105,6 +118,33 @@ export default function AdminAlertSettings() {
           />
         </span>
       </button>
+
+      {/* Said out loud rather than failing silently: the two reasons an admin hears
+          nothing are a dropped connection and a browser that has not allowed sound yet. */}
+      <p className="flex items-center gap-1.5 px-1 text-[11px] font-dm text-gray-500">
+        <span
+          aria-hidden
+          className={`h-1.5 w-1.5 rounded-full ${
+            live === "connected"
+              ? "bg-green-500"
+              : live === "refused"
+                ? "bg-red-500"
+                : "bg-amber-400"
+          }`}
+        />
+        {LIVE_COPY[live]}
+      </p>
+      {soundOn && sound === "locked" && (
+        <p className="rounded-lg bg-amber-50 px-2 py-1.5 text-[11px] font-dm text-amber-800">
+          Click anywhere on the page to allow the alert sound.
+        </p>
+      )}
     </div>
   );
 }
+
+const LIVE_COPY: Record<LiveAlertsState, string> = {
+  connected: "Live alerts connected",
+  connecting: "Connecting to live alerts…",
+  refused: "Live alerts refused — sign out and in again",
+};
