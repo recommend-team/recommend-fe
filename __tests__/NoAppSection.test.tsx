@@ -47,7 +47,7 @@ describe("NoAppSection", () => {
   it("opens on the first step of a real order", () => {
     render(<NoAppSection />);
 
-    expect(screen.getByText("Hi, what can I eat around Egbeda?")).toBeInTheDocument();
+    expect(screen.getByText("Hi, what can I eat around Lekki?")).toBeInTheDocument();
     expect(screen.getAllByText("Mama Ngozi Kitchen").length).toBeGreaterThan(0);
   });
 

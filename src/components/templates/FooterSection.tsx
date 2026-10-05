@@ -34,7 +34,7 @@ export default function FooterSection() {
           <div className="flex flex-col gap-6 max-w-125.25">
 
             <Text variant="section-heading-48" color="orange">
-              Anything you need, delivered right on WhatsApp.
+              Anything you need, from vendors near you.
             </Text>
 
             <NewsletterInput />

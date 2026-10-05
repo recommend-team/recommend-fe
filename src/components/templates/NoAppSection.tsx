@@ -23,7 +23,7 @@ function subscribeReducedMotion(onChange: () => void): () => void {
 }
 
 /**
- * "No app needed" — a real order, played on a phone, step by step.
+ * "Order by chatting" — a real order, played on a phone, step by step.
  *
  * The phone advances by itself while the section is on screen, and stops for good the
  * moment a visitor picks a step: someone reading step 4 should not have it snatched away.
@@ -71,7 +71,11 @@ export default function NoAppSection() {
 
   return (
     <BackgroundThree>
-      <section ref={section} className="relative w-full overflow-hidden py-20">
+      <section
+        id="how-it-works"
+        ref={section}
+        className="relative w-full scroll-mt-24 overflow-hidden py-20"
+      >
         <div className="mx-auto max-w-6xl px-4 md:px-10">
           {/* Heading */}
           <div className="flex flex-col items-center gap-5 text-center md:flex-row md:items-end md:justify-between md:gap-12 md:text-left">
@@ -90,7 +94,7 @@ export default function NoAppSection() {
               variant="section-heading-48"
               className="order-1 font-extrabold leading-[1.08] tracking-tight md:order-2 md:text-right"
             >
-              <span className="block text-recommend-orange">No app needed.</span>
+              <span className="block text-recommend-orange">Order by chatting.</span>
               <span className="block text-[#1A1A1A]">Just say Hey Recommend.</span>
             </Text>
           </div>
@@ -197,7 +201,7 @@ export default function NoAppSection() {
                   variant="green"
                 />
                 <p className="text-[13px] font-dm text-[#5b6472]">
-                  Opens in your browser. Nothing to install.
+                  Works in your browser. Add it to your home screen.
                 </p>
               </div>
             </div>

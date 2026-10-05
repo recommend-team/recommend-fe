@@ -274,9 +274,9 @@ function Screen({
 function AskScreen() {
   return (
     <>
-      <Buyer time="5:03 AM">Hi, what can I eat around Egbeda?</Buyer>
+      <Buyer time="5:03 AM">Hi, what can I eat around Lekki?</Buyer>
       <Reply time="5:04 AM">
-        Good morning! Here are some spots near you in Egbeda. Prices are just below — let
+        Good morning! Here are some spots near you in Lekki. Prices are just below — let
         me know if anything catches your eye.
       </Reply>
       <VendorCard name="Iya Basira Buka" items={IYA_BASIRA} />
@@ -312,7 +312,7 @@ function CheckoutScreen() {
       </div>
       <Buyer time="5:11 AM">Deliver to me</Buyer>
       <Reply time="5:11 AM">Where should we deliver it?</Reply>
-      <Buyer time="5:12 AM">No 12, Orilope Egbeda</Buyer>
+      <Buyer time="5:12 AM">No 12, Admiralty Way, Lekki</Buyer>
     </>
   );
 }
@@ -322,7 +322,7 @@ function PayScreen() {
     <>
       <Reply time="5:12 AM">
         So that&apos;s 2 × Jollof Rice with Chicken, ₦7,000 for the items, delivered to No
-        12, Orilope Egbeda. That comes to ₦8,500. Shall I go ahead?
+        12, Admiralty Way, Lekki. That comes to ₦8,500. Shall I go ahead?
       </Reply>
       <Card>
         <p className="px-2.5 py-2 text-[11px] font-bold text-[#1f2937]">Your order</p>
@@ -356,7 +356,7 @@ function ConfirmedScreen() {
       </div>
       <Reply time="5:16 AM">
         Payment confirmed — thank you! Your order of 2 items from Mama Ngozi Kitchen has
-        been sent through. We&apos;ll deliver to No 12, Orilope Egbeda. Your reference is{" "}
+        been sent through. We&apos;ll deliver to No 12, Admiralty Way, Lekki. Your reference is{" "}
         {REFERENCE}.
       </Reply>
       <Card>
@@ -381,7 +381,7 @@ function ConfirmedScreen() {
         </div>
         <OrderLines />
         <p className="border-t border-[#f2f4f7] px-2.5 py-1.5 text-[8.5px] text-[#98a2b3]">
-          Delivering to No 12, Orilope Egbeda
+          Delivering to No 12, Admiralty Way, Lekki
         </p>
       </Card>
     </>
@@ -438,7 +438,7 @@ function SheetTitle({ title, subtitle }: { title: string; subtitle: string }) {
 function VendorSheet({ className }: { className?: string }) {
   return (
     <Sheet className={className}>
-      <SheetTitle title="Mama Ngozi Kitchen" subtitle="Restaurant · Egbeda · Open" />
+      <SheetTitle title="Mama Ngozi Kitchen" subtitle="Restaurant · Lekki · Open" />
       <div>
         {MAMA_NGOZI_MENU.map((item, index) => (
           <div

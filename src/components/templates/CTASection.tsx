@@ -1,8 +1,8 @@
+import { ArrowRight } from "lucide-react";
 import { CUSTOMER_APP_URL } from "@/lib/links";
 import Image from "next/image";
 import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/molecules/Button";
-import WhatsAppIcon from "@/components/atoms/WhatsAppIcon";
 
 export default function CTASection() {
   return (
@@ -49,7 +49,7 @@ export default function CTASection() {
             color="orange"
             className="max-w-[780px] md:max-w-[980px] leading-tight"
           >
-            One message is all it takes. No signup. No app. Just results.
+            One message is all it takes. No signup. Just results.
           </Text>
 
           {/* Right caricature */}
@@ -70,7 +70,7 @@ export default function CTASection() {
           text="Start Ordering"
           href={CUSTOMER_APP_URL}
           external
-          icon={<WhatsAppIcon />}
+          icon={<ArrowRight size={18} />}
           variant="green" 
         />
 

@@ -1,7 +1,7 @@
 "use client";
 import { CUSTOMER_APP_URL } from "@/lib/links";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link"; // Better for navigation
 import { Button } from "../molecules/Button";
@@ -82,14 +82,7 @@ const MobileHeader = () => {
               text="Start Ordering"
               href={CUSTOMER_APP_URL}
               external
-              icon={
-                <Image
-                  alt="whatsapp icon"
-                  src="/icon_whatsapp.svg"
-                  width={20}
-                  height={20}
-                />
-              }
+              icon={<ArrowRight size={18} />}
             />
           </div>
         </div>
@@ -138,14 +131,7 @@ const DesktopHeader = () => {
           text="Start Ordering"
           href={CUSTOMER_APP_URL}
           external
-          icon={
-            <Image
-              alt="whatsapp icon"
-              src="/icon_whatsapp.svg"
-              width={20}
-              height={20}
-            />
-          }
+          icon={<ArrowRight size={18} />}
         />
       </div>
     </div>

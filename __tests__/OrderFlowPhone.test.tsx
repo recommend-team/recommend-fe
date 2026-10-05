@@ -1,7 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import OrderFlowPhone from "@/components/organisms/OrderFlowPhone";
 
-const ASK = "Hi, what can I eat around Egbeda?";
+const ASK = "Hi, what can I eat around Lekki?";
 const NAME = "Lovely. What name should I put on the order?";
 const layerOf = (text: string) => screen.getByText(text).closest(".absolute.inset-0");
 

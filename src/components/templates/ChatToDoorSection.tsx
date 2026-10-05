@@ -6,7 +6,7 @@ import { BackgroundThree } from "./BackgroundThree";
 /**
  * "From your chat to your door" — what happens after a buyer pays, and who handles it.
  *
- * The "No app needed" section shows the buyer's side of the chat; this one shows the other
+ * The "Order by chatting" section shows the buyer's side of the chat; this one shows the other
  * two people involved, the vendor and the rider, and explains the delivery code before a
  * buyer meets it at the door. Replaces the WhatsApp-era "Order in 3 Easy Steps".
  *
