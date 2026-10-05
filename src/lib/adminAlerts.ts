@@ -94,11 +94,16 @@ export class SeenAlerts {
 }
 
 /**
- * Whether an alert is about the page the admin is already on. They can see it; a banner
- * and a chime on top would only be noise.
+ * Whether an alert is about the conversation the admin is already reading. The new message
+ * appears in front of them live, so a banner and a chime on top would only be noise.
+ *
+ * Conversations only. A list page — transactions, vendors — is where an admin waits for
+ * things to happen; it refreshes quietly behind the alert, which is easy to miss, so an
+ * alert pointing there still chimes. Silencing those left an admin sitting on the
+ * transactions page hearing nothing for every paid or ready order.
  */
 export function isAboutCurrentPage(alert: AdminAlert, pathname: string): boolean {
-  if (alert.url === FALLBACK_PATH) return false;
+  if (!alert.url.startsWith("/admin/conversations/")) return false;
   return pathname === alert.url;
 }
 

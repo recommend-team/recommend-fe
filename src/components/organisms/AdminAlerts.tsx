@@ -20,6 +20,7 @@ import {
 } from "@/lib/adminAlerts";
 import { armChime, playChime } from "@/lib/chime";
 import { readMuted } from "@/hooks/useAlertSound";
+import { NOTIFICATIONS_KEY, useMarkAlertRead } from "@/hooks/useAdminNotifications";
 
 const BANNER_MS = 10_000;
 const MAX_BANNERS = 3;
@@ -60,6 +61,7 @@ export default function AdminAlerts() {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const [banners, setBanners] = useState<Banner[]>([]);
+  const markAlertRead = useMarkAlertRead();
 
   const seen = useRef(new SeenAlerts());
   const nextKey = useRef(0);
@@ -74,6 +76,8 @@ export default function AdminAlerts() {
       const alert = parseAlert(raw);
       if (!seen.current.firstTime(alert.id)) return;
 
+      // Every alert is also a new entry under the bell.
+      void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
       for (const queryKey of STALE[alert.kind ?? ""] ?? []) {
         void queryClient.invalidateQueries({ queryKey: [...queryKey] });
       }
@@ -165,6 +169,8 @@ export default function AdminAlerts() {
           <button
             onClick={() => {
               dismiss(key);
+              // Seen and acted on: the bell should not count it as unread.
+              markAlertRead(alert.id);
               router.push(alert.url);
             }}
             className="flex min-w-0 flex-1 items-start gap-3 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-amber-50"

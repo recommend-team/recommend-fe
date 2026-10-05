@@ -2,6 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AdminAlerts from "@/components/organisms/AdminAlerts";
 import { liveAlertsState } from "@/lib/adminAlerts";
+import { request } from "@/lib/api";
 
 // ─── Doubles ──────────────────────────────────────────────────────────────────
 
@@ -195,6 +196,43 @@ describe("AdminAlerts", () => {
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: ["admin", "transactions"],
     });
+  });
+
+  it("refreshes the bell for every alert, even a quiet one", () => {
+    pathname = "/admin/conversations/c1";
+    const { invalidate } = mount();
+
+    fromSocket(alert());
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["admin", "notifications"] });
+  });
+
+  it("marks the bell's entry read when the admin opens the banner", () => {
+    const client = new QueryClient();
+    client.setQueryData(["admin", "notifications"], {
+      items: [
+        { id: "n9", data: { alertId: "a1" }, readAt: null },
+        { id: "n8", data: { alertId: "other" }, readAt: null },
+      ],
+      total: 2,
+      unread: 2,
+      page: 1,
+      limit: 20,
+    });
+    // Keep the seeded feed: the refresh an alert triggers would otherwise replace it.
+    jest.spyOn(client, "invalidateQueries").mockResolvedValue();
+    jest.mocked(request).mockResolvedValue({});
+    render(
+      <QueryClientProvider client={client}>
+        <AdminAlerts />
+      </QueryClientProvider>
+    );
+    fromSocket(alert());
+
+    act(() => screen.getByText("A buyer needs help").click());
+
+    expect(request).toHaveBeenCalledWith("/notifications/n9/read", { method: "PATCH" });
+    expect(request).toHaveBeenCalledTimes(1);
   });
 
   it("closes the socket when the panel goes away", () => {

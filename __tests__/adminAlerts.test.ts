@@ -109,4 +109,9 @@ describe("isAboutCurrentPage", () => {
   it("never hides an alert that only points at the dashboard", () => {
     expect(isAboutCurrentPage(parseAlert({}), "/admin")).toBe(false);
   });
+
+  it("still alerts on the transactions page, where an admin waits for orders", () => {
+    const paid = parseAlert({ kind: "NEW_PAID_ORDER", url: "/admin/transactions" });
+    expect(isAboutCurrentPage(paid, "/admin/transactions")).toBe(false);
+  });
 });

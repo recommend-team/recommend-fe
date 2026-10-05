@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks";
 import AdminAlertSettings from "./AdminAlertSettings";
+import NotificationBell from "./NotificationBell";
 
 interface NavItem {
   label: string;
@@ -145,13 +146,16 @@ export default function AdminSidebar() {
         <Link href="/admin">
           <Brand />
         </Link>
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-lg text-gray-700 hover:bg-amber-100"
-          aria-label="Open menu"
-        >
-          <Menu size={20} />
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell align="right" />
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-2 rounded-lg text-gray-700 hover:bg-amber-100"
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Mobile drawer overlay */}
@@ -188,10 +192,14 @@ export default function AdminSidebar() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:w-64 shrink-0 flex-col gap-2 bg-white/70 backdrop-blur-sm border-r border-[#FFD91D] p-4 min-h-screen sticky top-0">
-        <Link href="/admin" className="mb-4 flex items-center gap-2 px-2">
-          <Brand />
-        </Link>
+      {/* z-40: the bell's panel hangs out over the page, and must sit above it. */}
+      <aside className="hidden md:flex md:w-64 shrink-0 flex-col gap-2 bg-white/70 backdrop-blur-sm border-r border-[#FFD91D] p-4 min-h-screen sticky top-0 z-40">
+        <div className="mb-4 flex items-center justify-between gap-2 px-2">
+          <Link href="/admin" className="flex min-w-0 items-center gap-2">
+            <Brand />
+          </Link>
+          <NotificationBell />
+        </div>
         <NavList />
         <div className="mt-auto">
           <AdminAlertSettings />
