@@ -1,4 +1,3 @@
-import GeneralHeader from "@/components/organisms/GeneralHeader";
 import AboutHeroSection from "@/components/templates/AboutHeroSection";
 import FounderStorySection from "@/components/templates/FounderStorySection";
 import StatsSection from "@/components/templates/StatsSection";
@@ -12,7 +11,6 @@ import FooterSection from "@/components/templates/FooterSection";
 export default function AboutPage() {
   return (
     <>
-      <GeneralHeader />
       <AboutHeroSection />
       <FounderStorySection />
       <AboutValuesSection/>
