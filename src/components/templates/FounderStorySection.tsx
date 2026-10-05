@@ -18,8 +18,8 @@ const cards = [
     illustration: "/svg/story-frown.svg",
   },
   {
-    heading: '"WHAT IF WHATSAPP\nCOULD JUST FIX THIS?"',
-    body: "Not another app. Not another marketplace. A decision-first, WhatsApp-first system connecting people to verified local vendors instantly.",
+    heading: '"What if one\nmessage could\nfix this?"',
+    body: "Not another marketplace to scroll through. One chat that finds a verified vendor near you, takes payment, and gets it done.",
     illustration: "/svg/story-lightbulb.svg",
   },
 ];
@@ -33,27 +33,29 @@ export default function FounderStorySection() {
     offset: ["start start", "end end"],
   });
 
+  // Each card starts moving almost as soon as the one before has landed. The section used
+  // to be 400vh with long still stretches before each card, which read as stuck and slow.
   const card2Y = useTransform(
     scrollYProgress,
-    [0, 0.33, 0.55],
+    [0, 0.06, 0.36],
     ["100vh", "100vh", "0vh"]
   );
 
   const card3Y = useTransform(
     scrollYProgress,
-    [0, 0.65, 0.88],
+    [0, 0.42, 0.72],
     ["100vh", "100vh", "0vh"]
   );
 
   const card1Bg = useTransform(
     scrollYProgress,
-    [0, 0.25],
+    [0, 0.2],
     ["#FFFDE0", "#FFF8B8"]
   );
 
   useEffect(() => {
     const unsubscribe = scrollYProgress.on("change", (v) => {
-      if (v >= 0.88) {
+      if (v >= 0.76) {
         footerControls.start({ opacity: 1, y: 0, transition: { duration: 0.4 } });
       } else {
         footerControls.start({ opacity: 0, y: 40, transition: { duration: 0.2 } });
@@ -65,7 +67,7 @@ export default function FounderStorySection() {
   return (
     <section
       ref={containerRef}
-      className="relative h-[400vh] bg-[#FFFEF0]"
+      className="relative h-[260vh] bg-[#FFFEF0]"
     >
       <div className="sticky top-0 h-screen flex flex-col items-center justify-center px-4 md:px-10">
 
@@ -146,7 +148,7 @@ export default function FounderStorySection() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={footerControls}
-            className="w-full mt-18 pointer-events-none relative flex items-center justify-end"
+            className="w-full mt-10 pointer-events-none relative flex items-center justify-end"
           >
             <div className="absolute left-[48%] bottom-3">
               <Image

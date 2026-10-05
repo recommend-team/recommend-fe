@@ -1,67 +1,73 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Text } from "../atoms/Text";
 import { BackgroundTwo } from "./BackgroundTwo";
 
+/**
+ * The About page opener: what Recommend is, then the founder's note leading into the story.
+ *
+ * Laid out in the flow — heading and note side by side, the scroll hint beneath — rather
+ * than as a full-screen hero with each piece pinned to a corner, which spread them so far
+ * apart they stopped reading as one thing.
+ */
 export default function AboutHeroSection() {
+  const reduceMotion = useReducedMotion();
+
   return (
     <BackgroundTwo>
-      <div className="relative min-h-screen w-full px-6 md:px-14 pt-32 md:pt-40 pb-20">
-
-        {/* TODO: replace with cloud illustrations per design (two clouds: top-left and right) */}
-        <div className="absolute top-28 right-6 md:top-45 md:right-35 z-10">
-          <Image
-            src="/svg/sheep.svg"
-            alt="sheep illustration"
-            width={110}
-            height={110}
-            className="w-14 md:w-20 h-auto"
-          />
-        </div>
-
-        <div className="relative z-10 max-w-xl">
+      <section className="relative mx-auto grid w-full max-w-6xl items-center gap-10 px-6 pt-32 pb-14 font-dm md:grid-cols-[minmax(0,1fr)_minmax(0,440px)] md:gap-12 md:px-10 md:pt-40 md:pb-16">
+        <div className="relative z-10 flex flex-col gap-5">
+          <span className="text-xs font-extrabold tracking-[.14em] text-recommend-green md:text-[13px]">
+            ABOUT RECOMMEND
+          </span>
           <Text variant="hero-heading" color="orange">
             One message.
             <br />
-            Everything
-            <br />
-            you need.
+            Everything you need.
           </Text>
+          <p className="max-w-[500px] text-base leading-relaxed text-[#3d4451] md:text-lg">
+            Recommend is a personal market assistant for Lagos. Tell us what you need and we
+            find it from verified vendors near you, take payment securely, and get it to your
+            door — all in one chat.
+          </p>
         </div>
 
-        <div className="
-          relative z-10
-          -mt-17 flex justify-end pr-8
-          md:mt-20 md:block
-          md:absolute md:top-[50px] md:left-[29%]
-        ">
-          <div className="relative rotate-[-4deg] w-[280px] md:w-[480px]">
+        <div className="relative z-10 flex justify-center md:justify-end">
+          <Image
+            src="/svg/sheep.svg"
+            alt=""
+            width={110}
+            height={110}
+            className="absolute -top-8 right-2 w-14 h-auto md:-top-12 md:right-0 md:w-20"
+          />
+          <div className="relative w-[280px] rotate-[-4deg] md:w-[420px]">
             <Image
               src="/svg/sticky-note.svg"
-              alt="Founder story sticky note"
+              alt=""
               width={260}
               height={200}
-              className="w-full h-auto"
+              className="h-auto w-full"
             />
             <div className="absolute inset-0 flex items-center justify-center p-5">
               <Image
                 src="/svg/story-line.svg"
-                alt="Chanor's story"
+                alt="The founder's story"
                 width={150}
                 height={100}
-                className="w-[45%] h-auto"
+                className="h-auto w-[45%]"
               />
             </div>
           </div>
         </div>
 
-        <div className="absolute bottom-10 right-6 md:right-10 flex flex-row items-center gap-2 z-10">
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
+        <div className="relative z-10 flex items-center gap-2 md:col-span-2">
+          <motion.span
+            aria-hidden
+            animate={reduceMotion ? undefined : { y: [0, 6, 0] }}
             transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-            className="flex justify-center flex-shrink-0"
+            className="flex"
           >
             <svg
               width="20"
@@ -75,13 +81,12 @@ export default function AboutHeroSection() {
             >
               <path d="M12 5v14M5 12l7 7 7-7" />
             </svg>
-          </motion.div>
+          </motion.span>
           <Text variant="tap-hint" color="dark" className="text-[13px] md:text-[15px]">
-            Scroll to see how that became this.
+            Scroll to see how it started.
           </Text>
         </div>
-
-      </div>
+      </section>
     </BackgroundTwo>
   );
 }

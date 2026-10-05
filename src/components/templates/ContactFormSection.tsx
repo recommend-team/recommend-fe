@@ -8,7 +8,7 @@ import { Text } from "../atoms/Text";
 import { Button } from "../molecules/Button";
 import { BackgroundTwo } from "./BackgroundTwo";
 
-const CONTACT_EMAIL = "hello@recommend.ng";
+const CONTACT_EMAIL = "contacts.recommend@gmail.com";
 const CONTACT_PHONE = "+234 800 000 0000"; // TODO: replace with real support line
 const CONTACT_LOCATION = "Lagos, Nigeria";
 

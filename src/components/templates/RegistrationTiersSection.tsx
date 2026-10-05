@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Text } from "../atoms/Text";
+import { ArrowRight } from "lucide-react";
 import { Button } from "../molecules/Button";
 import { BackgroundThree } from "./BackgroundThree";
 import { vendorApp } from "@/lib/links";
@@ -124,6 +125,7 @@ export default function RegistrationTiersSection() {
                       variant="green"
                       text={tier.cta}
                       href={vendorApp(`/signup?type=${tier.type}`)}
+                      icon={<ArrowRight size={18} />}
                     />
                   </div>
                 </div>

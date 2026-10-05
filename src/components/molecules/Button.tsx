@@ -6,7 +6,8 @@ import { cn } from "@/lib/utilities";
 type ButtonProps = {
   text: string;
   icon?: ReactNode;
-  variant: "green" | "gradient";
+  /** green: buyers and vendors. orange: riders. gradient: secondary actions. */
+  variant: "green" | "orange" | "gradient";
   disabled?: boolean;
   onClick?: () => void;
   /**
@@ -42,7 +43,13 @@ const Button = ({
     green: {
       cardVariant: "none" as const,
       bg: "bg-recommend-green text-white hover:bg-recommend-green-hover active:bg-recommend-green-active",
-      disabledBg: "bg-recommend-green opacity-50 cursor-not-allowed",
+      // White text in every state — the disabled style used to leave it black on faded green.
+      disabledBg: "bg-recommend-green text-white opacity-60 cursor-not-allowed",
+    },
+    orange: {
+      cardVariant: "none" as const,
+      bg: "bg-recommend-orange text-white hover:bg-[#dc4f1a] active:bg-[#c44514]",
+      disabledBg: "bg-recommend-orange text-white opacity-60 cursor-not-allowed",
     },
     gradient: {
       cardVariant: "gradient" as const,

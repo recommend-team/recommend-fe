@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Text } from "../atoms/Text";
+import { ArrowRight } from "lucide-react";
 import { Button } from "../molecules/Button";
 import { BackgroundTwo } from "./BackgroundTwo";
 import { vendorApp } from "@/lib/links";
@@ -41,12 +42,13 @@ export default function VendorHeroSection() {
 
             <div className="flex items-center gap-3">
               <Button
-                variant="gradient"
+                variant="green"
                 text="Start Selling Today"
                 href={vendorApp("/signup")}
+                icon={<ArrowRight size={18} />}
               />
               <Button
-                variant="green"
+                variant="gradient"
                 text="Log in"
                 href={vendorApp("/login")}
               />
@@ -70,12 +72,13 @@ export default function VendorHeroSection() {
 
             <div className="flex items-center gap-3">
               <Button
-                variant="gradient"
+                variant="green"
                 text="Start Selling Today"
                 href={vendorApp("/signup")}
+                icon={<ArrowRight size={18} />}
               />
               <Button
-                variant="green"
+                variant="gradient"
                 text="Log in"
                 href={vendorApp("/login")}
               />
@@ -107,6 +110,7 @@ export default function VendorHeroSection() {
             variant="green"
             text="Become a Vendor"
             href={vendorApp("/signup")}
+            icon={<ArrowRight size={18} />}
           />
         </div>
 
