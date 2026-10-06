@@ -3,6 +3,7 @@ import type {
   AdminBuyerDetail,
   AdminBuyerSummary,
   AdminOrderSummary,
+  AdminRider,
   AdminStatusEvent,
   AdminTransactionSummary,
   AdminUser,
@@ -10,12 +11,14 @@ import type {
   AdminVendorSummary,
   BuyerListFilters,
   CreateAdminPayload,
+  CreateRiderPayload,
   OrderListFilters,
   PaginatedResult,
   PaginationParams,
   OrderStatus,
   PendingApproval,
   PlatformStats,
+  RiderListFilters,
   TransactionListFilters,
   VendorListFilters,
 } from "@/types";
@@ -162,6 +165,8 @@ export async function getAdminTransactions(
       limit: params.limit,
       status: params.status,
       search: params.search,
+      riderId: params.riderId,
+      needsRider: params.needsRider ? "true" : undefined,
     })}`
   );
 }
@@ -230,5 +235,46 @@ export async function getTransactionHistory(
 ): Promise<AdminStatusEvent[]> {
   return request<AdminStatusEvent[]>(
     `/admin/transactions/${encodeURIComponent(reference)}/history`
+  );
+}
+
+// ─── Riders ─────────────────────────────────────────────────────────────────
+//
+// Until riders have an app, admin runs delivery: adds riders, assigns one to each
+// delivery, and reaches them by phone. A rider's deliveries are the transactions list
+// filtered by `riderId`.
+
+export async function getRiders(
+  params: RiderListFilters = {}
+): Promise<PaginatedResult<AdminRider>> {
+  return request<PaginatedResult<AdminRider>>(
+    `/admin/riders${qs({
+      page: params.page,
+      limit: params.limit,
+      status: params.status,
+      search: params.search,
+    })}`
+  );
+}
+
+export async function getRider(id: string): Promise<AdminRider> {
+  return request<AdminRider>(`/admin/riders/${id}`);
+}
+
+export async function createRider(payload: CreateRiderPayload): Promise<AdminRider> {
+  return request<AdminRider>("/admin/riders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/** Put a rider on a delivery, or replace the one on it. Required before dispatch. */
+export async function assignRider(input: {
+  reference: string;
+  riderId: string;
+}): Promise<AdminTransactionSummary> {
+  return request<AdminTransactionSummary>(
+    `/admin/transactions/${encodeURIComponent(input.reference)}/rider`,
+    { method: "POST", body: JSON.stringify({ riderId: input.riderId }) }
   );
 }

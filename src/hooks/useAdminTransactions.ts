@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  assignRider,
   completeTransaction,
   dispatchTransaction,
   getAdminTransactions,
@@ -39,7 +40,7 @@ export function useVerifyTransaction() {
 }
 
 /**
- * The lifecycle actions, all invalidating the same two lists.
+ * The lifecycle actions, all invalidating the same lists.
  *
  * A checkout moving can move its vendor orders with it — completion does — so patching
  * the cache by hand would drift from what the server actually did.
@@ -54,8 +55,15 @@ function useLifecycleAction<TInput>(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      // Assigning, dispatching and delivering all move a rider's counts.
+      queryClient.invalidateQueries({ queryKey: ["admin", "riders"] });
     },
   });
+}
+
+/** Put a rider on a delivery, or swap the one on it. Required before dispatch. */
+export function useAssignRider() {
+  return useLifecycleAction(assignRider);
 }
 
 export function useDispatchTransaction() {

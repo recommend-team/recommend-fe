@@ -214,6 +214,9 @@ export interface AdminTransactionSummary {
   paidAt: string | null;
   createdAt: string;
   deliveryCode: string | null;
+  /** Who is carrying it. Null on a pickup, and on a delivery with no rider yet. */
+  rider: { id: string; name: string; phone: string | null } | null;
+  riderAssignedAt: string | null;
   vendors: {
     orderId: string;
     vendorId: string;
@@ -427,6 +430,43 @@ export interface TransactionListFilters extends PaginationParams {
   status?: OrderStatus;
   /** Reference, buyer name or phone — matched server-side. */
   search?: string;
+  /** One rider's deliveries. */
+  riderId?: string;
+  /** Paid or ready deliveries with no rider yet. */
+  needsRider?: boolean;
+}
+
+/** A rider as the roster lists them (`GET /admin/riders`). */
+export interface AdminRider {
+  id: string;
+  firstName: string;
+  lastName: string;
+  /** Null when the rider gave none. */
+  email: string | null;
+  phoneNumber: string | null;
+  riderType: RiderType | null;
+  riderNote: string | null;
+  status: UserStatus;
+  createdAt: string;
+  /** Assigned and not yet delivered: paid, ready or on its way. */
+  activeDeliveries: number;
+  completedDeliveries: number;
+}
+
+export interface RiderListFilters extends PaginationParams {
+  status?: UserStatus;
+  /** Name, phone or email. */
+  search?: string;
+}
+
+/** A rider admin adds by hand. Phone in any Nigerian format; email optional. */
+export interface CreateRiderPayload {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email?: string;
+  riderType: RiderType;
+  note?: string;
 }
 
 export interface BuyerListFilters extends PaginationParams {

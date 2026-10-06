@@ -1,6 +1,7 @@
 import type {
   BuyerListFilters,
   OrderListFilters,
+  RiderListFilters,
   TransactionListFilters,
   VendorListFilters,
 } from "@/types";
@@ -24,4 +25,6 @@ export const queryKeys = {
   buyers: (filters: BuyerListFilters) =>
     ["admin", "buyers", filters] as const,
   buyerDetail: (id: string) => ["admin", "buyers", id] as const,
+  riders: (filters: RiderListFilters) => ["admin", "riders", filters] as const,
+  rider: (id: string) => ["admin", "riders", id] as const,
 } as const;

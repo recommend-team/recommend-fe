@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Search, RefreshCw, Truck, Check, History, Copy } from "lucide-react";
+import { Search, RefreshCw, Truck, Check, History, Copy, UserPlus, Phone } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
+import AssignRiderDialog from "@/components/organisms/AssignRiderDialog";
 import {
   useAdminTransactions,
   useCompleteTransaction,
@@ -48,6 +49,15 @@ const STATUS_LABELS: Record<OrderStatus | "ALL", string> = {
   REFUNDED: "Refunded",
 };
 
+/** Not a status: paid or ready deliveries nobody has been assigned to carry yet. */
+const NEEDS_RIDER = "NEEDS_RIDER";
+type Filter = OrderStatus | "ALL" | typeof NEEDS_RIDER;
+const FILTERS: Filter[] = ["ALL", NEEDS_RIDER, ...STATUSES.filter((s) => s !== "ALL")];
+const FILTER_LABELS: Record<Filter, string> = { ...STATUS_LABELS, [NEEDS_RIDER]: "Needs a rider" };
+
+/** Where a delivery can take a rider: paid, ready, or already on its way (a swap). */
+const ASSIGNABLE: OrderStatus[] = ["PAID", "READY", "DISPATCHED"];
+
 const PAGE_SIZE = 20;
 
 function formatNaira(n: number): string {
@@ -57,14 +67,20 @@ function formatNaira(n: number): string {
 
 export default function AdminTransactionsPage() {
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<OrderStatus | "ALL">("ALL");
-  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<Filter>("ALL");
+  // A rider's page links here with `?search=<reference>`.
+  const [search, setSearch] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : new URLSearchParams(window.location.search).get("search") ?? ""
+  );
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const transactions = useAdminTransactions({
     page,
     limit: PAGE_SIZE,
-    status: status === "ALL" ? undefined : status,
+    status: filter === "ALL" || filter === NEEDS_RIDER ? undefined : filter,
+    needsRider: filter === NEEDS_RIDER || undefined,
     search: search.trim() || undefined,
   });
 
@@ -95,20 +111,24 @@ export default function AdminTransactionsPage() {
             />
           </div>
           <div className="flex gap-2 flex-wrap">
-            {STATUSES.map((s) => (
+            {FILTERS.map((f) => (
               <button
-                key={s}
+                key={f}
+                type="button"
                 onClick={() => {
-                  setStatus(s);
+                  setFilter(f);
                   setPage(1);
                 }}
+                aria-pressed={filter === f}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold font-dm transition-colors ${
-                  status === s
+                  filter === f
                     ? "bg-recommend-orange text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : f === NEEDS_RIDER
+                      ? "bg-orange-50 text-orange-700 hover:bg-orange-100"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {STATUS_LABELS[s]}
+                {FILTER_LABELS[f]}
               </button>
             ))}
           </div>
@@ -127,6 +147,7 @@ export default function AdminTransactionsPage() {
                 <th className="py-3 pr-4">Reference</th>
                 <th className="py-3 pr-4">Buyer</th>
                 <th className="py-3 pr-4">Vendors</th>
+                <th className="py-3 pr-4">Rider</th>
                 <th className="py-3 pr-4">Items</th>
                 <th className="py-3 pr-4">Delivery</th>
                 <th className="py-3 pr-4">Total</th>
@@ -138,14 +159,18 @@ export default function AdminTransactionsPage() {
             <tbody>
               {transactions.isLoading ? (
                 <tr>
-                  <td colSpan={9} className="py-6 text-center text-gray-400">
+                  <td colSpan={10} className="py-6 text-center text-gray-400">
                     Loading transactions…
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-6 text-center text-gray-400">
-                    {search ? "No transactions match." : "No transactions yet."}
+                  <td colSpan={10} className="py-6 text-center text-gray-400">
+                    {filter === NEEDS_RIDER
+                      ? "Every delivery has a rider."
+                      : search
+                        ? "No transactions match."
+                        : "No transactions yet."}
                   </td>
                 </tr>
               ) : (
@@ -191,13 +216,19 @@ function TransactionRow({
   const verify = useVerifyTransaction();
   const dispatchOrder = useDispatchTransaction();
   const completeOrder = useCompleteTransaction();
+  const [assigning, setAssigning] = useState(false);
 
   const unpaid = transaction.status === "PENDING_PAYMENT";
   const isPickup = transaction.fulfillmentType === "PICKUP";
 
   // A pickup order is never dispatched — the buyer collects it — so it goes straight
   // from ready to delivered.
-  const canDispatch = transaction.status === "READY" && !isPickup;
+  // A delivery is dispatched only with a named rider; until then, assigning one is the
+  // action it is waiting for.
+  const canAssign = !isPickup && ASSIGNABLE.includes(transaction.status);
+  const needsRider = canAssign && !transaction.rider && transaction.status !== "DISPATCHED";
+  const canDispatch = transaction.status === "READY" && !isPickup && !!transaction.rider;
+  const lifecycleError = dispatchOrder.error ?? completeOrder.error;
   const canComplete =
     transaction.status === "DISPATCHED" ||
     (transaction.status === "READY" && isPickup);
@@ -230,6 +261,9 @@ function TransactionRow({
         </td>
         <td className="py-3 pr-4 text-gray-700">
           {transaction.vendors.map((v) => v.vendorName ?? "Unknown").join(", ")}
+        </td>
+        <td className="py-3 pr-4">
+          <RiderCell transaction={transaction} />
         </td>
         <td className="py-3 pr-4 text-gray-700">{itemCount}</td>
         <td className="py-3 pr-4 text-gray-700">
@@ -269,6 +303,24 @@ function TransactionRow({
               </button>
             )}
 
+            {needsRider && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAssigning(true);
+                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold font-dm whitespace-nowrap ${
+                  transaction.status === "READY"
+                    ? "bg-recommend-orange text-white hover:bg-orange-600"
+                    : "bg-orange-50 text-orange-700 hover:bg-orange-100"
+                }`}
+                title="Choose who carries this delivery"
+              >
+                <UserPlus size={13} />
+                Assign rider
+              </button>
+            )}
+
             {canDispatch && (
               <button
                 onClick={(e) => {
@@ -298,13 +350,37 @@ function TransactionRow({
                 {completeOrder.isPending ? "Saving…" : "Delivered"}
               </button>
             )}
+
+            {canAssign && transaction.rider && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAssigning(true);
+                }}
+                className="text-xs font-bold font-dm text-gray-500 underline-offset-2 hover:text-gray-800 hover:underline"
+              >
+                Change rider
+              </button>
+            )}
           </div>
         </td>
       </tr>
 
+      {lifecycleError && (
+        <tr className="border-b border-gray-100">
+          <td colSpan={10} className="py-2 px-4 text-xs text-red-600 bg-red-50">
+            {lifecycleError.message}
+          </td>
+        </tr>
+      )}
+
+      {assigning && (
+        <AssignRiderDialog transaction={transaction} onClose={() => setAssigning(false)} />
+      )}
+
       {verify.isError && (
         <tr className="border-b border-gray-100">
-          <td colSpan={9} className="py-2 px-4 text-xs text-red-600 bg-red-50">
+          <td colSpan={10} className="py-2 px-4 text-xs text-red-600 bg-red-50">
             Couldn&apos;t check this payment. Nothing has changed.
           </td>
         </tr>
@@ -314,7 +390,7 @@ function TransactionRow({
       {verify.isSuccess && verify.data?.status === "PENDING_PAYMENT" && (
         <tr className="border-b border-gray-100">
           <td
-            colSpan={9}
+            colSpan={10}
             className="py-2 px-4 text-xs text-gray-600 bg-gray-50"
           >
             Paystack has no successful payment for this reference — it was not
@@ -325,7 +401,7 @@ function TransactionRow({
 
       {expanded && (
         <tr className="border-b border-gray-100 bg-gray-50/60">
-          <td colSpan={9} className="py-3 px-4">
+          <td colSpan={10} className="py-3 px-4">
             <div className="flex flex-col gap-3">
               {transaction.vendors.map((vendor) => (
                 <div key={vendor.orderId} className="flex flex-col gap-1">
@@ -376,6 +452,33 @@ function TransactionRow({
       )}
     </>
   );
+}
+
+/** Who is carrying it — a phone call away — or that nobody is yet. */
+function RiderCell({ transaction }: { transaction: AdminTransactionSummary }) {
+  if (transaction.fulfillmentType === "PICKUP") {
+    return <span className="text-xs text-gray-400">Pickup</span>;
+  }
+  if (transaction.rider) {
+    return (
+      <div className="flex flex-col">
+        <span className="text-gray-800">{transaction.rider.name}</span>
+        {transaction.rider.phone && (
+          <a
+            href={`tel:${transaction.rider.phone}`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-recommend-green"
+          >
+            <Phone size={11} /> {transaction.rider.phone}
+          </a>
+        )}
+      </div>
+    );
+  }
+  if (ASSIGNABLE.includes(transaction.status)) {
+    return <span className="text-xs font-bold text-orange-700">Needs a rider</span>;
+  }
+  return <span className="text-xs text-gray-400">—</span>;
 }
 
 /**

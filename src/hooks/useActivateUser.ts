@@ -11,6 +11,7 @@ export function useActivateUser() {
     mutationFn: activateUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "vendors"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "riders"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "buyers"] });
     },
   });
