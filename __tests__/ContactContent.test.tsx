@@ -1,7 +1,18 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import ContactContent, { composeEnquiry } from "@/components/templates/ContactContent";
+import ContactContent, { contactPayload } from "@/components/templates/ContactContent";
+import { sendContactMessage } from "@/services/contact.service";
+import { ApiError } from "@/lib/api";
 
 jest.mock("@/lib/links", () => ({ CUSTOMER_APP_URL: "https://order.example" }));
+jest.mock("@/services/contact.service", () => ({ sendContactMessage: jest.fn() }));
+jest.mock("@/lib/api", () => {
+  class ApiError extends Error {
+    constructor(message: string, readonly status: number, readonly fieldErrors?: { field: string; message: string }[]) {
+      super(message);
+    }
+  }
+  return { ApiError, request: jest.fn() };
+});
 jest.mock("@/components/templates/BackgroundThree", () => ({
   BackgroundThree: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
@@ -19,6 +30,8 @@ const decode = (href: string) => {
 };
 
 describe("Contact page", () => {
+  beforeEach(() => jest.mocked(sendContactMessage).mockReset());
+
   it("sends buyers with an order to the chat first", () => {
     render(<ContactContent />);
 
@@ -65,50 +78,79 @@ describe("Contact page", () => {
   });
 
   it("will not send an empty message", async () => {
-    const open = jest.spyOn(window, "open").mockImplementation(() => null);
     render(<ContactContent />);
 
     fireEvent.submit(screen.getByRole("button", { name: /Send message/ }).closest("form")!);
 
     expect(await screen.findByText("Please enter your name")).toBeInTheDocument();
-    expect(open).not.toHaveBeenCalled();
-    open.mockRestore();
+    expect(sendContactMessage).not.toHaveBeenCalled();
   });
 
-  it("hands the email app everything the visitor typed", async () => {
-    const open = jest.spyOn(window, "open").mockImplementation(() => null);
-    render(<ContactContent />);
-
+  const fillIn = () => {
     fireEvent.change(screen.getByLabelText(/Full name/), { target: { value: "Ada Okafor" } });
     fireEvent.change(screen.getByLabelText(/Email address/), { target: { value: "ada@example.com" } });
     fireEvent.change(screen.getByLabelText(/Order reference/), { target: { value: "REC-123" } });
-    fireEvent.change(screen.getByLabelText(/Message/), { target: { value: "My jollof never arrived." } });
+    fireEvent.change(screen.getByLabelText(/^Message/), { target: { value: "My jollof never arrived." } });
     fireEvent.submit(screen.getByRole("button", { name: /Send message/ }).closest("form")!);
+  };
 
-    await waitFor(() => expect(open).toHaveBeenCalled());
-    const sent = decode(open.mock.calls[0][0] as string);
-    expect(sent.subject).toBe("Recommend — Order or delivery");
-    expect(sent.body).toContain("Name: Ada Okafor");
-    expect(sent.body).toContain("Order: REC-123");
-    expect(sent.body).toContain("My jollof never arrived.");
-    expect(await screen.findByRole("status")).toHaveTextContent("Your email app should open");
-    open.mockRestore();
+  it("sends the message to the team and says so, by name", async () => {
+    jest.mocked(sendContactMessage).mockResolvedValue();
+    render(<ContactContent />);
+
+    fillIn();
+
+    await waitFor(() => expect(sendContactMessage).toHaveBeenCalledTimes(1));
+    expect(sendContactMessage).toHaveBeenCalledWith({
+      fullName: "Ada Okafor",
+      email: "ada@example.com",
+      topic: "Order or delivery",
+      orderReference: "REC-123",
+      message: "My jollof never arrived.",
+      website: "",
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent("Thanks, Ada. We've got your message.");
+    expect(screen.getByRole("status")).toHaveTextContent("ada@example.com");
+  });
+
+  it("keeps what the visitor typed when sending fails, and says why", async () => {
+    jest.mocked(sendContactMessage).mockRejectedValue(
+      new ApiError("We couldn't send your message just now. Please try again in a moment.", 503)
+    );
+    render(<ContactContent />);
+
+    fillIn();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't send your message just now");
+    expect(screen.getByRole("alert")).toHaveTextContent("Your message is still here");
+    expect(screen.getByLabelText(/^Message/)).toHaveValue("My jollof never arrived.");
+  });
+
+  it("tells the visitor when they are offline", async () => {
+    jest.mocked(sendContactMessage).mockRejectedValue(new ApiError("Network request failed.", 0));
+    render(<ContactContent />);
+
+    fillIn();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("couldn't reach our server");
   });
 });
 
-describe("composeEnquiry", () => {
+describe("contactPayload", () => {
   const values = {
-    fullName: "Ada",
+    fullName: " Ada ",
     email: "ada@example.com",
     phoneNumber: "",
     orderReference: "REC-1",
     message: "Hello there",
+    website: "",
   };
 
-  it("leaves out an empty phone and an order reference on non-order topics", () => {
-    const body = decode(composeEnquiry("Something else", values)).body;
+  it("leaves out an empty phone, and the order reference on other topics", () => {
+    const payload = contactPayload("Something else", values);
 
-    expect(body).not.toContain("Phone:");
-    expect(body).not.toContain("Order:");
+    expect(payload).not.toHaveProperty("phoneNumber");
+    expect(payload).not.toHaveProperty("orderReference");
+    expect(payload.fullName).toBe("Ada");
   });
 });

@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { ArrowRight, ArrowUpRight, Clock, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { CUSTOMER_APP_URL } from "@/lib/links";
+import { ApiError } from "@/lib/api";
+import { sendContactMessage, type ContactPayload } from "@/services/contact.service";
 import { SOCIAL_LINKS } from "@/lib/social";
 import { BUYER_FAQS } from "./BuyerFaqSection";
 import { BackgroundThree } from "./BackgroundThree";
@@ -15,8 +17,8 @@ import { BackgroundTwo } from "./BackgroundTwo";
  * details. Buyers with an order go to the chat — a person on the team can see the order and
  * take over — because that beats any form.
  *
- * The form still sends through the visitor's email app: there is no support endpoint yet.
- * When there is, `onSubmit` is the one place to change.
+ * The form posts to the backend (`POST /contact`), which emails the team inbox with the
+ * visitor as reply-to.
  */
 
 export const CONTACT_EMAIL = "contacts.recommend@gmail.com";
@@ -168,49 +170,116 @@ interface FormValues {
   phoneNumber: string;
   orderReference: string;
   message: string;
+  /** The honeypot: hidden from people, filled by bots. */
+  website: string;
 }
+
+const EMPTY: FormValues = {
+  fullName: "",
+  email: "",
+  phoneNumber: "",
+  orderReference: "",
+  message: "",
+  website: "",
+};
 
 const PHONE_RULE = /^\+?[0-9\s-]{7,20}$/;
 const INPUT =
   "w-full rounded-xl border-[1.5px] border-[#e3e6e1] bg-[#fcfcf8] px-3.5 py-3 text-[15px] placeholder:text-[#98a2b3] focus:border-recommend-green focus:outline-none focus:ring-1 focus:ring-recommend-green";
 
-/** What the email app is handed: a subject from the topic, every field in the body. */
-export function composeEnquiry(topic: Topic, values: FormValues): string {
+/** What the backend receives. The order reference only travels with an order question. */
+export function contactPayload(topic: Topic, values: FormValues): ContactPayload {
   const phone = values.phoneNumber.trim();
   const order = topic === "Order or delivery" ? values.orderReference.trim() : "";
-  const header = [
-    `Name: ${values.fullName.trim()}`,
-    `Email: ${values.email.trim()}`,
-    phone && `Phone: ${phone}`,
-    order && `Order: ${order}`,
-  ].filter(Boolean);
-  return mailto(`Recommend — ${topic}`, [...header, "", values.message.trim()].join("\n"));
+  return {
+    fullName: values.fullName.trim(),
+    email: values.email.trim(),
+    ...(phone ? { phoneNumber: phone } : {}),
+    topic,
+    ...(order ? { orderReference: order } : {}),
+    message: values.message.trim(),
+    website: values.website,
+  };
 }
 
+type Status =
+  | { kind: "idle" }
+  | { kind: "sending" }
+  | { kind: "sent"; name: string; email: string }
+  | { kind: "failed"; text: string };
+
+/**
+ * Sends straight to the team inbox through the backend. What the visitor typed stays in
+ * the form until the send succeeds — a failure never costs them their message.
+ */
 function ContactForm() {
   const [topic, setTopic] = useState<Topic>("Order or delivery");
-  const [opened, setOpened] = useState(false);
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
-  } = useForm<FormValues>({
-    defaultValues: { fullName: "", email: "", phoneNumber: "", orderReference: "", message: "" },
-  });
+  } = useForm<FormValues>({ defaultValues: EMPTY });
 
-  const onSubmit = (values: FormValues) => {
-    window.open(composeEnquiry(topic, values), "_self");
-    setOpened(true);
-    reset();
+  const onSubmit = async (values: FormValues) => {
+    setStatus({ kind: "sending" });
+    try {
+      await sendContactMessage(contactPayload(topic, values));
+      setStatus({ kind: "sent", name: values.fullName.trim().split(/\s+/)[0], email: values.email.trim() });
+      reset(EMPTY);
+    } catch (error) {
+      // A field the server refused is shown on that field.
+      if (error instanceof ApiError && error.fieldErrors?.length) {
+        for (const { field, message } of error.fieldErrors) {
+          if (field in EMPTY) setError(field as keyof FormValues, { message });
+        }
+      }
+      setStatus({
+        kind: "failed",
+        text:
+          error instanceof ApiError && error.status !== 0
+            ? error.message
+            : "We couldn't reach our server. Check your connection and try again.",
+      });
+    }
   };
+
+  if (status.kind === "sent") {
+    return (
+      <div
+        role="status"
+        className="flex flex-col items-start gap-4 rounded-[24px] bg-white p-6 shadow-[0_14px_40px_rgba(60,40,0,.08)] md:rounded-[28px] md:p-9"
+      >
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#E6F2EB] text-recommend-green">
+          <Check size={24} strokeWidth={2.6} aria-hidden />
+        </span>
+        <h2 className="font-champ text-[28px] leading-[1.02] md:text-4xl md:leading-none">
+          Thanks, {status.name}. We&apos;ve got your message.
+        </h2>
+        <p className="max-w-[520px] text-[15px] leading-relaxed text-[#3d4451] md:text-base">
+          We&apos;ll reply to <b>{status.email}</b> within our support hours. If it&apos;s
+          about an order in progress, the chat is the fastest way to reach us.
+        </p>
+        <button
+          type="button"
+          onClick={() => setStatus({ kind: "idle" })}
+          className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-extrabold text-recommend-green hover:underline"
+        >
+          Send another message
+          <ArrowRight size={16} strokeWidth={2.6} aria-hidden />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
       aria-labelledby="send-message"
-      className="flex flex-col gap-[18px] rounded-[24px] bg-white p-5 shadow-[0_14px_40px_rgba(60,40,0,.08)] md:rounded-[28px] md:p-9"
+      className="relative flex flex-col gap-[18px] rounded-[24px] bg-white p-5 shadow-[0_14px_40px_rgba(60,40,0,.08)] md:rounded-[28px] md:p-9"
     >
       <div>
         <span className={EYEBROW}>SEND US A MESSAGE</span>
@@ -300,10 +369,17 @@ function ContactForm() {
         />
       </Field>
 
-      {opened && (
-        <p role="status" className="rounded-xl bg-[#E6F2EB] p-3 text-sm text-recommend-green">
-          Your email app should open with your message ready to send. If it doesn&apos;t, email us
-          at{" "}
+      {/* The honeypot. Off-screen and out of the tab order, so only a bot fills it in. */}
+      <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label>
+          Website
+          <input tabIndex={-1} autoComplete="off" {...register("website")} />
+        </label>
+      </div>
+
+      {status.kind === "failed" && (
+        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
+          {status.text} Your message is still here. You can also email us at{" "}
           <a href={`mailto:${CONTACT_EMAIL}`} className="font-bold underline">
             {CONTACT_EMAIL}
           </a>
@@ -312,15 +388,14 @@ function ContactForm() {
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[13px] text-[#6b7280]">
-          This opens your email app with your message ready. We only use your details to reply.
-        </p>
+        <p className="text-[13px] text-[#6b7280]">We only use your details to reply to you.</p>
         <button
           type="submit"
-          className="inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-[14px] bg-recommend-green px-6 text-base font-extrabold text-white transition-colors hover:bg-recommend-green-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-recommend-green"
+          disabled={status.kind === "sending"}
+          className="inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-[14px] bg-recommend-green px-6 text-base font-extrabold text-white transition-colors hover:bg-recommend-green-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-recommend-green disabled:cursor-wait disabled:opacity-70"
         >
-          Send message
-          <ArrowRight size={18} aria-hidden />
+          {status.kind === "sending" ? "Sending…" : "Send message"}
+          {status.kind !== "sending" && <ArrowRight size={18} aria-hidden />}
         </button>
       </div>
     </form>
