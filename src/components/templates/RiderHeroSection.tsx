@@ -42,14 +42,15 @@ export default function RiderHeroSection() {
               Join Recommend as a rider
             </Text>
 
-            <StoreBadges className="flex-col" />
-
+            {/* Sign-up first: it works today. The store apps are not out yet. */}
             <Button
               variant="orange"
               text="Become a rider"
               href="/rider/signup"
               icon={<ArrowRight size={18} />}
             />
+
+            <StoreBadges className="flex-col" />
           </div>
         </div>
 
@@ -69,14 +70,15 @@ export default function RiderHeroSection() {
               Join Recommend as a rider
             </Text>
 
-            <StoreBadges />
-
+            {/* Sign-up first: it works today. The store apps are not out yet. */}
             <Button
               variant="orange"
               text="Become a rider"
               href="/rider/signup"
               icon={<ArrowRight size={18} />}
             />
+
+            <StoreBadges />
           </div>
 
           {/* Right: rider image — left-aligned within column, shifted left to touch text column */}

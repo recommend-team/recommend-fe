@@ -71,8 +71,9 @@ export default function BuyerFaqSection() {
   return (
     <BackgroundThree>
       <section
+        id="faq"
         aria-labelledby="buyer-faq"
-        className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-20 font-dm text-[#1A1A1A] md:px-10 md:py-24 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-[72px]"
+        className="mx-auto grid scroll-mt-24 w-full max-w-6xl gap-8 px-4 py-20 font-dm text-[#1A1A1A] md:px-10 md:py-24 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-[72px]"
       >
         <div className="flex flex-col gap-4 px-1 md:gap-[18px]">
           <span className="text-xs font-extrabold tracking-[.14em] text-recommend-green md:text-[13px]">
