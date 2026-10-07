@@ -2,7 +2,7 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import { useStorefront, useCreateOrder } from "@/hooks";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useState } from "react";
 import { RemoteImage } from "@/components/atoms/RemoteImage";
 
@@ -33,7 +33,7 @@ export default function OrderPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<OrderFormValues>({
     defaultValues: {
@@ -47,8 +47,8 @@ export default function OrderPage() {
     },
   });
 
-  const fulfillmentType = watch("fulfillmentType");
-  const quantity = watch("quantity");
+  const fulfillmentType = useWatch({ control, name: "fulfillmentType" });
+  const quantity = useWatch({ control, name: "quantity" });
 
   if (isLoading) {
     return (
@@ -104,7 +104,7 @@ export default function OrderPage() {
       });
 
       // Redirect to Paystack checkout
-      window.location.href = result.authorizationUrl;
+      window.location.assign(result.authorizationUrl);
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : "Something went wrong. Please try again."

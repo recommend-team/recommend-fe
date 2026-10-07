@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Store,
@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks";
+import type { AuthUser } from "@/types";
 import AdminAlertSettings from "./AdminAlertSettings";
 import NotificationBell from "./NotificationBell";
 
@@ -57,10 +58,13 @@ export default function AdminSidebar() {
   const logout = useLogout();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close the drawer automatically when the route changes
-  useEffect(() => {
+  // Close the drawer when the route changes. Adjusted during render rather than in an
+  // effect, so the closed drawer is what renders — no flash of it open on the new page.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
     setMobileOpen(false);
-  }, [pathname]);
+  }
 
   const handleLogout = () => {
     logout();
@@ -69,74 +73,6 @@ export default function AdminSidebar() {
 
   const visibleItems = items.filter(
     (item) => !item.requireSuperAdmin || user?.role === "SUPER_ADMIN"
-  );
-
-  const Brand = () => (
-    <div className="flex items-center gap-2">
-      <Image
-        src="/logo-minimal.svg"
-        alt="Recommend"
-        width={32}
-        height={32}
-        className="rounded-full"
-      />
-      <div className="flex flex-col min-w-0">
-        <span className="text-sm font-bold font-dm text-recommend-orange truncate">
-          Recommend Admin
-        </span>
-        <span className="text-[10px] font-dm text-gray-500">
-          Ecosystem Management
-        </span>
-      </div>
-    </div>
-  );
-
-  const NavList = ({ onNavigate }: { onNavigate?: () => void }) => (
-    <nav className="flex flex-col gap-1">
-      {visibleItems.map((item) => {
-        const Icon = item.icon;
-        const active =
-          pathname === item.href ||
-          (item.href !== "/admin" && pathname.startsWith(item.href));
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-dm transition-colors ${
-              active
-                ? "bg-recommend-orange text-white font-bold"
-                : "text-gray-700 hover:bg-amber-100"
-            }`}
-          >
-            <Icon size={18} />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-
-  const UserFooter = () => (
-    <div className="border-t border-gray-200 pt-3">
-      {user && (
-        <div className="px-3 pb-3">
-          <p className="text-sm font-bold font-dm text-gray-800 truncate">
-            {user.firstName} {user.lastName}
-          </p>
-          <p className="text-xs font-dm text-gray-500 truncate">
-            {user.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
-          </p>
-        </div>
-      )}
-      <button
-        onClick={handleLogout}
-        className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-dm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
-      >
-        <LogOut size={18} />
-        <span>Log out</span>
-      </button>
-    </div>
   );
 
   return (
@@ -180,12 +116,14 @@ export default function AdminSidebar() {
                 <X size={20} />
               </button>
             </div>
-            <NavList onNavigate={() => setMobileOpen(false)} />
+            <NavList
+              items={visibleItems}
+              pathname={pathname}
+              onNavigate={() => setMobileOpen(false)}
+            />
             <div className="mt-auto">
-              {/* Outside UserFooter, which is redefined on every render and would remount
-                  this — re-checking push state on every navigation. */}
               <AdminAlertSettings />
-              <UserFooter />
+              <UserFooter user={user} onLogout={handleLogout} />
             </div>
           </aside>
         </div>
@@ -200,12 +138,103 @@ export default function AdminSidebar() {
           </Link>
           <NotificationBell />
         </div>
-        <NavList />
+        <NavList items={visibleItems} pathname={pathname} />
         <div className="mt-auto">
           <AdminAlertSettings />
-          <UserFooter />
+          <UserFooter user={user} onLogout={handleLogout} />
         </div>
       </aside>
     </>
+  );
+}
+
+// Declared outside the sidebar so React keeps them between renders — defined inside, they
+// were new components every render, remounting (and losing state) each time.
+
+function Brand() {
+  return (
+    <div className="flex items-center gap-2">
+      <Image
+        src="/logo-minimal.svg"
+        alt="Recommend"
+        width={32}
+        height={32}
+        className="rounded-full"
+      />
+      <div className="flex flex-col min-w-0">
+        <span className="text-sm font-bold font-dm text-recommend-orange truncate">
+          Recommend Admin
+        </span>
+        <span className="text-[10px] font-dm text-gray-500">
+          Ecosystem Management
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function NavList({
+  items: navItems,
+  pathname,
+  onNavigate,
+}: {
+  items: NavItem[];
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  return (
+    <nav className="flex flex-col gap-1">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const active =
+          pathname === item.href ||
+          (item.href !== "/admin" && pathname.startsWith(item.href));
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-dm transition-colors ${
+              active
+                ? "bg-recommend-orange text-white font-bold"
+                : "text-gray-700 hover:bg-amber-100"
+            }`}
+          >
+            <Icon size={18} />
+            <span>{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function UserFooter({
+  user,
+  onLogout,
+}: {
+  user: AuthUser | null | undefined;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="border-t border-gray-200 pt-3">
+      {user && (
+        <div className="px-3 pb-3">
+          <p className="text-sm font-bold font-dm text-gray-800 truncate">
+            {user.firstName} {user.lastName}
+          </p>
+          <p className="text-xs font-dm text-gray-500 truncate">
+            {user.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
+          </p>
+        </div>
+      )}
+      <button
+        onClick={onLogout}
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-dm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+      >
+        <LogOut size={18} />
+        <span>Log out</span>
+      </button>
+    </div>
   );
 }

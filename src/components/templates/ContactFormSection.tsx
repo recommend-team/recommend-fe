@@ -70,7 +70,7 @@ export default function ContactFormSection() {
     )}&body=${encodeURIComponent(body)}`;
 
     try {
-      window.location.href = mailto;
+      window.open(mailto, "_self");
       setStatus({ kind: "sent" });
       reset();
     } catch {

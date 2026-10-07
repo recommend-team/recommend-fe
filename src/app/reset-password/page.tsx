@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { KeyRound, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/molecules/Button";
@@ -33,13 +33,13 @@ function ResetPasswordInner() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  const password = watch("password");
+  const password = useWatch({ control, name: "password" });
 
   const onSubmit = async (values: FormValues) => {
     setStatus({ kind: "idle" });
