@@ -9,6 +9,15 @@ jobs:
     name: CD - Deploy
     runs-on: ubuntu-latest
 
+    # The build needs these: api.ts refuses a production build without an API URL, and
+    # links.ts disables the buttons without the app URLs. Set them as repository
+    # variables (Settings → Secrets and variables → Actions → Variables) to override;
+    # otherwise the build is checked against staging.
+    env:
+      NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://recommend-staging.onrender.com/api/v1' }}
+      NEXT_PUBLIC_CUSTOMER_APP_URL: ${{ vars.NEXT_PUBLIC_CUSTOMER_APP_URL || 'https://recommend-customer-app.vercel.app' }}
+      NEXT_PUBLIC_VENDOR_APP_URL: ${{ vars.NEXT_PUBLIC_VENDOR_APP_URL || 'https://recommend-vendors.vercel.app' }}
+
     steps:
       # 1. Checkout code
       - uses: actions/checkout@v4
