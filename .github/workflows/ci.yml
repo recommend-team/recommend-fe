@@ -24,9 +24,10 @@ jobs:
       # 1. Checkout code
       - uses: actions/checkout@v4
 
-      # 2. Install pnpm globally first
+      # 2. Install pnpm — the version pinned in package.json's "packageManager", so the
+      #    cache below finds the store this pnpm actually uses.
       - name: Install pnpm
-        run: npm install -g pnpm
+        uses: pnpm/action-setup@v4
 
       # 3. Setup Node.js with pnpm cache
       - uses: actions/setup-node@v4
@@ -47,7 +48,7 @@ jobs:
 
       # 6. Unit & Integration tests
       - name: Run Tests
-        run: pnpm test -- --coverage
+        run: pnpm test --coverage
 
       # 7. Build Next.js app
       - name: Build
