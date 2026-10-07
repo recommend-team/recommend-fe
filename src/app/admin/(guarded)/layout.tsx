@@ -1,6 +1,7 @@
 import AdminGuard from "@/components/organisms/AdminGuard";
 import AdminSidebar from "@/components/organisms/AdminSidebar";
 import { DialogProvider } from "@/components/organisms/DialogProvider";
+import AdminAlerts from "@/components/organisms/AdminAlerts";
 
 export const metadata = {
   title: "Recommend Admin",
@@ -21,6 +22,7 @@ export default function AdminGuardedLayout({
             {children}
           </main>
         </div>
+        <AdminAlerts />
       </DialogProvider>
     </AdminGuard>
   );

@@ -22,8 +22,6 @@ import * as Sentry from '@sentry/nextjs'
 
 const isProd = process.env.NODE_ENV === 'production'
 
-type LogLevel = 'info' | 'warn' | 'error'
-
 export const logger = {
   info: (message: string, extra?: unknown) => {
     if (isProd) {

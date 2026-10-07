@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { Text } from "../atoms/Text";
+import { ArrowRight } from "lucide-react";
 import { Button } from "../molecules/Button";
 import { BackgroundTwo } from "./BackgroundTwo";
+import { vendorApp } from "@/lib/links";
 
 export default function VendorHeroSection() {
   return (
@@ -40,12 +41,17 @@ export default function VendorHeroSection() {
             </Text>
 
             <div className="flex items-center gap-3">
-              <Link href="/vendor/signup">
-                <Button variant="gradient" text="Start Selling Today" />
-              </Link>
-              <Link href="/vendor/login">
-                <Button variant="green" text="Log in" />
-              </Link>
+              <Button
+                variant="green"
+                text="Start Selling Today"
+                href={vendorApp("/signup")}
+                icon={<ArrowRight size={18} />}
+              />
+              <Button
+                variant="gradient"
+                text="Log in"
+                href={vendorApp("/login")}
+              />
             </div>
           </div>
         </div>
@@ -65,12 +71,17 @@ export default function VendorHeroSection() {
             </Text>
 
             <div className="flex items-center gap-3">
-              <Link href="/vendor/signup">
-                <Button variant="gradient" text="Start Selling Today" />
-              </Link>
-              <Link href="/vendor/login">
-                <Button variant="green" text="Log in" />
-              </Link>
+              <Button
+                variant="green"
+                text="Start Selling Today"
+                href={vendorApp("/signup")}
+                icon={<ArrowRight size={18} />}
+              />
+              <Button
+                variant="gradient"
+                text="Log in"
+                href={vendorApp("/login")}
+              />
             </div>
           </div>
 
@@ -95,9 +106,12 @@ export default function VendorHeroSection() {
           <Text variant="hero-heading" color="orange" className="text-center">
             A spot for every seller.
           </Text>
-          <Link href="/vendor/signup">
-            <Button variant="green" text="Become a Vendor" />
-          </Link>
+          <Button
+            variant="green"
+            text="Become a Vendor"
+            href={vendorApp("/signup")}
+            icon={<ArrowRight size={18} />}
+          />
         </div>
 
       </div>

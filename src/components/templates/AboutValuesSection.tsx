@@ -27,7 +27,7 @@ const faqs = [
   {
     title: "Simple",
     description:
-      "No app. No forms. No fees. Just WhatsApp, the app 90% of Nigerians already have.",
+      "Just chat. No forms, no menus to dig through — say what you want and we handle the rest.",
   },
   {
     title: "Local",

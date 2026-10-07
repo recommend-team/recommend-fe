@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/molecules/Button";
 import { BackgroundTwo } from "@/components/templates/BackgroundTwo";
@@ -42,7 +42,7 @@ function RegisterFormInner() {
   const {
     register: field,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
@@ -58,7 +58,7 @@ function RegisterFormInner() {
     },
   });
 
-  const password = watch("password");
+  const password = useWatch({ control, name: "password" });
 
   const onSubmit = async (values: FormValues) => {
     setSubmitError(null);

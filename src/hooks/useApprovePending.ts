@@ -12,6 +12,7 @@ export function useApprovePending() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "pending"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "vendors"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "riders"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
     },
   });

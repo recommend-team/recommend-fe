@@ -13,7 +13,7 @@ export default function VendorPage() {
       <RegistrationTiersSection />
       <VendorFeaturesSection />
       <SlidingLocations />
-      <FaqSection />
+      <FaqSection audience="vendor" />
       <VendorCTASection />
       <FooterSection />
     </>

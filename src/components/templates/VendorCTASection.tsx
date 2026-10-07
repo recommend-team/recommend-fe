@@ -1,7 +1,8 @@
 import Image from "next/image";
-import Link from "next/link";
 import { Text } from "../atoms/Text";
+import { ArrowRight } from "lucide-react";
 import { Button } from "../molecules/Button";
+import { vendorApp } from "@/lib/links";
 
 export default function VendorCTASection() {
   return (
@@ -57,9 +58,12 @@ export default function VendorCTASection() {
           </div>
         </div>
 
-        <Link href="/vendor/signup">
-          <Button variant="green" text="Sign Up as a Vendor" />
-        </Link>
+        <Button
+          variant="green"
+          text="Sign Up as a Vendor"
+          href={vendorApp("/signup")}
+          icon={<ArrowRight size={18} />}
+        />
       </div>
     </section>
   );

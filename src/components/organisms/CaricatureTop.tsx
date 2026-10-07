@@ -1,3 +1,4 @@
+import { CUSTOMER_APP_URL } from "@/lib/links";
 import Image from "next/image";
 import { Text } from "../atoms/Text";
 import { Button } from "../molecules/Button";
@@ -66,6 +67,8 @@ const CaricatureTop = () => {
         <Button
           variant="gradient"
           text="Order now"
+          href={CUSTOMER_APP_URL}
+          external
           icon={<WhatsAppIcon />}
           className="hidden md:block"
         />

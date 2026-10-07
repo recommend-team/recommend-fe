@@ -1,3 +1,4 @@
+import { CUSTOMER_APP_URL, vendorApp } from "@/lib/links";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "../molecules/Button";
@@ -45,7 +46,13 @@ const MobileOnlyCaricatureSection = () => {
           </video>
         </div>
 
-        <Button variant="gradient" text="Order now" icon={<WhatsAppIcon />} />
+        <Button
+          variant="gradient"
+          text="Order now"
+          icon={<WhatsAppIcon />}
+          href={CUSTOMER_APP_URL}
+          external
+        />
       </div>
       {/* Caricature block 2 */}
       <div className="flex flex-col items-center gap-3">
@@ -73,13 +80,12 @@ const MobileOnlyCaricatureSection = () => {
           className="w-24 h-24 object-cover rounded-full"
         />
 
-        <Link href="/vendor/signup">
-          <Button
-            variant="gradient"
-            text="Join as a Business"
-            icon={<WhatsAppIcon />}
-          />
-        </Link>
+        <Button
+          variant="gradient"
+          text="Join as a Business"
+          icon={<WhatsAppIcon />}
+          href={vendorApp("/signup")}
+        />
       </div>
       {/* Caricature block 3 */}
       <div className="flex flex-col items-center gap-3">

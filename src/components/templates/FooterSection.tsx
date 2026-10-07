@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { Text } from "@/components/atoms/Text";
 import { NewsletterInput } from "@/components/molecules/NewsletterInput";
-import { FooterNavColumn } from "@/components/molecules/FooterNavColumn";
+import { FooterNavColumn, type FooterItem } from "@/components/molecules/FooterNavColumn";
+import { SOCIAL_LINKS } from "@/lib/social";
 
 const neighborhoods = [
   "Lekki",
@@ -15,12 +16,18 @@ const neighborhoods = [
   "Victoria Arobieke Street",
 ];
 
-const company = [
-  "Vendors", "Riders", "About", "FAQs",
-  "Blog", "Contact", "Terms of Use", "Privacy Policy",
+// Pages that exist link to them. Blog, Terms of Use and Privacy Policy have no pages yet,
+// so they are listed as text rather than as links to nowhere.
+const company: FooterItem[] = [
+  { label: "Vendors", href: "/vendor" },
+  { label: "Riders", href: "/rider" },
+  { label: "About", href: "/about" },
+  { label: "FAQs", href: "/#faq" },
+  "Blog",
+  { label: "Contact", href: "/contact" },
+  "Terms of Use",
+  "Privacy Policy",
 ];
-
-const social = ["Instagram", "X", "LinkedIn", "Tiktok"];
 
 export default function FooterSection() {
   return (
@@ -34,7 +41,7 @@ export default function FooterSection() {
           <div className="flex flex-col gap-6 max-w-125.25">
 
             <Text variant="section-heading-48" color="orange">
-              Anything you need, delivered right on WhatsApp.
+              Anything you need, from vendors near you.
             </Text>
 
             <NewsletterInput />
@@ -50,7 +57,7 @@ export default function FooterSection() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-12">
             <FooterNavColumn heading="Neighborhoods" links={neighborhoods} showStar />
             <FooterNavColumn heading="Company" links={company} />
-            <FooterNavColumn heading="Social" links={social} />
+            <FooterNavColumn heading="Social" links={SOCIAL_LINKS} />
           </div>
 
         </div>

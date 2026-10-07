@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Text } from "../atoms/Text";
+import { ArrowRight } from "lucide-react";
 import { Button } from "../molecules/Button";
 import { BackgroundThree } from "./BackgroundThree";
+import { vendorApp } from "@/lib/links";
 import type { VendorType } from "@/types";
 
 interface Tier {
@@ -117,12 +118,16 @@ export default function RegistrationTiersSection() {
                     </div>
                   </div>
 
-                  <Link
-                    href={`/vendor/signup/register?tier=${tier.type}`}
-                    className="mt-auto"
-                  >
-                    <Button variant="green" text={tier.cta} />
-                  </Link>
+                  {/* `?type=` pre-selects step one of the vendor app's wizard, so
+                      picking a tier here is not a choice they make twice. */}
+                  <div className="mt-auto">
+                    <Button
+                      variant="green"
+                      text={tier.cta}
+                      href={vendorApp(`/signup?type=${tier.type}`)}
+                      icon={<ArrowRight size={18} />}
+                    />
+                  </div>
                 </div>
               </div>
             ))}

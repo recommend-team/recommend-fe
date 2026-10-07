@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Recommend — Order from local vendors on WhatsApp",
+  title: "Recommend — Order from vendors near you, just by chatting",
   description:
-    "Recommend connects customers with local vendors for fast ordering and delivery, powered by WhatsApp.",
+    "Tell Recommend what you want. We find it from vendors near you, take payment securely, and deliver it to your door.",
 };
 
 export default function RootLayout({

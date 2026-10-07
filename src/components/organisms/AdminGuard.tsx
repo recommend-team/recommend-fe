@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCurrentUser } from "@/hooks";
 import type { AdminRole, AuthUser } from "@/types";
@@ -13,6 +13,9 @@ function isAdmin(user: AuthUser | null | undefined): boolean {
 function isSuperAdmin(user: AuthUser | null | undefined): boolean {
   return user?.role === "SUPER_ADMIN";
 }
+
+/** Nothing to listen to: being in the browser never changes once true. */
+const subscribeNothing = () => () => undefined;
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -32,11 +35,13 @@ export default function AdminGuard({ children, requireRole }: AdminGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { data: user, isLoading } = useCurrentUser();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // False while server-rendering and hydrating, true once in the browser — where the
+  // session in localStorage can be read. Without an effect that sets state on mount.
+  const mounted = useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false
+  );
 
   const allowed = requireRole === "SUPER_ADMIN" ? isSuperAdmin(user) : isAdmin(user);
 

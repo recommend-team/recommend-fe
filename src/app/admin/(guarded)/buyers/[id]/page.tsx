@@ -188,9 +188,8 @@ export default function BuyerDetailPage({
             <table className="w-full text-sm font-dm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
-                  <th className="py-2 pr-4">Product</th>
+                  <th className="py-2 pr-4">Items</th>
                   <th className="py-2 pr-4">Vendor</th>
-                  <th className="py-2 pr-4">Qty</th>
                   <th className="py-2 pr-4">Total</th>
                   <th className="py-2 pr-4">Status</th>
                   <th className="py-2 pr-4">Date</th>
@@ -200,13 +199,24 @@ export default function BuyerDetailPage({
                 {orders.slice(0, 10).map((o) => (
                   <tr key={o.id} className="border-b border-gray-100">
                     <td className="py-2 pr-4 text-gray-800">
-                      {o.product.name}
+                      <div className="flex flex-col gap-0.5">
+                        {o.items.map((item) => (
+                          <span key={item.id}>
+                            <span className="font-bold text-gray-400">
+                              {item.quantity}×{" "}
+                            </span>
+                            {item.productName}
+                          </span>
+                        ))}
+                        {o.items.length === 0 && (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2 pr-4 text-gray-700">
                       {o.vendor.businessName ??
                         `${o.vendor.firstName} ${o.vendor.lastName}`}
                     </td>
-                    <td className="py-2 pr-4 text-gray-700">{o.quantity}</td>
                     <td className="py-2 pr-4 font-bold text-gray-900">
                       {formatNaira(o.totalAmount)}
                     </td>

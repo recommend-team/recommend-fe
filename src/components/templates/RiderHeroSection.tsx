@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Text } from "../atoms/Text";
+import { Button } from "../molecules/Button";
+import { StoreBadges } from "../molecules/StoreBadges";
 import { BackgroundTwo } from "./BackgroundTwo";
 
 export default function RiderHeroSection() {
@@ -40,29 +42,15 @@ export default function RiderHeroSection() {
               Join Recommend as a rider
             </Text>
 
-            <div className="flex flex-col gap-3 w-full">
-              <Link
-                href="#"
-                aria-label="Download on Google Play (coming soon)"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-[#1A1A1A] bg-white hover:bg-gray-100 transition-colors w-fit"
-              >
-                <Image src="/svg/google-play-icon.svg" alt="" width={18} height={18} aria-hidden="true" />
-                <span className="font-bold text-sm font-dm text-[#1A1A1A]">Download on Google Play</span>
-              </Link>
+            {/* Sign-up first: it works today. The store apps are not out yet. */}
+            <Button
+              variant="orange"
+              text="Become a rider"
+              href="/rider/signup"
+              icon={<ArrowRight size={18} />}
+            />
 
-              <Link
-                href="#"
-                aria-label="Download on App Store (coming soon)"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-recommend-green hover:bg-recommend-green-hover transition-colors w-fit"
-              >
-                <Image src="/svg/apple-icon.svg" alt="" width={18} height={18} aria-hidden="true" />
-                <span className="font-bold text-sm font-dm text-white">Download on App Store</span>
-              </Link>
-            </div>
-
-            <Link href="/rider/signup" className="text-sm font-dm text-recommend-orange font-bold underline w-fit">
-              Or register as a rider here →
-            </Link>
+            <StoreBadges className="flex-col" />
           </div>
         </div>
 
@@ -82,30 +70,15 @@ export default function RiderHeroSection() {
               Join Recommend as a rider
             </Text>
 
-            {/* TODO: replace href="#" with real store links once apps are published */}
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="#"
-                aria-label="Download on Google Play (coming soon)"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-[#1A1A1A] bg-white hover:bg-gray-100 transition-colors"
-              >
-                <Image src="/svg/google-play-icon.svg" alt="" width={18} height={18} aria-hidden="true" />
-                <span className="font-bold text-sm font-dm text-[#1A1A1A]">Download on Google Play</span>
-              </Link>
+            {/* Sign-up first: it works today. The store apps are not out yet. */}
+            <Button
+              variant="orange"
+              text="Become a rider"
+              href="/rider/signup"
+              icon={<ArrowRight size={18} />}
+            />
 
-              <Link
-                href="#"
-                aria-label="Download on App Store (coming soon)"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-recommend-green hover:bg-recommend-green-hover transition-colors"
-              >
-                <Image src="/svg/apple-icon.svg" alt="" width={18} height={18} aria-hidden="true" />
-                <span className="font-bold text-sm font-dm text-white">Download on App Store</span>
-              </Link>
-            </div>
-
-            <Link href="/rider/signup" className="text-sm font-dm text-recommend-orange font-bold underline w-fit">
-              Or register as a rider here →
-            </Link>
+            <StoreBadges />
           </div>
 
           {/* Right: rider image — left-aligned within column, shifted left to touch text column */}

@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useStorefront } from "@/hooks";
-import Image from "next/image";
+import { RemoteImage } from "@/components/atoms/RemoteImage";
 import Link from "next/link";
 
 function formatPrice(price: number): string {
@@ -51,7 +51,7 @@ export default function StorefrontPage() {
       {/* Banner */}
       <div className="relative w-full h-44 bg-gray-100">
         {vendor.businessBannerUrl ? (
-          <Image
+          <RemoteImage
             src={vendor.businessBannerUrl}
             alt={vendor.businessName ?? "Store banner"}
             fill
@@ -69,7 +69,7 @@ export default function StorefrontPage() {
         {/* Logo overlay */}
         {vendor.businessLogoUrl && (
           <div className="absolute -bottom-6 left-4 w-14 h-14 rounded-full border-2 border-white bg-white overflow-hidden shadow-md">
-            <Image
+            <RemoteImage
               src={vendor.businessLogoUrl}
               alt="Logo"
               fill
@@ -132,7 +132,7 @@ export default function StorefrontPage() {
                 {/* Product image */}
                 <div className="w-20 h-20 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 relative">
                   {product.imageUrl ? (
-                    <Image
+                    <RemoteImage
                       src={product.imageUrl}
                       alt={product.name}
                       fill

@@ -23,14 +23,19 @@ import {
   ExternalLink,
   Tag,
   MessageCircle,
+  Truck,
+  StickyNote,
 } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
+import Paginator from "@/components/atoms/admin/Paginator";
 import {
   useUserDetail,
   useApprovePending,
   useRejectPending,
   useSuspendUser,
   useActivateUser,
+  useRider,
+  useAdminTransactions,
 } from "@/hooks";
 import { useConfirm, usePrompt } from "@/components/organisms/DialogProvider";
 
@@ -56,6 +61,8 @@ export default function RiderDetailPage({
   const confirm = useConfirm();
   const prompt = usePrompt();
   const rider = useUserDetail(id);
+  // The delivery counts and admin's note, which the generic user detail doesn't carry.
+  const stats = useRider(id);
   const approve = useApprovePending();
   const reject = useRejectPending();
   const suspend = useSuspendUser();
@@ -113,6 +120,8 @@ export default function RiderDetailPage({
   }
 
   const r = rider.data;
+  // Riders added without an email carry a placeholder, which is not an address.
+  const email = r.email?.endsWith("@riders.recommend.ng") ? null : r.email;
   if (r.role !== "RIDER") {
     return (
       <div className="flex flex-col gap-3">
@@ -162,7 +171,9 @@ export default function RiderDetailPage({
             </h1>
             <StatusPill status={r.status} />
           </div>
-          <p className="text-sm font-dm text-gray-500 truncate">{r.email}</p>
+          <p className="text-sm font-dm text-gray-500 truncate">
+            {email ?? "No email"}
+          </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Chip
               icon={Tag}
@@ -171,11 +182,20 @@ export default function RiderDetailPage({
               }
               color="orange"
             />
-            <Chip
-              icon={r.isEmailVerified ? ShieldCheck : ShieldAlert}
-              label={r.isEmailVerified ? "Email verified" : "Email unverified"}
-              color={r.isEmailVerified ? "green" : "gray"}
-            />
+            {stats.data && (
+              <Chip
+                icon={Truck}
+                label={`${stats.data.activeDeliveries} in progress · ${stats.data.completedDeliveries} delivered`}
+                color={stats.data.activeDeliveries > 0 ? "green" : "gray"}
+              />
+            )}
+            {email && (
+              <Chip
+                icon={r.isEmailVerified ? ShieldCheck : ShieldAlert}
+                label={r.isEmailVerified ? "Email verified" : "Email unverified"}
+                color={r.isEmailVerified ? "green" : "gray"}
+              />
+            )}
             {r.bvn && (
               <Chip
                 icon={ShieldCheck}
@@ -272,8 +292,21 @@ export default function RiderDetailPage({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <InfoCard title="Contact" icon={User}>
           <InfoRow icon={User} label="Name" value={displayName} />
-          <InfoRow icon={Mail} label="Email" value={r.email} />
-          <InfoRow icon={Phone} label="Phone" value={r.phoneNumber} />
+          <InfoRow icon={Mail} label="Email" value={email} emptyHint="No email" />
+          <InfoRow
+            icon={Phone}
+            label="Phone"
+            value={
+              r.phoneNumber ? (
+                <a href={`tel:${r.phoneNumber}`} className="hover:text-recommend-green">
+                  {r.phoneNumber}
+                </a>
+              ) : null
+            }
+          />
+          {stats.data?.riderNote && (
+            <InfoRow icon={StickyNote} label="Note" value={stats.data.riderNote} />
+          )}
           <InfoRow
             icon={Calendar}
             label="Joined"
@@ -354,7 +387,107 @@ export default function RiderDetailPage({
           )}
         </InfoCard>
       </div>
+
+      <RiderDeliveries riderId={r.id} />
     </div>
+  );
+}
+
+const DELIVERY_PAGE_SIZE = 10;
+
+/**
+ * What this rider has been given to carry, newest first: the ones in progress to follow
+ * up on (with the buyer's number and, once on its way, the code), the rest as a record.
+ */
+function RiderDeliveries({ riderId }: { riderId: string }) {
+  const [page, setPage] = useState(1);
+  const deliveries = useAdminTransactions({
+    riderId,
+    page,
+    limit: DELIVERY_PAGE_SIZE,
+  });
+  const rows = deliveries.data?.items ?? [];
+
+  return (
+    <InfoCard title="Deliveries" icon={Truck}>
+      {deliveries.isError && (
+        <p className="text-sm font-dm text-red-600">Couldn&apos;t load deliveries.</p>
+      )}
+      {deliveries.isLoading ? (
+        <p className="text-sm font-dm text-gray-400">Loading deliveries…</p>
+      ) : rows.length === 0 ? (
+        <EmptyBlock
+          icon={Truck}
+          message="No deliveries yet. Assign this rider from Transactions."
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm font-dm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                <th className="py-2 pr-4">Order</th>
+                <th className="py-2 pr-4">Buyer</th>
+                <th className="py-2 pr-4">Deliver to</th>
+                <th className="py-2 pr-4">Status</th>
+                <th className="py-2 pr-4">Assigned</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((t) => (
+                <tr key={t.id} className="border-b border-gray-100 align-top">
+                  <td className="py-2.5 pr-4">
+                    <Link
+                      href={`/admin/transactions?search=${encodeURIComponent(t.reference)}`}
+                      className="font-mono text-xs text-gray-700 hover:text-recommend-orange"
+                    >
+                      {t.reference}
+                    </Link>
+                    <span className="block text-xs text-gray-500">
+                      {t.vendors.map((v) => v.vendorName ?? "Unknown").join(", ")}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    <span className="block text-gray-800">{t.buyerName}</span>
+                    <a
+                      href={`tel:${t.buyerPhone}`}
+                      className="text-xs text-gray-500 hover:text-recommend-green"
+                    >
+                      {t.buyerPhone}
+                    </a>
+                    {t.status === "DISPATCHED" && t.deliveryCode && (
+                      <span className="mt-1 block font-mono text-xs font-bold tracking-[0.15em] text-recommend-green">
+                        Code {t.deliveryCode}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-4 max-w-xs text-gray-700">
+                    {t.deliveryAddress ?? "—"}
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    <StatusPill status={t.status} />
+                  </td>
+                  <td className="py-2.5 pr-4 text-gray-500">
+                    {t.riderAssignedAt
+                      ? new Date(t.riderAssignedAt).toLocaleString()
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {deliveries.data && deliveries.data.total > DELIVERY_PAGE_SIZE && (
+        <Paginator
+          page={page}
+          total={deliveries.data.total}
+          pageSize={DELIVERY_PAGE_SIZE}
+          loadedOnThisPage={rows.length}
+          onChange={setPage}
+          label="deliveries"
+        />
+      )}
+    </InfoCard>
   );
 }
 

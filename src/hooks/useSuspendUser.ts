@@ -11,6 +11,7 @@ export function useSuspendUser() {
     mutationFn: suspendUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "vendors"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "riders"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "buyers"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "pending"] });
     },

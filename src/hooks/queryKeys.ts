@@ -1,9 +1,10 @@
 import type {
   BuyerListFilters,
   OrderListFilters,
+  RiderListFilters,
+  TransactionListFilters,
   VendorListFilters,
 } from "@/types";
-import type { ProductListFilters, VendorOrdersFilters } from "@/services";
 
 export const queryKeys = {
   storefront: (slug: string) => ["storefront", slug] as const,
@@ -19,14 +20,11 @@ export const queryKeys = {
   vendorDetail: (id: string) => ["admin", "vendors", id] as const,
   adminOrders: (filters: OrderListFilters) =>
     ["admin", "orders", filters] as const,
+  adminTransactions: (filters: TransactionListFilters) =>
+    ["admin", "transactions", filters] as const,
   buyers: (filters: BuyerListFilters) =>
     ["admin", "buyers", filters] as const,
   buyerDetail: (id: string) => ["admin", "buyers", id] as const,
-  // Vendor-facing
-  myVendorProfile: () => ["vendor", "profile"] as const,
-  myProducts: (filters: ProductListFilters) =>
-    ["vendor", "products", filters] as const,
-  myVendorOrders: (filters: VendorOrdersFilters) =>
-    ["vendor", "orders", filters] as const,
-  myVendorEarnings: () => ["vendor", "earnings"] as const,
+  riders: (filters: RiderListFilters) => ["admin", "riders", filters] as const,
+  rider: (id: string) => ["admin", "riders", id] as const,
 } as const;

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Text } from "../atoms/Text";
 import { Button } from "../molecules/Button";
 import WhatsAppIcon from "../atoms/WhatsAppIcon";
+import { vendorApp } from "@/lib/links";
 
 const CaricatureBottom = () => {
   return (
@@ -127,13 +128,14 @@ const CaricatureBottom = () => {
           className="w-10 md:w-16 lg:w-24 h-auto"/>
           </div>
 
-        <Link href="/vendor/signup" className="hidden md:block">
+        <div className="hidden md:block">
           <Button
             variant="gradient"
             text="Join as a Business"
             icon={<WhatsAppIcon />}
+            href={vendorApp("/signup")}
           />
-        </Link>
+        </div>
       </div>
 
     </div>

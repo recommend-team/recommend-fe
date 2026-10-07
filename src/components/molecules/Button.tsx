@@ -6,9 +6,23 @@ import { cn } from "@/lib/utilities";
 type ButtonProps = {
   text: string;
   icon?: ReactNode;
-  variant: "green" | "gradient";
+  /** green: buyers and vendors. orange: riders. gradient: secondary actions. */
+  variant: "green" | "orange" | "gradient";
   disabled?: boolean;
   onClick?: () => void;
+  /**
+   * Where the button goes.
+   *
+   * Renders a real anchor rather than a click handler, so it can be middle-clicked,
+   * opened in a new tab, and announced as a link by a screen reader.
+   *
+   * Passing `href=""` counts as *meant to link somewhere, but the value never arrived* —
+   * typically an unset environment variable — and renders the button disabled. Better a
+   * button that admits it does nothing than one that looks live and swallows the tap.
+   */
+  href?: string;
+  /** Opens in a new tab. For destinations that are not this site. */
+  external?: boolean;
   className?: string;
 };
 
@@ -18,13 +32,24 @@ const Button = ({
   variant,
   disabled = false,
   onClick,
+  href,
+  external = false,
   className,
 }: ButtonProps) => {
+  const isLink = typeof href === "string" && href.length > 0;
+  const isDisabled = disabled || (href !== undefined && !isLink);
+
   const variants = {
     green: {
       cardVariant: "none" as const,
       bg: "bg-recommend-green text-white hover:bg-recommend-green-hover active:bg-recommend-green-active",
-      disabledBg: "bg-recommend-green opacity-50 cursor-not-allowed",
+      // White text in every state — the disabled style used to leave it black on faded green.
+      disabledBg: "bg-recommend-green text-white opacity-60 cursor-not-allowed",
+    },
+    orange: {
+      cardVariant: "none" as const,
+      bg: "bg-recommend-orange text-white hover:bg-[#dc4f1a] active:bg-[#c44514]",
+      disabledBg: "bg-recommend-orange text-white opacity-60 cursor-not-allowed",
     },
     gradient: {
       cardVariant: "gradient" as const,
@@ -33,34 +58,58 @@ const Button = ({
     },
   };
 
-  const currentStyles = disabled
+  const currentStyles = isDisabled
     ? variants[variant].disabledBg
     : variants[variant].bg;
 
+  const inner = (
+    <>
+      <span className="whitespace-nowrap font-bold">{text}</span>
+      {icon && <span className="flex items-center justify-center">{icon}</span>}
+    </>
+  );
+
+  const innerClassName =
+    "flex w-full items-center justify-center gap-2 px-3 font-medium outline-none";
+
   return (
-    <div className="flex"> 
-    <Card
-      variant={variants[variant].cardVariant}
-      rounded="sm"
-      padding="small"
-      hoverable={!disabled}
-      className={cn(
-        "transition-all duration-200 active:scale-95 select-none cursor-pointer",
-        currentStyles,
-        className,
-      )}
-    >
-      <button
-        disabled={disabled}
-        onClick={onClick}
-        className="flex w-full items-center justify-center gap-2 px-3 font-medium outline-none"
-      >
-        <span className="whitespace-nowrap font-bold">{text}</span>
-                {icon && (
-          <span className="flex items-center justify-center">{icon}</span>
+    <div className="flex">
+      <Card
+        variant={variants[variant].cardVariant}
+        rounded="sm"
+        padding="small"
+        hoverable={!isDisabled}
+        className={cn(
+          "transition-all duration-200 active:scale-95 select-none",
+          isDisabled ? "cursor-not-allowed" : "cursor-pointer",
+          currentStyles,
+          className,
         )}
-      </button>
-    </Card></div>
+      >
+        {isLink && !disabled ? (
+          <a
+            href={href}
+            onClick={onClick}
+            {...(external
+              ? // noreferrer alongside noopener: the destination has no business
+                // knowing which page sent the buyer.
+                { target: "_blank", rel: "noopener noreferrer" }
+              : {})}
+            className={innerClassName}
+          >
+            {inner}
+          </a>
+        ) : (
+          <button
+            disabled={isDisabled}
+            onClick={onClick}
+            className={innerClassName}
+          >
+            {inner}
+          </button>
+        )}
+      </Card>
+    </div>
   );
 };
 

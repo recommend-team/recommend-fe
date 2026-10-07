@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import { StoreBadges } from "../molecules/StoreBadges";
 import { Text } from "../atoms/Text";
 
 export default function RiderCTASection() {
@@ -58,42 +58,7 @@ export default function RiderCTASection() {
           </div>
         </div>
 
-        {/* TODO: replace href="#" with real store links once apps are published */}
-        <div className="flex flex-wrap gap-3 justify-center">
-          <Link
-            href="#"
-            aria-label="Download on Google Play (coming soon)"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-[#1A1A1A] bg-white hover:bg-gray-100 transition-colors"
-          >
-            <Image
-              src="/svg/google-play-icon.svg"
-              alt=""
-              width={18}
-              height={18}
-              aria-hidden="true"
-            />
-            <span className="font-bold text-sm font-dm text-[#1A1A1A]">
-              Download on Google Play
-            </span>
-          </Link>
-
-          <Link
-            href="#"
-            aria-label="Download on App Store (coming soon)"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-recommend-green hover:bg-recommend-green-hover transition-colors"
-          >
-            <Image
-              src="/svg/apple-icon.svg"
-              alt=""
-              width={18}
-              height={18}
-              aria-hidden="true"
-            />
-            <span className="font-bold text-sm font-dm text-white">
-              Download on App Store
-            </span>
-          </Link>
-        </div>
+        <StoreBadges className="justify-center" />
       </div>
     </section>
   );

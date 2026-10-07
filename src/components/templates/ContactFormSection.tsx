@@ -7,9 +7,10 @@ import { useForm } from "react-hook-form";
 import { Text } from "../atoms/Text";
 import { Button } from "../molecules/Button";
 import { BackgroundTwo } from "./BackgroundTwo";
+import { SOCIAL_LINKS } from "@/lib/social";
 
-const CONTACT_EMAIL = "hello@recommend.ng";
-const CONTACT_PHONE = "+234 800 000 0000"; // TODO: replace with real support line
+const CONTACT_EMAIL = "contacts.recommend@gmail.com";
+const CONTACT_PHONE = "+234 814 306 7676"; // TODO: replace with real support line
 const CONTACT_LOCATION = "Lagos, Nigeria";
 
 const subjects = [
@@ -69,7 +70,7 @@ export default function ContactFormSection() {
     )}&body=${encodeURIComponent(body)}`;
 
     try {
-      window.location.href = mailto;
+      window.open(mailto, "_self");
       setStatus({ kind: "sent" });
       reset();
     } catch {
@@ -121,10 +122,11 @@ export default function ContactFormSection() {
                   label="Social"
                   value={
                     <div className="flex flex-col">
-                      <SocialLink href="#">Instagram</SocialLink>
-                      <SocialLink href="#">X</SocialLink>
-                      <SocialLink href="#">LinkedIn</SocialLink>
-                      <SocialLink href="#">Tiktok</SocialLink>
+                      {SOCIAL_LINKS.map(({ label, href }) => (
+                        <SocialLink key={label} href={href}>
+                          {label}
+                        </SocialLink>
+                      ))}
                     </div>
                   }
                 />
@@ -305,11 +307,13 @@ function SocialLink({
   children: React.ReactNode;
 }) {
   return (
-    <Link
+    <a
       href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       className="text-gray-800 hover:text-recommend-orange transition-colors"
     >
       {children}
-    </Link>
+    </a>
   );
 }

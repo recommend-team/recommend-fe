@@ -111,6 +111,66 @@
   }
 }
 
+/* ─── Order flow (landing → OrderFlowPhone) ────────────────────────────────────
+   Two layers per change: the screen arriving and the one leaving. */
+
+/* Slide: the new screen comes in from the side it is coming from. */
+.flow-slide-in-next { animation: flow-slide-in-next 520ms cubic-bezier(.22,.8,.24,1) both; }
+.flow-slide-out-next { animation: flow-slide-out-next 520ms cubic-bezier(.22,.8,.24,1) both; }
+.flow-slide-in-prev { animation: flow-slide-in-prev 520ms cubic-bezier(.22,.8,.24,1) both; }
+.flow-slide-out-prev { animation: flow-slide-out-prev 520ms cubic-bezier(.22,.8,.24,1) both; }
+
+@keyframes flow-slide-in-next { from { transform: translateX(100%); box-shadow: -12px 0 30px rgba(0,0,0,.18); } to { transform: none; box-shadow: none; } }
+@keyframes flow-slide-out-next { to { transform: translateX(-30%); filter: brightness(.85); } }
+@keyframes flow-slide-in-prev { from { transform: translateX(-100%); box-shadow: 12px 0 30px rgba(0,0,0,.18); } to { transform: none; box-shadow: none; } }
+@keyframes flow-slide-out-prev { to { transform: translateX(30%); filter: brightness(.85); } }
+
+/* Book: pages hinge on their left edge. Forward, the page on top turns away and
+   uncovers the next; back, the earlier page swings shut over the current one. */
+.flow-page-turn-away {
+  transform-origin: left center;
+  backface-visibility: hidden;
+  animation: flow-page-turn-away 700ms cubic-bezier(.645,.045,.355,1) both;
+}
+.flow-page-turn-back {
+  transform-origin: left center;
+  backface-visibility: hidden;
+  animation: flow-page-turn-back 700ms cubic-bezier(.645,.045,.355,1) both;
+}
+.flow-page-under { animation: flow-page-under 700ms ease-out both; }
+.flow-page-dim { animation: flow-page-dim 700ms ease-in both; }
+
+@keyframes flow-page-turn-away {
+  from { transform: rotateY(0deg); box-shadow: 0 0 0 rgba(0,0,0,0); filter: brightness(1); }
+  60% { box-shadow: 18px 0 40px rgba(0,0,0,.28); }
+  to { transform: rotateY(-105deg); box-shadow: 30px 0 50px rgba(0,0,0,.1); filter: brightness(.7); }
+}
+@keyframes flow-page-turn-back {
+  from { transform: rotateY(-105deg); box-shadow: 30px 0 50px rgba(0,0,0,.1); filter: brightness(.7); }
+  40% { box-shadow: 18px 0 40px rgba(0,0,0,.28); }
+  to { transform: rotateY(0deg); box-shadow: 0 0 0 rgba(0,0,0,0); filter: brightness(1); }
+}
+@keyframes flow-page-under { from { filter: brightness(.82); } to { filter: brightness(1); } }
+@keyframes flow-page-dim { to { filter: brightness(.82); } }
+
+/* A sheet (vendor menu, your orders) rises once its screen has arrived. */
+.flow-sheet-up { animation: flow-sheet-up 460ms cubic-bezier(.22,.8,.24,1) 260ms both; }
+.flow-scrim-in { animation: flow-scrim-in 460ms ease-out 200ms both; }
+@keyframes flow-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes flow-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="flow-slide-"],
+  [class*="flow-page-"],
+  .flow-sheet-up,
+  .flow-scrim-in {
+    animation: none;
+  }
+  .flow-leaving {
+    display: none;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
