@@ -67,7 +67,7 @@ export function AboutStory() {
       <figure className="mx-auto flex w-full max-w-[340px] flex-col gap-3.5">
         <div className="relative aspect-[17/20] overflow-hidden rounded-[28px] bg-gradient-to-b from-[#0F4A2E] to-[#1b8f57]">
           <Image
-            src="/images/about/chanor-james.webp"
+            src="/images/about/chanor-james-portrait.webp"
             alt="Chanor James, founder of Recommend"
             fill
             sizes="(min-width: 1024px) 340px, 90vw"
