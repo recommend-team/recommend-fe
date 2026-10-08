@@ -7,6 +7,7 @@ export type ConversationState =
   | "SELECTING_ITEM"
   | "COLLECTING_NAME"
   | "COLLECTING_PHONE"
+  | "COLLECTING_EMAIL"
   | "COLLECTING_FULFILLMENT"
   | "COLLECTING_ADDRESS"
   | "CONFIRMING_ORDER"
@@ -37,6 +38,8 @@ export interface ConversationSummary {
   state: ConversationState;
   buyerName: string | null;
   buyerPhone: string | null;
+  /** Proved with an emailed code — the buyer signed in. Null for a guest. */
+  verifiedEmail: string | null;
   lastMessageAt: string | null;
   lastMessage: string | null;
   heldByAdminId: string | null;
@@ -58,6 +61,8 @@ export interface ConversationDetail {
   state: ConversationState;
   buyerName: string | null;
   buyerPhone: string | null;
+  /** Proved with an emailed code — the buyer signed in. Null for a guest. */
+  verifiedEmail: string | null;
   heldByAdminId: string | null;
   heldAt: string | null;
   lastAdminMessageAt: string | null;

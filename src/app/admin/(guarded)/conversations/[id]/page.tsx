@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
+  BadgeCheck,
   Bot,
   Hand,
   Send,
@@ -31,6 +32,7 @@ const STATE_LABELS: Record<string, string> = {
   SELECTING_ITEM: "Choosing an item",
   COLLECTING_NAME: "Giving their name",
   COLLECTING_PHONE: "Giving their number",
+  COLLECTING_EMAIL: "Giving their email",
   COLLECTING_FULFILLMENT: "Delivery or pickup",
   COLLECTING_ADDRESS: "Giving an address",
   CONFIRMING_ORDER: "Confirming the order",
@@ -59,6 +61,16 @@ export default function AdminConversationPage() {
 
   const { data: me } = useCurrentUser();
   const { data: conversation, isLoading, isError } = useConversation(id);
+  const router = useRouter();
+
+  // An old link — an alert, a bookmark — to a conversation folded into a signed-in
+  // buyer's thread opens that thread. Move the address to it, so taking it over and
+  // replying act on the conversation the buyer is actually in.
+  useEffect(() => {
+    if (conversation && id && conversation.id !== id) {
+      router.replace(`/admin/conversations/${conversation.id}`);
+    }
+  }, [conversation, id, router]);
   const take = useTakeConversation();
   const release = useReleaseConversation();
   const send = useSendConversationMessage();
@@ -130,12 +142,23 @@ export default function AdminConversationPage() {
 
         <div className="min-w-0 flex-1">
           <p className="truncate font-dm font-bold text-gray-900">
-            {conversation.buyerName ?? "Unnamed buyer"}
+            {conversation.buyerName ??
+              conversation.verifiedEmail ??
+              "Unnamed buyer"}
           </p>
           <p className="truncate font-dm text-xs text-gray-500">
             {conversation.buyerPhone ?? "No number yet"} ·{" "}
             {STATE_LABELS[conversation.state] ?? conversation.state}
           </p>
+          {conversation.verifiedEmail && (
+            <p
+              className="mt-0.5 flex min-w-0 items-center gap-1 font-dm text-xs text-recommend-green"
+              title="The buyer proved this email with a code"
+            >
+              <BadgeCheck className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{conversation.verifiedEmail}</span>
+            </p>
+          )}
         </div>
 
         {heldByOther && (
