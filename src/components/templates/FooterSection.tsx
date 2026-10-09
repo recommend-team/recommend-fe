@@ -16,8 +16,8 @@ const neighborhoods = [
   "Victoria Arobieke Street",
 ];
 
-// Pages that exist link to them. Blog, Terms of Use and Privacy Policy have no pages yet,
-// so they are listed as text rather than as links to nowhere.
+// Pages that exist link to them. Blog has no page yet, so it is listed as text rather than
+// as a link to nowhere.
 const company: FooterItem[] = [
   { label: "Vendors", href: "/vendor" },
   { label: "Riders", href: "/rider" },
@@ -25,8 +25,8 @@ const company: FooterItem[] = [
   { label: "FAQs", href: "/#faq" },
   "Blog",
   { label: "Contact", href: "/contact" },
-  "Terms of Use",
-  "Privacy Policy",
+  { label: "Terms of Use", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
 ];
 
 export default function FooterSection() {

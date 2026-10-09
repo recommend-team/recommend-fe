@@ -41,7 +41,9 @@ describe("social links", () => {
     expect(container.querySelector('a[href="#"]')).toBeNull();
     expect(screen.getByRole("link", { name: "Vendors" })).toHaveAttribute("href", "/vendor");
     expect(screen.getByRole("link", { name: "FAQs" })).toHaveAttribute("href", "/#faq");
+    expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
     // No page yet — listed, not linked.
-    expect(within(container).queryByRole("link", { name: "Privacy Policy" })).toBeNull();
+    expect(within(container).queryByRole("link", { name: "Blog" })).toBeNull();
   });
 });
