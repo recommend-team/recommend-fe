@@ -463,6 +463,11 @@ function OverviewTab({
                   </p>
                   <p className="text-xs font-dm text-gray-500">
                     {formatNaira(p.price)}
+                    {p.isAddOn && (
+                      <span className="ml-2 rounded-full bg-recommend-green/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-recommend-green">
+                        Add-on
+                      </span>
+                    )}
                     {!p.isAvailable && (
                       <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400">
                         Unavailable
@@ -1059,6 +1064,14 @@ function ProductDetailModal({
               {product.isAvailable ? "Available" : "Unavailable"}
             </span>
           </div>
+
+          {product.isAddOn && (
+            <p className="rounded-xl bg-recommend-green/10 px-3 py-2 text-xs font-dm text-recommend-green">
+              <span className="font-bold">Add-on.</span> Sold only with a main
+              item from this vendor, and offered to buyers at checkout instead
+              of appearing in search.
+            </p>
+          )}
 
           {product.description ? (
             <div>

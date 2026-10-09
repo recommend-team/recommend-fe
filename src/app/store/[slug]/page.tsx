@@ -44,7 +44,10 @@ export default function StorefrontPage() {
   }
 
   const { vendor, products } = data;
-  const availableProducts = products.filter((p) => p.isAvailable);
+  // Extras — drinks, extra protein — are never ordered alone, so they are listed apart
+  // and without an order link: one placed on its own would be refused at checkout.
+  const availableProducts = products.filter((p) => p.isAvailable && !p.isAddOn);
+  const extras = products.filter((p) => p.isAvailable && p.isAddOn);
 
   return (
     <div className="min-h-screen bg-white max-w-[480px] mx-auto">
@@ -178,6 +181,30 @@ export default function StorefrontPage() {
               </Link>
             ))}
           </div>
+        )}
+
+        {extras.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-base font-bold font-dm text-gray-800">Extras</h2>
+            <p className="text-xs text-gray-400 font-dm mt-0.5 mb-3">
+              Add these to a meal from this store when you order in the chat.
+            </p>
+            <ul className="divide-y divide-gray-100 rounded-xl border border-gray-100">
+              {extras.map((extra) => (
+                <li
+                  key={extra.id}
+                  className="flex items-center justify-between gap-3 px-3 py-2.5"
+                >
+                  <span className="min-w-0 truncate text-sm font-dm text-gray-700">
+                    {extra.name}
+                  </span>
+                  <span className="shrink-0 text-sm font-bold font-dm text-[#006837]">
+                    {formatPrice(extra.price)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
 

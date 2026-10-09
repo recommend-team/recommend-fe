@@ -5,6 +5,11 @@ export interface Product {
   price: number;
   imageUrl: string | null;
   isAvailable: boolean;
+  /**
+   * An extra — drinks, extra protein — sold only with a main item from the same vendor.
+   * Absent from a server older than add-ons, which reads as false.
+   */
+  isAddOn?: boolean;
 }
 
 export interface CreateProductPayload {
