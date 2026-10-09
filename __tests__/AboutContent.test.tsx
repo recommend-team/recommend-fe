@@ -42,7 +42,7 @@ describe("About page", () => {
 
     expect(screen.getByRole("img", { name: "Chanor James, founder of Recommend" })).toHaveAttribute(
       "src",
-      "/images/about/chanor-james.webp"
+      "/images/about/chanor-james-portrait.webp"
     );
     expect(screen.getAllByText(/Chanor James/).length).toBeGreaterThan(0);
   });

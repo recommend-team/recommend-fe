@@ -267,6 +267,8 @@ export interface CatalogProduct {
   vendorId: string;
   vendorName: string | null;
   vendorSlug: string | null;
+  /** An extra, sold only with a main item from the same store. Listed after its dishes. */
+  isAddOn?: boolean;
 }
 
 /** One line of a basket an admin is building for a buyer. */

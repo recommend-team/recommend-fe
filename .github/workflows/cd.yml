@@ -15,8 +15,8 @@ jobs:
     # otherwise the build is checked against staging.
     env:
       NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://recommend-staging.onrender.com/api/v1' }}
-      NEXT_PUBLIC_CUSTOMER_APP_URL: ${{ vars.NEXT_PUBLIC_CUSTOMER_APP_URL || 'https://recommend-customer-app.vercel.app' }}
-      NEXT_PUBLIC_VENDOR_APP_URL: ${{ vars.NEXT_PUBLIC_VENDOR_APP_URL || 'https://recommend-vendors.vercel.app' }}
+      NEXT_PUBLIC_CUSTOMER_APP_URL: ${{ vars.NEXT_PUBLIC_CUSTOMER_APP_URL || 'https://recommend-customer-app.netlify.app' }}
+      NEXT_PUBLIC_VENDOR_APP_URL: ${{ vars.NEXT_PUBLIC_VENDOR_APP_URL || 'https://recommend-vendors.netlify .app' }}
 
     steps:
       # 1. Checkout code

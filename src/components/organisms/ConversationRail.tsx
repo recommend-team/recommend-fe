@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Hand, Search, UserCheck } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Hand, Search, UserCheck } from "lucide-react";
 import { useConversations } from "@/hooks";
 import type { ConversationSummary } from "@/types";
 
@@ -191,7 +191,9 @@ function RailRow({
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline justify-between gap-2">
           <span className="truncate font-dm text-sm font-bold text-gray-900">
-            {conversation.buyerName ?? "Unnamed buyer"}
+            {conversation.buyerName ??
+              conversation.verifiedEmail ??
+              "Unnamed buyer"}
           </span>
           <span className="shrink-0 font-dm text-[11px] text-gray-400">
             {ago(conversation.lastMessageAt)}
@@ -203,6 +205,15 @@ function RailRow({
         </span>
 
         <span className="mt-1 flex flex-wrap items-center gap-1.5">
+          {conversation.verifiedEmail && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-recommend-green/10 px-1.5 py-0.5 font-dm text-[10px] font-bold text-recommend-green"
+              title={`Signed in as ${conversation.verifiedEmail}`}
+            >
+              <BadgeCheck className="h-2.5 w-2.5" />
+              Verified
+            </span>
+          )}
           {waiting && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-1.5 py-0.5 font-dm text-[10px] font-bold text-red-600">
               <Hand className="h-2.5 w-2.5" />

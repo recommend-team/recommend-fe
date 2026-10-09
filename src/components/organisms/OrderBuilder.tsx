@@ -57,6 +57,28 @@ interface Line {
   quantity: number;
 }
 
+/**
+ * An extra rides with a dish from its own store. Once the last dish from a store leaves
+ * the basket, its extras go too — checkout would refuse them on their own.
+ */
+function withoutOrphanedExtras(lines: Line[]): Line[] {
+  const storesWithMeal = new Set(
+    lines.filter((line) => !line.product.isAddOn).map((line) => line.product.vendorId)
+  );
+  return lines.filter(
+    (line) => !line.product.isAddOn || storesWithMeal.has(line.product.vendorId)
+  );
+}
+
+/** Marks a store's extra — drinks, extra protein — in the shelf and the basket. */
+function ExtraTag() {
+  return (
+    <span className="ml-1.5 rounded-full bg-recommend-green/10 px-1.5 py-0.5 align-middle font-dm text-[9px] font-bold uppercase tracking-wide text-recommend-green">
+      Extra
+    </span>
+  );
+}
+
 /** Which shelf the admin is looking at. The basket survives all three. */
 type Step = "area" | "stores" | "products";
 
@@ -205,12 +227,19 @@ export default function OrderBuilder({
 
   const setQuantity = (productId: string, quantity: number) =>
     setLines((current) =>
-      quantity <= 0
-        ? current.filter((line) => line.product.id !== productId)
-        : current.map((line) =>
-            line.product.id === productId ? { ...line, quantity } : line
-          )
+      withoutOrphanedExtras(
+        quantity <= 0
+          ? current.filter((line) => line.product.id !== productId)
+          : current.map((line) =>
+              line.product.id === productId ? { ...line, quantity } : line
+            )
+      )
     );
+
+  // Stores with a dish in the basket — only their extras can be added.
+  const storesWithMeal = new Set(
+    lines.filter((line) => !line.product.isAddOn).map((line) => line.product.vendorId)
+  );
 
   const reset = () => {
     setLines([]);
@@ -509,19 +538,28 @@ export default function OrderBuilder({
             )}
 
             {step === "products" &&
-              (products ?? []).map((product) => (
+              (products ?? []).map((product) => {
+                // An extra waits for a dish from its store: checkout refuses it alone.
+                const blocked =
+                  !!product.isAddOn && !storesWithMeal.has(product.vendorId);
+                return (
                 <li key={product.id}>
                   <button
                     onClick={() => add(product)}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-black/5"
+                    disabled={blocked}
+                    title={blocked ? "Add a dish from this store first" : undefined}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                   >
                     <Thumb src={product.imageUrl} alt={product.name} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-dm text-xs text-gray-800">
                         {product.name}
+                        {product.isAddOn && <ExtraTag />}
                       </span>
                       <span className="block truncate font-dm text-[11px] text-gray-400">
-                        {product.vendorName ?? "Unknown store"}
+                        {blocked
+                          ? "Add a dish from this store first"
+                          : product.vendorName ?? "Unknown store"}
                       </span>
                     </span>
                     <span className="shrink-0 font-dm text-xs font-bold text-gray-700">
@@ -529,7 +567,8 @@ export default function OrderBuilder({
                     </span>
                   </button>
                 </li>
-              ))}
+                );
+              })}
           </ul>
 
           {lines.length > 0 && (
@@ -545,6 +584,7 @@ export default function OrderBuilder({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-dm text-xs text-gray-800">
                       {line.product.name}
+                      {line.product.isAddOn && <ExtraTag />}
                     </span>
                     <span className="block truncate font-dm text-[11px] text-gray-400">
                       {line.product.vendorName ?? "Unknown store"} ·{" "}
