@@ -5,6 +5,7 @@ import { CUSTOMER_APP_URL, vendorApp } from "@/lib/links";
 import { Button } from "@/components/molecules/Button";
 import { BackgroundThree } from "./BackgroundThree";
 import { BackgroundTwo } from "./BackgroundTwo";
+import { PICKUP_ENABLED } from "@/lib/features";
 
 /**
  * The About page (design option A, "Editorial"): who we are, the founder's story, mission
@@ -204,7 +205,9 @@ export function AboutWhoWeServe() {
     {
       eyebrow: "CUSTOMERS",
       title: "Get it without the hassle",
-      body: "Ask, pay securely, and choose delivery or pickup — with updates at every step.",
+      body: PICKUP_ENABLED
+        ? "Ask, pay securely, and choose delivery or pickup — with updates at every step."
+        : "Ask, pay securely, and get it delivered — with updates at every step.",
       cta: "Start Ordering",
       href: CUSTOMER_APP_URL,
       external: true,
@@ -321,7 +324,9 @@ const SAFEGUARDS = [
   {
     icon: Ticket,
     title: "Code-checked hand-overs",
-    body: "Every delivery and pickup is confirmed with a code only the buyer has.",
+    body: PICKUP_ENABLED
+      ? "Every delivery and pickup is confirmed with a code only the buyer has."
+      : "Every delivery is confirmed with a code only the buyer has.",
   },
   {
     icon: UserRound,

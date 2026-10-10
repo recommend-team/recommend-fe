@@ -5,6 +5,7 @@ import { ArrowRight, Minus, Plus, UserRound } from "lucide-react";
 import { CUSTOMER_APP_URL } from "@/lib/links";
 import { SERVICE_AREAS } from "@/lib/serviceAreas";
 import { BackgroundThree } from "./BackgroundThree";
+import { PICKUP_ENABLED } from "@/lib/features";
 
 /**
  * "Before you order" — what a first-time buyer wants answered before paying.
@@ -12,7 +13,8 @@ import { BackgroundThree } from "./BackgroundThree";
  * Separate from `FaqSection`, which serves the vendor, rider and about pages and still
  * describes the WhatsApp flow.
  *
- * Every answer here is true of the product as built: pickup costs nothing, delivery is one
+ * Every answer here is true of the product as built: pickup (while switched on — see
+ * `lib/features`) costs nothing, delivery is one
  * flat fee shown before payment (`checkout.service.ts` → `deliveryFeeFor`), payment is
  * Paystack, and the assistant hands a buyer to a person when it cannot help.
  */
@@ -26,7 +28,9 @@ export const BUYER_FAQS: { question: string; answer: string }[] = [
   {
     question: "How much is delivery?",
     answer:
-      "A flat delivery fee, shown in the chat before you pay — it's added at checkout once you choose delivery. Pickup is free.",
+      PICKUP_ENABLED
+        ? "A flat delivery fee, shown in the chat before you pay — it's added at checkout once you choose delivery. Pickup is free."
+        : "A flat delivery fee, shown in the chat before you pay — it's added at checkout.",
   },
   {
     question: "How do I pay? Is it safe?",

@@ -58,9 +58,10 @@ describe("FaqSection", () => {
       expect.arrayContaining([
         "Can I sell if my business isn't registered?",
         "When do I get paid?",
-        "How does pickup work?",
       ])
     );
+    // Pickup is switched off (NEXT_PUBLIC_PICKUP_ENABLED), so vendors are not told about it.
+    expect(questions()).not.toContain("How does pickup work?");
   });
 
   it("answers buyer questions everywhere else", () => {
