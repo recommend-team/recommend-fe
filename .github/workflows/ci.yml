@@ -11,18 +11,28 @@ jobs:
     name: CI - Build & Test
     runs-on: ubuntu-latest
 
+    # The build needs these: api.ts refuses a production build without an API URL, and
+    # links.ts disables the buttons without the app URLs. Set them as repository
+    # variables (Settings → Secrets and variables → Actions → Variables) to override;
+    # otherwise the build is checked against staging.
+    env:
+      NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://recommend-staging.onrender.com/api/v1' }}
+      NEXT_PUBLIC_CUSTOMER_APP_URL: ${{ vars.NEXT_PUBLIC_CUSTOMER_APP_URL || 'https://recommend-customer-app.vercel.app' }}
+      NEXT_PUBLIC_VENDOR_APP_URL: ${{ vars.NEXT_PUBLIC_VENDOR_APP_URL || 'https://recommend-vendors.vercel.app' }}
+
     steps:
       # 1. Checkout code
       - uses: actions/checkout@v4
 
-      # 2. Install pnpm globally first
+      # 2. Install pnpm — the version pinned in package.json's "packageManager", so the
+      #    cache below finds the store this pnpm actually uses.
       - name: Install pnpm
-        run: npm install -g pnpm
+        uses: pnpm/action-setup@v4
 
       # 3. Setup Node.js with pnpm cache
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -38,7 +48,7 @@ jobs:
 
       # 6. Unit & Integration tests
       - name: Run Tests
-        run: pnpm test -- --coverage
+        run: pnpm test --coverage
 
       # 7. Build Next.js app
       - name: Build
