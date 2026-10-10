@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { PICKUP_ENABLED } from "@/lib/features";
 
 /**
  * A phone playing one step of a real order, for the landing page.
@@ -30,7 +31,9 @@ export const ORDER_FLOW_STEPS: readonly OrderFlowStep[] = [
   },
   {
     title: "Check out in the chat",
-    body: "Your name, number, and delivery or pickup.",
+    body: PICKUP_ENABLED
+      ? "Your name, number, and delivery or pickup."
+      : "Your name, number, and delivery address.",
   },
   {
     title: "Pay securely",

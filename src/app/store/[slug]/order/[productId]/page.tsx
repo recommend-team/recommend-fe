@@ -5,6 +5,7 @@ import { useStorefront, useCreateOrder } from "@/hooks";
 import { useForm, useWatch } from "react-hook-form";
 import { useState } from "react";
 import { RemoteImage } from "@/components/atoms/RemoteImage";
+import { PICKUP_ENABLED } from "@/lib/features";
 
 interface OrderFormValues {
   quantity: number;
@@ -228,7 +229,8 @@ export default function OrderPage() {
           )}
         </div>
 
-        {/* Fulfillment type */}
+        {/* Fulfillment type — a choice only while pickup is switched on. */}
+        {PICKUP_ENABLED && (
         <div>
           <label className="text-sm font-bold font-dm text-gray-700 block mb-2">
             How do you want to receive your order?
@@ -266,6 +268,7 @@ export default function OrderPage() {
             </label>
           </div>
         </div>
+        )}
 
         {/* Delivery address (conditional) */}
         {fulfillmentType === "DELIVERY" && (

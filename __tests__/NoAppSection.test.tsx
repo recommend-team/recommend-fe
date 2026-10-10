@@ -91,7 +91,7 @@ describe("NoAppSection", () => {
     act(() => jest.advanceTimersByTime(20_000));
 
     expect(screen.getByText("STEP 3 OF 6")).toBeInTheDocument();
-    expect(currentStep()).toContain("3Check out in the chatYour name, number, and delivery or pickup.");
+    expect(currentStep()).toContain("3Check out in the chatYour name, number, and delivery address.");
   });
 
   it("never plays for a visitor who asked for reduced motion", () => {

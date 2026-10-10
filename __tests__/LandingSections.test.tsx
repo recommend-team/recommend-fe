@@ -52,12 +52,12 @@ describe("CoverageSection", () => {
     );
   });
 
-  it("says not yet for somewhere we are not, and offers pickup", () => {
+  it("says not yet for somewhere we are not — and, with pickup off, does not offer it", () => {
     render(<CoverageSection />);
     ask("Yaba");
 
     expect(screen.getByText("Not in Yaba yet.")).toBeInTheDocument();
-    expect(screen.getByText(/pickup/)).toBeInTheDocument();
+    expect(screen.queryByText(/pickup/)).not.toBeInTheDocument();
   });
 
   it("waits for something to check before answering", () => {

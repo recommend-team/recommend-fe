@@ -5,6 +5,7 @@ import { ArrowRight, MapPin, Search } from "lucide-react";
 import { CUSTOMER_APP_URL } from "@/lib/links";
 import { SERVICE_AREAS, servedAreaFor } from "@/lib/serviceAreas";
 import { BackgroundThree } from "./BackgroundThree";
+import { PICKUP_ENABLED } from "@/lib/features";
 
 /**
  * "Where we deliver" — the areas we serve today, and a check a buyer can run on their own
@@ -113,7 +114,11 @@ export default function CoverageSection() {
                 <Answer
                   tone="no"
                   title={`Not in ${typed} yet.`}
-                  body="We add new areas as vendors and riders join. You can still order for pickup from a vendor in one of our areas."
+                  body={
+                    PICKUP_ENABLED
+                      ? "We add new areas as vendors and riders join. You can still order for pickup from a vendor in one of our areas."
+                      : "We add new areas as vendors and riders join."
+                  }
                   cta="Ask anyway"
                 />
               ))}

@@ -3,6 +3,7 @@ import { CUSTOMER_APP_URL } from "@/lib/links";
 import { Button } from "../molecules/Button";
 import OrderFlowPhone from "./OrderFlowPhone";
 import { BackgroundTwo } from "../templates/BackgroundTwo";
+import { PICKUP_ENABLED } from "@/lib/features";
 
 /**
  * The hero: what Recommend is, in one line, and the way in.
@@ -17,7 +18,7 @@ import { BackgroundTwo } from "../templates/BackgroundTwo";
 const PROMISES = [
   { icon: Smartphone, text: "Works in your browser" },
   { icon: LockKeyhole, text: "Paid securely via Paystack" },
-  { icon: Check, text: "Delivery or pickup" },
+  { icon: Check, text: PICKUP_ENABLED ? "Delivery or pickup" : "Delivered to your door" },
 ];
 
 const LandingSectionOne = () => {

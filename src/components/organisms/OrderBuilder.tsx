@@ -28,6 +28,7 @@ import type {
   ConversationDetail,
   PlacedAdminOrder,
 } from "@/types";
+import { PICKUP_ENABLED } from "@/lib/features";
 
 const naira = (amount: number) =>
   `₦${amount.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
@@ -632,6 +633,8 @@ export default function OrderBuilder({
               placeholder="+2348012345678"
               className="rounded-md border border-black/10 px-2.5 py-2 font-dm text-xs outline-none focus:border-recommend-green"
             />
+            {/* Delivery only while pickup is switched off. */}
+            {PICKUP_ENABLED && (
             <select
               value={fulfillment}
               onChange={(event) =>
@@ -642,6 +645,7 @@ export default function OrderBuilder({
               <option value="DELIVERY">Delivery</option>
               <option value="PICKUP">Pickup</option>
             </select>
+            )}
             {fulfillment === "DELIVERY" && (
               <input
                 value={address}

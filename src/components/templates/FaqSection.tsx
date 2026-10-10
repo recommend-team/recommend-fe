@@ -3,6 +3,7 @@ import { Text } from "../atoms/Text";
 import { FaqItem } from "../molecules/FaqItem";
 import { BackgroundThree } from "./BackgroundThree";
 import { SERVICE_AREAS } from "@/lib/serviceAreas";
+import { PICKUP_ENABLED } from "@/lib/features";
 
 type Faq = { question: string; answer: string };
 
@@ -19,7 +20,9 @@ const GENERAL: Faq[] = [
   {
     question: "How do I place an order?",
     answer:
-      "Tap Start Ordering and chat. Say what you want, add what you like to your cart, choose delivery or pickup, and pay — all in the same conversation.",
+      `Tap Start Ordering and chat. Say what you want, add what you like to your cart, ${
+        PICKUP_ENABLED ? "choose delivery or pickup" : "tell us where to deliver"
+      }, and pay — all in the same conversation.`,
   },
   {
     question: "Is there an app?",
@@ -62,13 +65,20 @@ const VENDOR: Faq[] = [
   {
     question: "When do I get paid?",
     answer:
-      "Your earnings land in your Recommend wallet once the order is delivered or collected. Withdraw to your verified bank account whenever you like, from ₦2,000.",
+      `Your earnings land in your Recommend wallet once the order is ${
+        PICKUP_ENABLED ? "delivered or collected" : "delivered"
+      }. Withdraw to your verified bank account whenever you like, from ₦2,000.`,
   },
-  {
-    question: "How does pickup work?",
-    answer:
-      "When a buyer collects in person, they show you a code. Check it in the vendor app before you hand the order over.",
-  },
+  // Only while buyers can choose pickup at all.
+  ...(PICKUP_ENABLED
+    ? [
+        {
+          question: "How does pickup work?",
+          answer:
+            "When a buyer collects in person, they show you a code. Check it in the vendor app before you hand the order over.",
+        },
+      ]
+    : []),
   {
     question: "Do I need to pay to join?",
     answer:
