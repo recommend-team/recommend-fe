@@ -105,9 +105,10 @@ export default function StorefrontPage() {
           </p>
         )}
 
-        {vendor.businessAreas && vendor.businessAreas.length > 0 && (
+        {vendor.serviceAreas?.length > 0 && (
           <p className="text-xs text-gray-400 font-dm mt-2">
-            Delivers to: {vendor.businessAreas.join(", ")}
+            Delivers to:{" "}
+            {vendor.serviceAreas.map((area) => area.name).join(", ")}
           </p>
         )}
       </div>

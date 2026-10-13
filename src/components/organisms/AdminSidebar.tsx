@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   MessagesSquare,
   Receipt,
+  Banknote,
   ShieldCheck,
   Users,
   UserCog,
@@ -36,6 +37,7 @@ const items: NavItem[] = [
   { label: "Riders", href: "/admin/riders", icon: Bike },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { label: "Transactions", href: "/admin/transactions", icon: Receipt },
+  { label: "Withdrawals", href: "/admin/withdrawals", icon: Banknote },
   {
     label: "Conversations",
     href: "/admin/conversations",

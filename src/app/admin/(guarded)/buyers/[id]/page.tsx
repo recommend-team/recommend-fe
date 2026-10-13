@@ -214,8 +214,10 @@ export default function BuyerDetailPage({
                       </div>
                     </td>
                     <td className="py-2 pr-4 text-gray-700">
-                      {o.vendor.businessName ??
-                        `${o.vendor.firstName} ${o.vendor.lastName}`}
+                      {o.vendor
+                        ? o.vendor.businessName ??
+                          `${o.vendor.firstName} ${o.vendor.lastName}`
+                        : "—"}
                     </td>
                     <td className="py-2 pr-4 font-bold text-gray-900">
                       {formatNaira(o.totalAmount)}

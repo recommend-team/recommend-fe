@@ -92,21 +92,96 @@ export interface AdminVendorSummary {
   createdAt: string;
 }
 
+export type PayoutAccountStatus = "PENDING_VERIFICATION" | "ACTIVE" | "REMOVED";
+
+export type WithdrawalStatus =
+  | "REQUESTED"
+  | "PROCESSING"
+  | "SETTLED"
+  | "FAILED"
+  | "REVERSED";
+
+/** A vendor's bank account, from the `accounts` table — not the old columns on users. */
+export interface AdminPayoutAccount {
+  id: string;
+  bankName: string;
+  bankCode: string;
+  accountNumber: string;
+  accountName: string;
+  status: PayoutAccountStatus;
+  isDefault: boolean;
+  verifiedAt: string | null;
+  removedAt: string | null;
+  createdAt: string;
+}
+
+export interface WithdrawalAccount {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}
+
+/** A withdrawal as the vendor page lists it. */
+export interface AdminVendorWithdrawal {
+  id: string;
+  reference: string;
+  status: WithdrawalStatus;
+  amountRequested: number;
+  feeAmount: number;
+  amountSent: number;
+  failureReason: string | null;
+  attempts: number;
+  settledAt: string | null;
+  createdAt: string;
+  /** Null only if the account row is gone, which removal does not do. */
+  account: WithdrawalAccount | null;
+}
+
+/** A withdrawal on the all-vendors page, with who asked for it. */
+export interface AdminWithdrawal extends AdminVendorWithdrawal {
+  transferCode: string | null;
+  lastAttemptAt: string | null;
+  vendor: {
+    id: string;
+    name: string;
+    businessName: string | null;
+    email: string;
+  } | null;
+}
+
+export type WalletEntryType =
+  | "EARNING"
+  | "COMMISSION"
+  | "WITHDRAWAL"
+  | "WITHDRAWAL_REVERSED"
+  | "ADJUSTMENT";
+
+/** One line of a vendor's statement. Signed: credits positive, debits negative. */
+export interface WalletEntry {
+  id: string;
+  type: WalletEntryType;
+  amount: number;
+  orderId: string | null;
+  withdrawalId: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface WithdrawalListFilters extends PaginationParams {
+  status?: WithdrawalStatus;
+  /** Reference, or vendor business name, name or email. */
+  search?: string;
+}
+
 export interface AdminVendorDetail {
   vendor: AdminVendorSummary & {
     businessDescription: string | null;
     businessBannerUrl: string | null;
-    businessAreas: string[] | null;
     whatsappNumber: string | null;
     operatingHours: Record<
       string,
       { isOpen: boolean; open: string; close: string }
     > | null;
-    // Payout
-    bankName?: string | null;
-    bankCode?: string | null;
-    bankAccountNumber?: string | null;
-    bankAccountName?: string | null;
     // KYC documents (admin can review everything submitted)
     cacDocumentUrl?: string | null;
     tinDocumentUrl?: string | null;
@@ -120,6 +195,12 @@ export interface AdminVendorDetail {
   };
   products: Product[];
   productCount: number;
+  serviceAreas: { id: string; name: string; stateName: string | null }[];
+  /** Every account the vendor has added — active first, removed last. */
+  payoutAccounts: AdminPayoutAccount[];
+  wallet: { balance: number; entryCount: number };
+  /** The latest 20. */
+  withdrawals: AdminVendorWithdrawal[];
 }
 
 export interface AdminBuyerSummary {

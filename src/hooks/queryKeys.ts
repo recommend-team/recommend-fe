@@ -4,6 +4,7 @@ import type {
   RiderListFilters,
   TransactionListFilters,
   VendorListFilters,
+  WithdrawalListFilters,
 } from "@/types";
 
 export const queryKeys = {
@@ -22,6 +23,8 @@ export const queryKeys = {
     ["admin", "orders", filters] as const,
   adminTransactions: (filters: TransactionListFilters) =>
     ["admin", "transactions", filters] as const,
+  adminWithdrawals: (filters: WithdrawalListFilters) =>
+    ["admin", "withdrawals", filters] as const,
   buyers: (filters: BuyerListFilters) =>
     ["admin", "buyers", filters] as const,
   buyerDetail: (id: string) => ["admin", "buyers", id] as const,

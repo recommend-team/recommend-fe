@@ -26,6 +26,8 @@ import {
   Landmark,
   User,
   MessageCircle,
+  Wallet,
+  Banknote,
 } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import {
@@ -34,9 +36,10 @@ import {
   useRejectPending,
   useSuspendUser,
   useActivateUser,
+  useWalletStatement,
 } from "@/hooks";
 import { useConfirm, usePrompt } from "@/components/organisms/DialogProvider";
-import type { AdminVendorDetail, Product } from "@/types";
+import type { AdminVendorDetail, Product, WalletEntryType } from "@/types";
 
 const DAY_LABELS: Record<string, string> = {
   monday: "Monday",
@@ -54,10 +57,10 @@ function formatNaira(raw: string | number): string {
   return `₦${n.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
 }
 
-function maskAccount(acct: string | null | undefined): string {
-  if (!acct) return "";
-  if (acct.length <= 4) return acct;
-  return `${acct.slice(0, 2)}••••${acct.slice(-2)}`;
+/** Kobo kept: a wallet balance is reconciled to the kobo, unlike a product price. */
+function formatMoney(n: number): string {
+  if (!Number.isFinite(n)) return "₦0";
+  return `₦${n.toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
 }
 
 type TabKey = "overview" | "profile" | "payout" | "kyc";
@@ -332,8 +335,10 @@ export default function VendorDetailPage({
           onSelectProduct={setSelectedProduct}
         />
       )}
-      {tab === "profile" && <ProfileTab vendor={v} />}
-      {tab === "payout" && <PayoutTab vendor={v} />}
+      {tab === "profile" && (
+        <ProfileTab vendor={v} serviceAreas={data.serviceAreas ?? []} />
+      )}
+      {tab === "payout" && <PayoutTab detail={data} />}
       {tab === "kyc" && <KycTab vendor={v} />}
 
       {selectedProduct && (
@@ -490,9 +495,14 @@ function OverviewTab({
   );
 }
 
-function ProfileTab({ vendor: v }: { vendor: AdminVendorDetail["vendor"] }) {
+function ProfileTab({
+  vendor: v,
+  serviceAreas: deliveryAreas,
+}: {
+  vendor: AdminVendorDetail["vendor"];
+  serviceAreas: AdminVendorDetail["serviceAreas"];
+}) {
   const operatingHours = v.operatingHours ?? null;
-  const deliveryAreas = v.businessAreas ?? [];
   const hasHours =
     operatingHours && Object.keys(operatingHours).length > 0;
 
@@ -601,11 +611,16 @@ function ProfileTab({ vendor: v }: { vendor: AdminVendorDetail["vendor"] }) {
           <div className="flex flex-wrap gap-2">
             {deliveryAreas.map((area) => (
               <span
-                key={area}
+                key={area.id}
                 className="inline-flex items-center gap-1 rounded-full bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1 text-xs font-bold font-dm"
               >
                 <MapPin size={11} />
-                {area}
+                {area.name}
+                {area.stateName && (
+                  <span className="font-normal text-orange-600/70">
+                    , {area.stateName}
+                  </span>
+                )}
               </span>
             ))}
           </div>
@@ -666,47 +681,219 @@ function ProfileTab({ vendor: v }: { vendor: AdminVendorDetail["vendor"] }) {
   );
 }
 
-function PayoutTab({ vendor: v }: { vendor: AdminVendorDetail["vendor"] }) {
-  const hasPayout = Boolean(
-    v.bankName ?? v.bankCode ?? v.bankAccountNumber ?? v.bankAccountName
-  );
+const ENTRY_LABELS: Record<WalletEntryType, string> = {
+  EARNING: "Sale",
+  COMMISSION: "Recommend commission",
+  WITHDRAWAL: "Withdrawal",
+  WITHDRAWAL_REVERSED: "Withdrawal returned",
+  ADJUSTMENT: "Adjustment",
+};
+
+function PayoutTab({ detail }: { detail: AdminVendorDetail }) {
+  const accounts = detail.payoutAccounts ?? [];
+  const withdrawals = detail.withdrawals ?? [];
+  const balance = detail.wallet?.balance ?? 0;
+  const verified = accounts.filter((a) => a.status === "ACTIVE");
+  const [showStatement, setShowStatement] = useState(false);
+  const statement = useWalletStatement(showStatement ? detail.vendor.id : null);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <InfoCard title="Payout account" icon={Landmark}>
-        {!hasPayout ? (
+      <InfoCard title="Wallet" icon={Wallet}>
+        <InfoRow
+          icon={Wallet}
+          label="Available to withdraw"
+          value={
+            <span className="text-2xl font-bold text-gray-900">
+              {formatMoney(balance)}
+            </span>
+          }
+        />
+        <p className="text-xs font-dm text-gray-500">
+          Summed from {detail.wallet?.entryCount ?? 0} ledger entries — sales in,
+          commission and withdrawals out.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowStatement((open) => !open)}
+          className="inline-flex items-center gap-1.5 w-fit rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold font-dm text-gray-700 hover:border-recommend-orange hover:text-recommend-orange"
+        >
+          <FileText size={12} />
+          {showStatement ? "Hide statement" : "Show statement"}
+        </button>
+      </InfoCard>
+
+      <InfoCard title="Payout accounts" icon={Landmark}>
+        {accounts.length === 0 ? (
           <EmptyBlock
             icon={Landmark}
-            message="Vendor hasn't submitted bank details yet. Earnings cannot be paid out until this is set."
+            message="Vendor hasn't added a bank account yet. Earnings cannot be paid out until one is verified."
           />
         ) : (
-          <>
-            <InfoRow
-              icon={Landmark}
-              label="Bank"
-              value={v.bankName}
-              emptyHint="—"
-            />
-            <InfoRow
-              icon={Tag}
-              label="Bank code"
-              value={v.bankCode}
-              emptyHint="—"
-            />
-            <InfoRow
-              icon={Landmark}
-              label="Account number"
-              value={maskAccount(v.bankAccountNumber)}
-              emptyHint="—"
-            />
-            <InfoRow
-              icon={User}
-              label="Account name"
-              value={v.bankAccountName}
-              emptyHint="—"
-            />
-          </>
+          <div className="flex flex-col divide-y divide-gray-100">
+            {verified.length === 0 && (
+              <p className="text-xs font-dm text-orange-700 bg-orange-50 rounded-lg p-2 mb-2">
+                No verified account yet — the vendor can&apos;t withdraw until they
+                enter the code we emailed them.
+              </p>
+            )}
+            {accounts.map((account) => (
+              <div
+                key={account.id}
+                className={`py-2.5 flex items-start justify-between gap-3 ${
+                  account.status === "REMOVED" ? "opacity-60" : ""
+                }`}
+              >
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="text-sm font-bold font-dm text-gray-900 truncate">
+                    {account.accountName}
+                  </span>
+                  <span className="text-sm font-dm text-gray-700">
+                    {account.bankName} ·{" "}
+                    <span className="font-mono">{account.accountNumber}</span>
+                  </span>
+                  <span className="text-xs font-dm text-gray-400">
+                    Added {new Date(account.createdAt).toLocaleDateString()}
+                    {account.removedAt &&
+                      ` · removed ${new Date(account.removedAt).toLocaleDateString()}`}
+                  </span>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <StatusPill status={account.status} />
+                  {account.isDefault && account.status === "ACTIVE" && (
+                    <span className="text-[11px] font-bold font-dm text-recommend-green">
+                      Default
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </InfoCard>
+
+      <div className="lg:col-span-2">
+        <InfoCard title="Withdrawals" icon={Banknote}>
+          {withdrawals.length === 0 ? (
+            <EmptyBlock icon={Banknote} message="No withdrawals yet." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm font-dm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                    <th className="py-2 pr-4">Reference</th>
+                    <th className="py-2 pr-4">Requested</th>
+                    <th className="py-2 pr-4">Fee</th>
+                    <th className="py-2 pr-4">Sent</th>
+                    <th className="py-2 pr-4">To</th>
+                    <th className="py-2 pr-4">Status</th>
+                    <th className="py-2 pr-4">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {withdrawals.map((w) => (
+                    <tr key={w.id} className="border-b border-gray-100 align-top">
+                      <td className="py-2 pr-4 font-mono text-xs text-gray-700">
+                        {w.reference}
+                      </td>
+                      <td className="py-2 pr-4 font-bold text-gray-900">
+                        {formatMoney(w.amountRequested)}
+                      </td>
+                      <td className="py-2 pr-4 text-gray-500">
+                        {formatMoney(w.feeAmount)}
+                      </td>
+                      <td className="py-2 pr-4 text-gray-700">
+                        {formatMoney(w.amountSent)}
+                      </td>
+                      <td className="py-2 pr-4 text-gray-700">
+                        {w.account
+                          ? `${w.account.bankName} ${w.account.accountNumber}`
+                          : "—"}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <StatusPill status={w.status} />
+                        {w.failureReason && (
+                          <p className="text-xs text-red-600 max-w-[220px] mt-0.5">
+                            {w.failureReason}
+                          </p>
+                        )}
+                      </td>
+                      <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">
+                        {new Date(w.createdAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Link
+                href={`/admin/withdrawals?search=${encodeURIComponent(
+                  detail.vendor.email
+                )}`}
+                className="inline-flex items-center gap-1 mt-3 text-xs font-bold font-dm text-gray-600 hover:text-recommend-orange"
+              >
+                Open in Withdrawals <ExternalLink size={11} />
+              </Link>
+            </div>
+          )}
+        </InfoCard>
+      </div>
+
+      {showStatement && (
+        <div className="lg:col-span-2">
+          <InfoCard title="Statement" icon={FileText}>
+            {statement.isLoading ? (
+              <p className="text-sm font-dm text-gray-400">Loading statement…</p>
+            ) : statement.isError ? (
+              <p className="text-sm font-dm text-red-600 bg-red-50 rounded-lg p-3">
+                Couldn&apos;t load the statement.
+              </p>
+            ) : (statement.data ?? []).length === 0 ? (
+              <EmptyBlock icon={FileText} message="Nothing has moved yet." />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm font-dm">
+                  <thead>
+                    <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                      <th className="py-2 pr-4">Date</th>
+                      <th className="py-2 pr-4">What</th>
+                      <th className="py-2 pr-4 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(statement.data ?? []).map((entry) => (
+                      <tr key={entry.id} className="border-b border-gray-100">
+                        <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">
+                          {new Date(entry.createdAt).toLocaleString()}
+                        </td>
+                        <td className="py-2 pr-4 text-gray-800">
+                          {ENTRY_LABELS[entry.type] ?? entry.type}
+                          {entry.note && (
+                            <span className="text-gray-500 italic">
+                              {" "}
+                              — {entry.note}
+                            </span>
+                          )}
+                        </td>
+                        <td
+                          className={`py-2 pr-4 text-right font-bold ${
+                            entry.amount < 0 ? "text-red-600" : "text-green-700"
+                          }`}
+                        >
+                          {entry.amount > 0 ? "+" : ""}
+                          {formatMoney(entry.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="text-xs text-gray-400 mt-2">
+                  Latest 50 entries.
+                </p>
+              </div>
+            )}
+          </InfoCard>
+        </div>
+      )}
     </div>
   );
 }
