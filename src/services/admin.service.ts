@@ -216,7 +216,17 @@ export async function getWalletStatement(
   );
 }
 
-/** Send again on the same reference. Paystack deduplicates, so it can't pay twice. */
+/**
+ * Ask Paystack what happened and correct ours to match. One refunded by mistake but
+ * paid by Paystack is settled, and the refund taken back. Never sends anything.
+ */
+export async function verifyWithdrawal(
+  id: string
+): Promise<{ status: WithdrawalStatus }> {
+  return request(`/admin/withdrawals/${id}/verify`, { method: "POST" });
+}
+
+/** Look the reference up on Paystack, and send again only if Paystack has nothing. */
 export async function retryWithdrawal(
   id: string
 ): Promise<{ status: WithdrawalStatus; attempts: number }> {

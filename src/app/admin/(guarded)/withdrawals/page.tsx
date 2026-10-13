@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, RefreshCw, Undo2 } from "lucide-react";
+import { Search, RefreshCw, Undo2, SearchCheck } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
@@ -11,6 +11,7 @@ import {
   useAdminWithdrawals,
   useFailWithdrawal,
   useRetryWithdrawal,
+  useVerifyWithdrawal,
 } from "@/hooks";
 import type { AdminWithdrawal, WithdrawalStatus } from "@/types";
 
@@ -177,17 +178,20 @@ export default function AdminWithdrawalsPage() {
 function WithdrawalRow({ withdrawal: w }: { withdrawal: AdminWithdrawal }) {
   const retry = useRetryWithdrawal();
   const fail = useFailWithdrawal();
+  const verify = useVerifyWithdrawal();
   const confirm = useConfirm();
   const prompt = usePrompt();
 
   const inFlight = IN_FLIGHT.includes(w.status);
-  const error = retry.error ?? fail.error;
+  const refunded = w.status === "FAILED" || w.status === "REVERSED";
+  const busy = retry.isPending || fail.isPending || verify.isPending;
+  const error = retry.error ?? fail.error ?? verify.error;
 
   const onRetry = async () => {
     const ok = await confirm({
-      title: "Send this withdrawal again?",
+      title: "Retry this withdrawal?",
       message:
-        "It goes out on the same reference, so Paystack cannot pay it twice even if the first attempt is still in flight.",
+        "Paystack is checked first. If it already has this transfer, it is settled or left to finish — it is only sent again if Paystack has no record of it.",
       confirmLabel: "Retry now",
       variant: "primary",
     });
@@ -197,7 +201,7 @@ function WithdrawalRow({ withdrawal: w }: { withdrawal: AdminWithdrawal }) {
   const onFail = async () => {
     const reason = await prompt({
       title: "Give up on this withdrawal?",
-      message: `${formatNaira(w.amountRequested)} goes back to the vendor's balance. Only do this if you are sure Paystack has not sent it.`,
+      message: `Paystack is checked first: this is refused if Paystack is still sending it, and settled instead if Paystack paid it. Otherwise ${formatNaira(w.amountRequested)} goes back to the vendor's balance.`,
       placeholder: "Why? (at least 5 characters, shown on their statement)",
       confirmLabel: "Fail and refund",
       variant: "danger",
@@ -275,24 +279,36 @@ function WithdrawalRow({ withdrawal: w }: { withdrawal: AdminWithdrawal }) {
             <div className="flex flex-col gap-1.5 items-start">
               <button
                 onClick={onRetry}
-                disabled={retry.isPending || fail.isPending}
+                disabled={busy}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold font-dm bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 whitespace-nowrap"
               >
                 <RefreshCw
                   size={13}
                   className={retry.isPending ? "animate-spin" : ""}
                 />
-                {retry.isPending ? "Sending…" : "Retry"}
+                {retry.isPending ? "Checking…" : "Retry"}
               </button>
               <button
                 onClick={onFail}
-                disabled={retry.isPending || fail.isPending}
+                disabled={busy}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold font-dm bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50 whitespace-nowrap"
               >
                 <Undo2 size={13} />
                 {fail.isPending ? "Refunding…" : "Fail and refund"}
               </button>
             </div>
+          )}
+          {/* A refunded one may have been paid after all — the refund is then taken back. */}
+          {refunded && (
+            <button
+              onClick={() => verify.mutate(w.id)}
+              disabled={busy}
+              title="Ask Paystack whether this was actually paid"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold font-dm bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 whitespace-nowrap"
+            >
+              <SearchCheck size={13} />
+              {verify.isPending ? "Checking…" : "Check Paystack"}
+            </button>
           )}
         </td>
       </tr>
