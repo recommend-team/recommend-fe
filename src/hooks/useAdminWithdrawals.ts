@@ -6,6 +6,7 @@ import {
   getAdminWithdrawals,
   getWalletStatement,
   retryWithdrawal,
+  verifyWithdrawal,
 } from "@/services";
 import { ApiError } from "@/lib/api";
 import type {
@@ -56,6 +57,12 @@ function useWithdrawalAction<TInput, TResult>(
 export function useRetryWithdrawal() {
   return useWithdrawalAction<string, { status: WithdrawalStatus; attempts: number }>(
     retryWithdrawal
+  );
+}
+
+export function useVerifyWithdrawal() {
+  return useWithdrawalAction<string, { status: WithdrawalStatus }>(
+    verifyWithdrawal
   );
 }
 
