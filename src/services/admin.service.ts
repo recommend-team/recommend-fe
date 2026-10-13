@@ -9,6 +9,7 @@ import type {
   AdminUser,
   AdminVendorDetail,
   AdminVendorSummary,
+  AdminWithdrawal,
   BuyerListFilters,
   CreateAdminPayload,
   CreateRiderPayload,
@@ -21,6 +22,9 @@ import type {
   RiderListFilters,
   TransactionListFilters,
   VendorListFilters,
+  WalletEntry,
+  WithdrawalListFilters,
+  WithdrawalStatus,
 } from "@/types";
 
 function qs(params: Record<string, string | number | undefined>): string {
@@ -184,6 +188,50 @@ export async function verifyAdminTransaction(
     `/admin/transactions/${encodeURIComponent(reference)}/verify`,
     { method: "POST" }
   );
+}
+
+// ─── Withdrawals ────────────────────────────────────────────────────────────
+
+/** Every vendor's withdrawals, whatever happened to them — in-flight ones first. */
+export async function getAdminWithdrawals(
+  params: WithdrawalListFilters = {}
+): Promise<PaginatedResult<AdminWithdrawal>> {
+  return request<PaginatedResult<AdminWithdrawal>>(
+    `/admin/withdrawals${qs({
+      page: params.page,
+      limit: params.limit,
+      status: params.status,
+      search: params.search,
+    })}`
+  );
+}
+
+/** A vendor's ledger, newest first — every credit and debit behind their balance. */
+export async function getWalletStatement(
+  userId: string,
+  limit = 50
+): Promise<WalletEntry[]> {
+  return request<WalletEntry[]>(
+    `/admin/wallet/${userId}/entries${qs({ limit })}`
+  );
+}
+
+/** Send again on the same reference. Paystack deduplicates, so it can't pay twice. */
+export async function retryWithdrawal(
+  id: string
+): Promise<{ status: WithdrawalStatus; attempts: number }> {
+  return request(`/admin/withdrawals/${id}/retry`, { method: "POST" });
+}
+
+/** Give up and return the money to the vendor's balance. */
+export async function failWithdrawal(input: {
+  id: string;
+  reason: string;
+}): Promise<{ status: WithdrawalStatus }> {
+  return request(`/admin/withdrawals/${input.id}/fail`, {
+    method: "POST",
+    body: JSON.stringify({ reason: input.reason }),
+  });
 }
 
 // ─── Order lifecycle ────────────────────────────────────────────────────────

@@ -17,7 +17,8 @@ export interface Vendor {
   businessName: string | null;
   businessDescription: string | null;
   businessCategory: string | null;
-  businessAreas: string[] | null;
+  /** From the `areas` table. The old free-text `businessAreas` is no longer sent. */
+  serviceAreas: { id: string; name: string }[];
   businessLogoUrl: string | null;
   businessBannerUrl: string | null;
   whatsappNumber: string | null;

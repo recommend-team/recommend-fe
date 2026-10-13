@@ -1,11 +1,33 @@
-import type { OrderStatus, UserStatus } from "@/types";
+import type {
+  OrderStatus,
+  PayoutAccountStatus,
+  UserStatus,
+  WithdrawalStatus,
+} from "@/types";
 
 // Drawn from the shared types rather than a list kept by hand here — the hand-kept one
 // had drifted from the backend, so orders rendered with a status this map had never
 // heard of and fell through to the raw enum name.
-type AnyStatus = UserStatus | OrderStatus;
+type AnyStatus =
+  | UserStatus
+  | OrderStatus
+  | WithdrawalStatus
+  | PayoutAccountStatus;
 
 const map: Record<string, { label: string; text: string; dot: string }> = {
+  // Withdrawals. PROCESSING is shared with orders, below.
+  REQUESTED: { label: "Requested", text: "text-orange-700", dot: "bg-orange-400" },
+  SETTLED: { label: "Settled", text: "text-green-800", dot: "bg-green-700" },
+  FAILED: { label: "Failed", text: "text-red-700", dot: "bg-red-500" },
+  REVERSED: { label: "Reversed", text: "text-purple-700", dot: "bg-purple-500" },
+  // Payout accounts
+  ACTIVE: { label: "Verified", text: "text-green-700", dot: "bg-green-500" },
+  PENDING_VERIFICATION: {
+    label: "Awaiting code",
+    text: "text-orange-700",
+    dot: "bg-orange-400",
+  },
+  REMOVED: { label: "Removed", text: "text-gray-500", dot: "bg-gray-400" },
   APPROVED: { label: "Active", text: "text-green-700", dot: "bg-green-500" },
   PENDING: { label: "Pending", text: "text-orange-700", dot: "bg-orange-400" },
   SUSPENDED: { label: "Suspended", text: "text-red-700", dot: "bg-red-500" },
