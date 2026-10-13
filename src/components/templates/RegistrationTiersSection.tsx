@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Text } from "../atoms/Text";
@@ -9,6 +8,10 @@ import { Button } from "../molecules/Button";
 import { BackgroundThree } from "./BackgroundThree";
 import { vendorApp } from "@/lib/links";
 import type { VendorType } from "@/types";
+import {
+  StallIllustration,
+  StorefrontIllustration,
+} from "../atoms/TierIllustrations";
 
 interface Tier {
   type: VendorType;
@@ -16,6 +19,7 @@ interface Tier {
   blurb: string;
   requirements: string[];
   cta: string;
+  Illustration: typeof StallIllustration;
 }
 
 const tiers: Tier[] = [
@@ -31,6 +35,7 @@ const tiers: Tier[] = [
       "Email & phone number",
     ],
     cta: "Start small",
+    Illustration: StallIllustration,
   },
   {
     type: "REGISTERED",
@@ -44,6 +49,7 @@ const tiers: Tier[] = [
       "Business email & phone number",
     ],
     cta: "Go fully verified",
+    Illustration: StorefrontIllustration,
   },
 ];
 
@@ -107,14 +113,8 @@ export default function RegistrationTiersSection() {
                         ))}
                       </ul>
                     </div>
-                    <div className="relative w-24 h-28 md:w-32 md:h-36 shrink-0 rounded-xl overflow-hidden bg-white/30">
-                      {/* TODO: replace with final tier photo */}
-                      <Image
-                        src="/images/stopwatch.png"
-                        alt={tier.title}
-                        fill
-                        className="object-cover"
-                      />
+                    <div className="grid w-24 h-28 md:w-[168px] md:h-[184px] shrink-0 place-items-center rounded-xl md:rounded-[18px] bg-white">
+                      <tier.Illustration className="w-[88px] h-[88px] md:w-[150px] md:h-[150px]" />
                     </div>
                   </div>
 
