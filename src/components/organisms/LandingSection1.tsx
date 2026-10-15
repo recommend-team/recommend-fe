@@ -1,19 +1,23 @@
-import { ArrowDown, ArrowRight, Check, LockKeyhole, Smartphone } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowDown,
+  ArrowRight,
+  Bike,
+  Check,
+  LockKeyhole,
+  Smartphone,
+  Store,
+} from "lucide-react";
 import { CUSTOMER_APP_URL } from "@/lib/links";
 import { Button } from "../molecules/Button";
 import OrderFlowPhone from "./OrderFlowPhone";
 import { BackgroundTwo } from "../templates/BackgroundTwo";
 import { PICKUP_ENABLED } from "@/lib/features";
 
-/**
- * The hero: what Recommend is, in one line, and the way in.
- *
- * Says "works in your browser" rather than "no app": the customer app is a PWA today and
- * is headed for the Play Store and App Store, so "no app" would stop being true.
- *
- * The phone is the first screen of the order played in full by `NoAppSection` below —
- * "See how it works" scrolls there.
- */
+const JOIN = [
+  { label: "Become a vendor", href: "/vendor", icon: Store },
+  { label: "Become a rider", href: "/rider", icon: Bike },
+];
 
 const PROMISES = [
   { icon: Smartphone, text: "Works in your browser" },
@@ -57,6 +61,25 @@ const LandingSectionOne = () => {
               See how it works
               <ArrowDown size={16} strokeWidth={2.4} aria-hidden />
             </a>
+          </div>
+
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+            <span className="text-sm font-bold text-[#5b6472]">
+              Sell or deliver with us:
+            </span>
+            <div className="flex flex-wrap gap-2.5">
+              {JOIN.map(({ label, href, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-recommend-green bg-white/70 px-4 text-sm font-bold text-recommend-green transition-colors hover:bg-recommend-green hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-recommend-green"
+                >
+                  <Icon size={16} strokeWidth={2.4} aria-hidden />
+                  {label}
+                  <ArrowRight size={14} strokeWidth={2.4} aria-hidden />
+                </Link>
+              ))}
+            </div>
           </div>
 
           <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#5b6472]">
