@@ -90,7 +90,24 @@ export interface AdminVendorSummary {
   isEmailVerified: boolean;
   productCount?: number;
   createdAt: string;
+  /**
+   * Orders paid for and not cancelled or refunded, by Lagos calendar period — on the
+   * vendor list only. Optional so the other places this type is built need not invent it.
+   */
+  orders?: VendorOrderCounts;
 }
+
+export interface VendorOrderCounts {
+  today: number;
+  /** Since Monday. */
+  week: number;
+  /** Since the 1st. */
+  month: number;
+  allTime: number;
+}
+
+/** Which period the vendor list is ranked by, most orders first. */
+export type VendorOrderSort = keyof VendorOrderCounts;
 
 export type PayoutAccountStatus = "PENDING_VERIFICATION" | "ACTIVE" | "REMOVED";
 
@@ -480,6 +497,8 @@ export interface AdminUserDetail {
 
 export interface VendorListFilters extends PaginationParams {
   status?: UserStatus;
+  /** Rank by orders in this period. Omitted: newest vendors first. */
+  sort?: VendorOrderSort;
 }
 
 export interface OrderListFilters extends PaginationParams {

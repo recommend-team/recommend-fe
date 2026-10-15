@@ -2,12 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronRight } from "lucide-react";
+import { Search, ChevronRight, ArrowDown } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
 import { useVendors } from "@/hooks";
-import type { UserStatus } from "@/types";
+import type { UserStatus, VendorOrderSort } from "@/types";
+
+/** Order counts by period — paid, not cancelled or refunded, Lagos time. */
+const ORDER_COLUMNS: { key: VendorOrderSort; label: string; hint: string }[] = [
+  { key: "today", label: "Today", hint: "Orders since midnight" },
+  { key: "week", label: "This week", hint: "Orders since Monday" },
+  { key: "month", label: "This month", hint: "Orders since the 1st" },
+  { key: "allTime", label: "All time", hint: "Every order" },
+];
 
 const STATUSES: Array<UserStatus | "ALL"> = [
   "ALL",
@@ -24,12 +32,21 @@ export default function VendorsPage() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<UserStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
+  // Ranked on the server, so "top this week" is across every vendor, not this page's.
+  const [sort, setSort] = useState<VendorOrderSort | undefined>(undefined);
 
   const vendors = useVendors({
     page,
     limit: PAGE_SIZE,
     status: status === "ALL" ? undefined : status,
+    sort,
   });
+
+  const toggleSort = (key: VendorOrderSort) => {
+    // A second click on the same column goes back to newest first.
+    setSort((current) => (current === key ? undefined : key));
+    setPage(1);
+  };
 
   const rows = vendors.data?.items ?? [];
   const filtered = rows.filter((v) => {
@@ -97,6 +114,22 @@ export default function VendorsPage() {
                 <th className="py-3 pr-4">Tier</th>
                 <th className="py-3 pr-4">Category</th>
                 <th className="py-3 pr-4">Status</th>
+                {ORDER_COLUMNS.map(({ key, label, hint }) => (
+                  <th key={key} className="py-3 pr-4 text-right">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort(key)}
+                      title={`${hint}. Click to rank by this.`}
+                      aria-pressed={sort === key}
+                      className={`inline-flex items-center gap-1 uppercase tracking-wide whitespace-nowrap hover:text-gray-800 ${
+                        sort === key ? "text-recommend-orange" : ""
+                      }`}
+                    >
+                      {label}
+                      {sort === key && <ArrowDown size={12} />}
+                    </button>
+                  </th>
+                ))}
                 <th className="py-3 pr-4">Created</th>
                 <th className="py-3 pr-4 w-24">Actions</th>
               </tr>
@@ -104,13 +137,13 @@ export default function VendorsPage() {
             <tbody>
               {vendors.isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-gray-400">
+                  <td colSpan={10} className="py-6 text-center text-gray-400">
                     Loading vendors…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-gray-400">
+                  <td colSpan={10} className="py-6 text-center text-gray-400">
                     {search ? "No vendors match." : "No vendors yet."}
                   </td>
                 </tr>
@@ -142,6 +175,23 @@ export default function VendorsPage() {
                     <td className="py-3 pr-4">
                       <StatusPill status={v.status} />
                     </td>
+                    {ORDER_COLUMNS.map(({ key }) => {
+                      const count = v.orders?.[key] ?? 0;
+                      return (
+                        <td
+                          key={key}
+                          className={`py-3 pr-4 text-right tabular-nums ${
+                            count === 0
+                              ? "text-gray-300"
+                              : sort === key
+                                ? "font-bold text-gray-900"
+                                : "text-gray-700"
+                          }`}
+                        >
+                          {count.toLocaleString()}
+                        </td>
+                      );
+                    })}
                     <td className="py-3 pr-4 text-gray-500">
                       {new Date(v.createdAt).toLocaleDateString()}
                     </td>
