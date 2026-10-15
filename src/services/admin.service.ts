@@ -102,6 +102,7 @@ export async function getVendors(
       page: params.page,
       limit: params.limit,
       status: params.status,
+      sort: params.sort,
     })}`
   );
 }

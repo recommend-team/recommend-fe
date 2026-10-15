@@ -1,5 +1,6 @@
 import AboutContent from "@/components/templates/AboutContent";
 import FooterSection from "@/components/templates/FooterSection";
+import { pageMetadata } from "@/lib/site";
 // The previous About page, kept for now. AboutContent replaces all of it.
 // import AboutHeroSection from "@/components/templates/AboutHeroSection";
 // import FounderStorySection from "@/components/templates/FounderStorySection";
@@ -10,11 +11,12 @@ import FooterSection from "@/components/templates/FooterSection";
 // anything in the product. Bring it back with real numbers.
 // import StatsSection from "@/components/templates/StatsSection";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "About Recommend — local commerce, as simple as asking",
   description:
     "Recommend is a personal market assistant for Lagos. Founded by Chanor James to connect people with verified vendors nearby in one conversation.",
-};
+  path: "/about",
+});
 
 /**
  * Who we are, the founder's story, mission and vision, what we do, who we serve, what we

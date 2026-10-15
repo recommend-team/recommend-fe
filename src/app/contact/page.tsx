@@ -1,5 +1,6 @@
 import ContactContent from "@/components/templates/ContactContent";
 import FooterSection from "@/components/templates/FooterSection";
+import { pageMetadata } from "@/lib/site";
 // The previous contact page, kept for now. ContactContent replaces all of it.
 // import ContactHeroSection from "@/components/templates/ContactHeroSection";
 // import ContactFormSection from "@/components/templates/ContactFormSection";
@@ -7,11 +8,12 @@ import FooterSection from "@/components/templates/FooterSection";
 // import FaqSection from "@/components/templates/FaqSection";
 // import VendorCTASection from "@/components/templates/VendorCTASection";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Contact Recommend — we're here to help",
   description:
     "Get help with an order, your vendor store or riding with us, or reach the team about partnerships and press.",
-};
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

@@ -1,12 +1,14 @@
 import LegalDocument from "@/components/templates/LegalDocument";
 import FooterSection from "@/components/templates/FooterSection";
 import { PRIVACY } from "@/lib/legal/privacy";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Privacy Policy — Recommend",
   description:
     "How Recommend collects, uses, shares and protects your personal data, and your rights under the NDPR and NDPA 2023.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (
