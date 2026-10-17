@@ -10,6 +10,7 @@ import { useCheckout, useStorefront, queryKeys } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { formatNaira, useStorefrontCart } from "@/lib/storefront-cart";
 import { rememberOrder } from "@/lib/last-order";
+import { SUPPORT_PHONE, SUPPORT_PHONE_HREF } from "@/lib/support";
 import type { CartChange, FulfillmentType } from "@/types";
 
 interface CheckoutForm {
@@ -64,6 +65,7 @@ export default function StoreCheckoutPage() {
     },
   });
   const fulfillmentType = useWatch({ control, name: "fulfillmentType" });
+  const typedEmail = useWatch({ control, name: "buyerEmail" });
 
   if (isLoading || !cart.loaded) {
     return (
@@ -97,7 +99,7 @@ export default function StoreCheckoutPage() {
         <p className="text-lg font-bold text-gray-800 mb-2">Your cart is empty</p>
         <Link
           href={`/store/${slug}`}
-          className="mt-2 rounded-full bg-[#006837] px-5 py-2.5 text-sm font-bold text-white"
+          className="mt-2 rounded-full bg-recommend-orange px-5 py-2.5 text-sm font-bold text-white"
         >
           Back to {storeName}
         </Link>
@@ -200,7 +202,7 @@ export default function StoreCheckoutPage() {
                         ? `Remove ${item.product.name}`
                         : `One fewer ${item.product.name}`
                     }
-                    className="grid h-7 w-7 place-items-center rounded-full text-[#006837] hover:bg-[#006837]/10"
+                    className="grid h-7 w-7 place-items-center rounded-full text-recommend-orange hover:bg-recommend-orange/10"
                   >
                     {item.quantity === 1 ? <Trash2 size={13} /> : <Minus size={13} />}
                   </button>
@@ -211,7 +213,7 @@ export default function StoreCheckoutPage() {
                     type="button"
                     onClick={() => cart.setQuantity(item.product.id, item.quantity + 1)}
                     aria-label={`One more ${item.product.name}`}
-                    className="grid h-7 w-7 place-items-center rounded-full text-[#006837] hover:bg-[#006837]/10"
+                    className="grid h-7 w-7 place-items-center rounded-full text-recommend-orange hover:bg-recommend-orange/10"
                   >
                     <Plus size={13} />
                   </button>
@@ -270,7 +272,7 @@ export default function StoreCheckoutPage() {
                   key={option}
                   className={`flex-1 cursor-pointer rounded-xl border px-3 py-2.5 text-center text-sm font-bold ${
                     fulfillmentType === option
-                      ? "border-[#006837] bg-[#006837]/5 text-[#006837]"
+                      ? "border-recommend-orange bg-recommend-orange/5 text-[#C2410C]"
                       : "border-gray-200 text-gray-600"
                   }`}
                 >
@@ -366,8 +368,10 @@ export default function StoreCheckoutPage() {
               })}
               className={inputClass(!!errors.buyerEmail)}
             />
-            <p className="mt-1 text-xs text-gray-400">
-              Your receipt and delivery code are sent here.
+            <p className="mt-1 text-xs text-gray-500">
+              Your receipt and delivery code come here.{" "}
+              <b className="text-gray-700">Use one you can open</b> — it&apos;s also how
+              you sign in to follow your order.
             </p>
           </Field>
 
@@ -381,6 +385,11 @@ export default function StoreCheckoutPage() {
             />
           </Field>
         </section>
+
+        <AfterYouPay
+          email={typedEmail?.trim() || null}
+          delivery={fulfillmentType === "DELIVERY"}
+        />
 
         {problem && (
           <p role="alert" className="mx-4 mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
@@ -399,7 +408,7 @@ export default function StoreCheckoutPage() {
             <button
               type="submit"
               disabled={checkout.isPending || !vendor.isOpen}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#006837] py-3.5 text-base font-bold text-white hover:bg-[#00552d] disabled:bg-gray-300"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-recommend-orange py-3.5 text-base font-bold text-white hover:bg-[#D84A15] disabled:bg-gray-300"
             >
               <Lock size={16} aria-hidden />
               {checkout.isPending ? "Starting payment…" : `Pay ${formatNaira(total)}`}
@@ -411,6 +420,55 @@ export default function StoreCheckoutPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+/**
+ * The last thing read before paying: what happens next, and how to follow the order —
+ * the Recommend chat, signed in with the email they paid with, where the order is already
+ * waiting. No link from here: leaving checkout half-way helps nobody. The order page they
+ * return to has the button.
+ */
+function AfterYouPay({ email, delivery }: { email: string | null; delivery: boolean }) {
+  const steps: React.ReactNode[] = [
+    <>Pay securely with Paystack. You&apos;ll come back here to see your order confirmed.</>,
+    <>
+      We email your receipt to{" "}
+      {email ? <b className="text-gray-900 [overflow-wrap:anywhere]">{email}</b> : "your email"}
+      {delivery ? ", and your delivery code when the rider leaves." : "."}
+    </>,
+    <>
+      <b className="text-gray-900">Follow your order on Recommend.</b> Open the Recommend
+      chat and sign in with this same email — your order will already be there, with every
+      update, and you can message us about it.
+    </>,
+  ];
+
+  return (
+    <section
+      aria-labelledby="after-you-pay"
+      className="mx-4 mt-6 rounded-2xl border border-[#F2E2B8] bg-[#FAF6E1] p-4"
+    >
+      <h2 id="after-you-pay" className="text-sm font-bold text-gray-900">
+        What happens after you pay
+      </h2>
+      <ol className="mt-3 space-y-3">
+        {steps.map((step, index) => (
+          <li key={index} className="flex gap-3 text-sm leading-snug text-gray-700">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-recommend-orange text-xs font-bold text-white">
+              {index + 1}
+            </span>
+            <span className="pt-0.5">{step}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-3 border-t border-[#EADFB8] pt-3 text-sm text-gray-700">
+        Prefer to call?{" "}
+        <a href={SUPPORT_PHONE_HREF} className="font-bold whitespace-nowrap text-[#C2410C] hover:underline">
+          {SUPPORT_PHONE}
+        </a>
+      </p>
+    </section>
   );
 }
 
@@ -433,7 +491,7 @@ function Field({
 }
 
 function inputClass(invalid: boolean): string {
-  return `w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#006837] ${
+  return `w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-recommend-orange ${
     invalid ? "border-red-400" : "border-gray-200"
   }`;
 }

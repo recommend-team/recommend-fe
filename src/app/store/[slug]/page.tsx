@@ -488,7 +488,7 @@ function CheckoutLink({
         if (!isOpen) event.preventDefault();
       }}
       className={`flex items-center gap-2 font-bold text-white ${className} ${
-        isOpen ? "bg-[#0A8A4A] hover:bg-[#006837]" : "cursor-not-allowed bg-gray-500"
+        isOpen ? "bg-recommend-orange hover:bg-[#D84A15]" : "cursor-not-allowed bg-gray-500"
       }`}
     >
       {isOpen ? (
@@ -535,12 +535,12 @@ function ProductCard({
             disabled={!!locked}
             title={locked ?? undefined}
             aria-label={`Add ${product.name}`}
-            className="absolute right-2 bottom-2 grid h-11 w-11 place-items-center rounded-full bg-white text-[#006837] shadow-[0_4px_12px_rgba(21,23,28,0.18)] disabled:text-gray-300"
+            className="absolute right-2 bottom-2 grid h-11 w-11 place-items-center rounded-full bg-white text-recommend-orange shadow-[0_4px_12px_rgba(21,23,28,0.18)] disabled:text-gray-300"
           >
             <Plus size={20} strokeWidth={2.4} />
           </button>
         ) : (
-          <div className="absolute inset-x-2 bottom-2 flex h-11 items-center justify-between rounded-full bg-[#006837] text-white shadow-[0_4px_12px_rgba(0,104,55,0.3)]">
+          <div className="absolute inset-x-2 bottom-2 flex h-11 items-center justify-between rounded-full bg-recommend-orange text-white shadow-[0_4px_12px_rgba(239,90,34,0.3)]">
             <button
               type="button"
               onClick={() => onChange(quantity - 1)}

@@ -150,7 +150,7 @@ export function ItemSheet({
               onClose();
             }}
             className={`flex h-[52px] flex-1 items-center justify-between rounded-2xl px-[18px] text-base font-bold text-white disabled:bg-gray-300 ${
-              removing ? "bg-[#B42318] hover:bg-[#912018]" : "bg-[#006837] hover:bg-[#00552D]"
+              removing ? "bg-[#B42318] hover:bg-[#912018]" : "bg-recommend-orange hover:bg-[#D84A15]"
             }`}
           >
             <span>{label}</span>
