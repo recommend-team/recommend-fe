@@ -8,6 +8,7 @@ import { CUSTOMER_APP_URL } from "@/lib/links";
 import { ApiError } from "@/lib/api";
 import { sendContactMessage, type ContactPayload } from "@/services/contact.service";
 import { SOCIAL_LINKS } from "@/lib/social";
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_HREF } from "@/lib/support";
 import { BUYER_FAQS } from "./BuyerFaqSection";
 import { BackgroundThree } from "./BackgroundThree";
 import { BackgroundTwo } from "./BackgroundTwo";
@@ -21,9 +22,10 @@ import { BackgroundTwo } from "./BackgroundTwo";
  * visitor as reply-to.
  */
 
-export const CONTACT_EMAIL = "contacts.recommend@gmail.com";
-export const CONTACT_PHONE = "+234 814 306 7676";
-const CONTACT_PHONE_HREF = "tel:+2348143067676";
+// From `lib/support` — set by NEXT_PUBLIC_SUPPORT_PHONE / _EMAIL, with defaults.
+const CONTACT_EMAIL = SUPPORT_EMAIL;
+const CONTACT_PHONE = SUPPORT_PHONE;
+const CONTACT_PHONE_HREF = SUPPORT_PHONE_HREF;
 const SUPPORT_HOURS = [
   { days: "Monday – Friday", hours: "8am – 9pm" },
   { days: "Saturday", hours: "9am – 8pm" },

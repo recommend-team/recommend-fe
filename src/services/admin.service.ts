@@ -172,6 +172,8 @@ export async function getAdminTransactions(
       search: params.search,
       riderId: params.riderId,
       needsRider: params.needsRider ? "true" : undefined,
+      source: params.source,
+      stuck: params.stuck ? "true" : undefined,
     })}`
   );
 }

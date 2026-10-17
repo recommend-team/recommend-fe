@@ -39,6 +39,7 @@ const REASONS: Record<CartChange["reason"], string> = {
   UNAVAILABLE: "is not available right now",
   VENDOR_CLOSED: "is from a vendor that is closed",
   PRICE_CHANGED: "changed price while you were building this",
+  ADDON_WITHOUT_MAIN: "is an extra and needs a main item from the same vendor",
 };
 
 /**
