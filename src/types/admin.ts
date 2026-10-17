@@ -315,6 +315,17 @@ export interface AdminTransactionSummary {
   /** Who is carrying it. Null on a pickup, and on a delivery with no rider yet. */
   rider: { id: string; name: string; phone: string | null } | null;
   riderAssignedAt: string | null;
+  /** Where it was placed: the chat, a vendor's storefront, or by an admin. */
+  source: CheckoutSource;
+  /**
+   * Whether the buyer can be reached in the chat. Always for a chat order; a storefront
+   * buyer only once they have signed in with the email they paid with.
+   */
+  buyerOnChat: boolean;
+  /** When it last left with a rider. */
+  dispatchedAt: string | null;
+  /** With its rider longer than the server's limit (3 hours), not delivered. */
+  stuck: boolean;
   vendors: {
     orderId: string;
     vendorId: string;
@@ -325,6 +336,8 @@ export interface AdminTransactionSummary {
     items: { name: string; quantity: number; lineTotal: number }[];
   }[];
 }
+
+export type CheckoutSource = "CHAT" | "STOREFRONT" | "ADMIN";
 
 export interface CatalogArea {
   id: string;
@@ -542,6 +555,9 @@ export interface TransactionListFilters extends PaginationParams {
   riderId?: string;
   /** Paid or ready deliveries with no rider yet. */
   needsRider?: boolean;
+  source?: CheckoutSource;
+  /** With a rider for hours and not delivered. */
+  stuck?: boolean;
 }
 
 /** A rider as the roster lists them (`GET /admin/riders`). */

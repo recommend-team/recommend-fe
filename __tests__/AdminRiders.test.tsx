@@ -66,6 +66,10 @@ const tx = (over: Partial<AdminTransactionSummary> = {}): AdminTransactionSummar
   deliveryCode: null,
   rider: null,
   riderAssignedAt: null,
+  source: "CHAT",
+  buyerOnChat: true,
+  dispatchedAt: null,
+  stuck: false,
   vendors: [],
   ...over,
 });
@@ -233,5 +237,79 @@ describe("Transactions — riders", () => {
     act(() => screen.getByRole("button", { name: "Needs a rider" }).click());
 
     expect(transactionFilters).toMatchObject({ needsRider: true, status: undefined });
+  });
+});
+
+describe("Transactions — storefront follow-up", () => {
+  const row = (reference: string) => screen.getByText(reference).closest("tr")!;
+
+  it("labels a storefront order, and says to call a buyer who isn't on the chat", () => {
+    transactions = [
+      tx({
+        source: "STOREFRONT",
+        buyerEmail: "ada@example.com",
+        buyerOnChat: false,
+      }),
+    ];
+    render(<AdminTransactionsPage />);
+
+    const r = row("REC-AAA");
+    expect(within(r).getByText("Storefront")).toBeInTheDocument();
+    expect(within(r).getByText("ada@example.com")).toBeInTheDocument();
+    expect(within(r).getByRole("link", { name: /Not on chat — call buyer/ })).toHaveAttribute(
+      "href",
+      "tel:+2348000000001"
+    );
+  });
+
+  it("says nothing once the storefront buyer has signed in to the chat", () => {
+    transactions = [tx({ source: "STOREFRONT", buyerOnChat: true })];
+    render(<AdminTransactionsPage />);
+
+    expect(within(row("REC-AAA")).queryByText(/Not on chat/)).not.toBeInTheDocument();
+  });
+
+  it("doesn't ask anyone to call about an order that was never paid", () => {
+    transactions = [tx({ source: "STOREFRONT", buyerOnChat: false, status: "PENDING_PAYMENT", paidAt: null })];
+    render(<AdminTransactionsPage />);
+
+    expect(within(row("REC-AAA")).queryByText(/Not on chat/)).not.toBeInTheDocument();
+  });
+
+  it("flags a delivery stuck on its way, with how long it has been", () => {
+    transactions = [
+      tx({
+        status: "DISPATCHED",
+        rider: { id: "r1", name: "Musa Bello", phone: null },
+        dispatchedAt: new Date(Date.now() - 4.2 * 3_600_000).toISOString(),
+        stuck: true,
+      }),
+    ];
+    render(<AdminTransactionsPage />);
+
+    expect(within(row("REC-AAA")).getByText(/Stuck · 4h/)).toBeInTheDocument();
+  });
+
+  it("filters to stuck deliveries, and by where the order was placed", () => {
+    render(<AdminTransactionsPage />);
+
+    act(() => screen.getByRole("button", { name: "Stuck on its way" }).click());
+    expect(transactionFilters).toMatchObject({ stuck: true, status: undefined });
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Where the order was placed" }), {
+      target: { value: "STOREFRONT" },
+    });
+    expect(transactionFilters).toMatchObject({ stuck: true, source: "STOREFRONT" });
+  });
+
+  it("opens on the stuck filter from the alert's link", () => {
+    window.history.replaceState(null, "", "/admin/transactions?stuck=true");
+    try {
+      render(<AdminTransactionsPage />);
+      expect(transactionFilters).toMatchObject({ stuck: true });
+      expect(screen.getByRole("button", { name: "Stuck on its way" })).toHaveAttribute("aria-pressed", "true");
+    } finally {
+      window.history.replaceState(null, "", "/");
+    }
   });
 });

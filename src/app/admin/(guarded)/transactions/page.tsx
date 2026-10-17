@@ -1,7 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Search, RefreshCw, Truck, Check, History, Copy, UserPlus, Phone } from "lucide-react";
+import {
+  Search,
+  RefreshCw,
+  Truck,
+  Check,
+  History,
+  Copy,
+  UserPlus,
+  Phone,
+  Store,
+  AlertTriangle,
+} from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
@@ -14,7 +25,7 @@ import {
   useTransactionHistory,
   useVerifyTransaction,
 } from "@/hooks";
-import type { AdminTransactionSummary, OrderStatus } from "@/types";
+import type { AdminTransactionSummary, CheckoutSource, OrderStatus } from "@/types";
 
 /**
  * The money view: one row per payment.
@@ -51,14 +62,43 @@ const STATUS_LABELS: Record<OrderStatus | "ALL", string> = {
 
 /** Not a status: paid or ready deliveries nobody has been assigned to carry yet. */
 const NEEDS_RIDER = "NEEDS_RIDER";
-type Filter = OrderStatus | "ALL" | typeof NEEDS_RIDER;
-const FILTERS: Filter[] = ["ALL", NEEDS_RIDER, ...STATUSES.filter((s) => s !== "ALL")];
-const FILTER_LABELS: Record<Filter, string> = { ...STATUS_LABELS, [NEEDS_RIDER]: "Needs a rider" };
+/** Not a status either: with a rider for hours and not marked delivered. */
+const STUCK = "STUCK";
+type Filter = OrderStatus | "ALL" | typeof NEEDS_RIDER | typeof STUCK;
+const FILTERS: Filter[] = [
+  "ALL",
+  NEEDS_RIDER,
+  STUCK,
+  ...STATUSES.filter((s) => s !== "ALL"),
+];
+const FILTER_LABELS: Record<Filter, string> = {
+  ...STATUS_LABELS,
+  [NEEDS_RIDER]: "Needs a rider",
+  [STUCK]: "Stuck on its way",
+};
+
+const SOURCES: Array<{ value: CheckoutSource | ""; label: string }> = [
+  { value: "", label: "Every source" },
+  { value: "CHAT", label: "Chat" },
+  { value: "STOREFRONT", label: "Storefront" },
+  { value: "ADMIN", label: "Placed by admin" },
+];
+
+/** Links into this page: `?stuck=true` (the alert), `?source=`, `?search=<reference>`. */
+function fromUrl(name: string): string | null {
+  return typeof window === "undefined"
+    ? null
+    : new URLSearchParams(window.location.search).get(name);
+}
 
 /** Where a delivery can take a rider: paid, ready, or already on its way (a swap). */
 const ASSIGNABLE: OrderStatus[] = ["PAID", "READY", "DISPATCHED"];
 
 const PAGE_SIZE = 20;
+
+function hoursSince(iso: string): number {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 3_600_000);
+}
 
 function formatNaira(n: number): string {
   if (!Number.isFinite(n)) return "₦0";
@@ -67,20 +107,27 @@ function formatNaira(n: number): string {
 
 export default function AdminTransactionsPage() {
   const [page, setPage] = useState(1);
-  const [filter, setFilter] = useState<Filter>("ALL");
-  // A rider's page links here with `?search=<reference>`.
-  const [search, setSearch] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : new URLSearchParams(window.location.search).get("search") ?? ""
+  const [filter, setFilter] = useState<Filter>(() =>
+    fromUrl("stuck") === "true" ? STUCK : "ALL"
   );
+  const [source, setSource] = useState<CheckoutSource | "">(() => {
+    const value = fromUrl("source");
+    return SOURCES.some((s) => s.value === value) ? (value as CheckoutSource) : "";
+  });
+  // A rider's page links here with `?search=<reference>`.
+  const [search, setSearch] = useState(() => fromUrl("search") ?? "");
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const transactions = useAdminTransactions({
     page,
     limit: PAGE_SIZE,
-    status: filter === "ALL" || filter === NEEDS_RIDER ? undefined : filter,
+    status:
+      filter === "ALL" || filter === NEEDS_RIDER || filter === STUCK
+        ? undefined
+        : filter,
     needsRider: filter === NEEDS_RIDER || undefined,
+    stuck: filter === STUCK || undefined,
+    source: source || undefined,
     search: search.trim() || undefined,
   });
 
@@ -110,6 +157,21 @@ export default function AdminTransactionsPage() {
               className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 bg-white font-dm text-sm focus:outline-none focus:border-recommend-green"
             />
           </div>
+          <select
+            value={source}
+            onChange={(e) => {
+              setSource(e.target.value as CheckoutSource | "");
+              setPage(1);
+            }}
+            aria-label="Where the order was placed"
+            className="h-10 rounded-lg border border-gray-200 bg-white px-3 font-dm text-sm focus:outline-none focus:border-recommend-green"
+          >
+            {SOURCES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
           <div className="flex gap-2 flex-wrap">
             {FILTERS.map((f) => (
               <button
@@ -125,7 +187,9 @@ export default function AdminTransactionsPage() {
                     ? "bg-recommend-orange text-white"
                     : f === NEEDS_RIDER
                       ? "bg-orange-50 text-orange-700 hover:bg-orange-100"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      : f === STUCK
+                        ? "bg-red-50 text-red-700 hover:bg-red-100"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {FILTER_LABELS[f]}
@@ -168,7 +232,9 @@ export default function AdminTransactionsPage() {
                   <td colSpan={10} className="py-6 text-center text-gray-400">
                     {filter === NEEDS_RIDER
                       ? "Every delivery has a rider."
-                      : search
+                      : filter === STUCK
+                        ? "Nothing is stuck on its way."
+                        : search
                         ? "No transactions match."
                         : "No transactions yet."}
                   </td>
@@ -244,8 +310,20 @@ function TransactionRow({
         onClick={onToggle}
         className="border-b border-gray-100 hover:bg-amber-50/40 cursor-pointer"
       >
-        <td className="py-3 pr-4 font-mono text-xs text-gray-700">
-          {transaction.reference}
+        <td className="py-3 pr-4">
+          <div className="flex flex-col items-start gap-1">
+            <span className="font-mono text-xs text-gray-700">
+              {transaction.reference}
+            </span>
+            {transaction.source === "STOREFRONT" && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-700"
+                title="Bought on the vendor's storefront, not in the chat"
+              >
+                <Store size={11} /> Storefront
+              </span>
+            )}
+          </div>
         </td>
         <td className="py-3 pr-4">
           <div className="flex flex-col items-start gap-1">
@@ -253,6 +331,21 @@ function TransactionRow({
             <span className="text-xs text-gray-500">
               {transaction.buyerPhone}
             </span>
+            {transaction.source === "STOREFRONT" && transaction.buyerEmail && (
+              <span className="text-xs text-gray-500">{transaction.buyerEmail}</span>
+            )}
+            {/* A storefront buyer who never signed in to the chat can't be messaged
+                there — following up is a phone call. */}
+            {!transaction.buyerOnChat && !unpaid && (
+              <a
+                href={`tel:${transaction.buyerPhone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 hover:bg-amber-100"
+                title="They haven't signed in to the chat with the email they paid with"
+              >
+                <Phone size={11} /> Not on chat — call buyer
+              </a>
+            )}
             {/* Beside the phone number, because relaying it is a phone call. */}
             {transaction.status === "DISPATCHED" && transaction.deliveryCode && (
               <DeliveryCode code={transaction.deliveryCode} />
@@ -275,7 +368,17 @@ function TransactionRow({
           {formatNaira(transaction.totalAmount)}
         </td>
         <td className="py-3 pr-4">
-          <StatusPill status={transaction.status} />
+          <div className="flex flex-col items-start gap-1">
+            <StatusPill status={transaction.status} />
+            {transaction.stuck && transaction.dispatchedAt && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-700 whitespace-nowrap"
+                title={`Left with the rider ${new Date(transaction.dispatchedAt).toLocaleString()}`}
+              >
+                <AlertTriangle size={11} /> Stuck · {hoursSince(transaction.dispatchedAt)}h
+              </span>
+            )}
+          </div>
         </td>
         <td className="py-3 pr-4 text-gray-500">
           {new Date(transaction.createdAt).toLocaleString()}
