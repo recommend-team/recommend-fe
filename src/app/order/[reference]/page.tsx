@@ -6,7 +6,10 @@ import { useEffect, useState } from "react";
 import { Check, Copy, MessageCircle, Phone, RefreshCw } from "lucide-react";
 import { getOrderStatus, verifyOrder } from "@/services";
 import { CUSTOMER_APP_URL } from "@/lib/links";
-import { CONTACT_PHONE } from "@/components/templates/ContactContent";
+import {
+  SUPPORT_PHONE as CONTACT_PHONE,
+  SUPPORT_PHONE_HREF as PHONE_HREF,
+} from "@/lib/support";
 import { formatNaira, clearStoredCart } from "@/lib/storefront-cart";
 import { recallOrder, type LastOrder } from "@/lib/last-order";
 import type { OrderStatusView } from "@/types";
@@ -22,8 +25,6 @@ type View =
   | { state: "unpaid"; order: OrderStatusView }
   | { state: "called-off"; order: OrderStatusView }
   | { state: "missing" };
-
-const PHONE_HREF = `tel:${CONTACT_PHONE.replace(/\s/g, "")}`;
 
 function viewOf(order: OrderStatusView): View {
   if (order.status === "PENDING_PAYMENT") return { state: "unpaid", order };

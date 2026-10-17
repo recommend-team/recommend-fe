@@ -8,9 +8,8 @@ import { Text } from "../atoms/Text";
 import { Button } from "../molecules/Button";
 import { BackgroundTwo } from "./BackgroundTwo";
 import { SOCIAL_LINKS } from "@/lib/social";
+import { SUPPORT_EMAIL as CONTACT_EMAIL, SUPPORT_PHONE as CONTACT_PHONE } from "@/lib/support";
 
-const CONTACT_EMAIL = "contacts.recommend@gmail.com";
-const CONTACT_PHONE = "+234 814 306 7676"; // TODO: replace with real support line
 const CONTACT_LOCATION = "Lagos, Nigeria";
 
 const subjects = [

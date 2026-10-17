@@ -16,7 +16,10 @@ import {
 } from "lucide-react";
 import { useStorefront } from "@/hooks";
 import { RemoteImage } from "@/components/atoms/RemoteImage";
-import { CONTACT_PHONE } from "@/components/templates/ContactContent";
+import {
+  SUPPORT_PHONE as CONTACT_PHONE,
+  SUPPORT_PHONE_HREF as PHONE_HREF,
+} from "@/lib/support";
 import { ItemSheet } from "@/components/storefront/ItemSheet";
 import { ProductPhoto } from "@/components/storefront/ProductPhoto";
 import { formatNaira, useStorefrontCart } from "@/lib/storefront-cart";
@@ -30,7 +33,6 @@ import type { Product } from "@/types";
  * sits beside the order.
  */
 
-const PHONE_HREF = `tel:${CONTACT_PHONE.replace(/\s/g, "")}`;
 const EXTRAS_LOCKED = "Add something from the menu first — extras go with a meal.";
 
 type Tab = "all" | "extras";
