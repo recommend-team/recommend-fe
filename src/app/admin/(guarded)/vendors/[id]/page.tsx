@@ -28,6 +28,8 @@ import {
   MessageCircle,
   Wallet,
   Banknote,
+  Pencil,
+  Power,
 } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import {
@@ -37,8 +39,14 @@ import {
   useSuspendUser,
   useActivateUser,
   useWalletStatement,
+  useUpdateVendor,
 } from "@/hooks";
 import { useConfirm, usePrompt } from "@/components/organisms/DialogProvider";
+import EditStoreDialog from "@/components/organisms/vendor-admin/EditStoreDialog";
+import EditOwnerDialog from "@/components/organisms/vendor-admin/EditOwnerDialog";
+import EditHoursDialog from "@/components/organisms/vendor-admin/EditHoursDialog";
+import EditAreasDialog from "@/components/organisms/vendor-admin/EditAreasDialog";
+import VendorProductsTab from "@/components/organisms/vendor-admin/VendorProductsTab";
 import type { AdminVendorDetail, Product, WalletEntryType } from "@/types";
 
 const DAY_LABELS: Record<string, string> = {
@@ -63,7 +71,10 @@ function formatMoney(n: number): string {
   return `₦${n.toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
 }
 
-type TabKey = "overview" | "profile" | "payout" | "kyc";
+type TabKey = "overview" | "products" | "profile" | "payout" | "kyc";
+
+/** Which edit dialog is open. Changes are saved for the vendor, logged, and they are told. */
+type Editing = "store" | "owner" | "hours" | "areas" | null;
 
 export default function VendorDetailPage({
   params,
@@ -79,10 +90,12 @@ export default function VendorDetailPage({
   const reject = useRejectPending();
   const suspend = useSuspendUser();
   const activate = useActivateUser();
+  const update = useUpdateVendor(id);
 
   const [actionError, setActionError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [tab, setTab] = useState<TabKey>("overview");
+  const [editing, setEditing] = useState<Editing>(null);
 
   const goBack = () => router.push("/admin/vendors");
 
@@ -225,6 +238,27 @@ export default function VendorDetailPage({
 
       {/* Actions */}
       <div className="flex flex-wrap gap-2">
+        {/* Open or closed — the same switch the vendor has on their dashboard. */}
+        {v.status !== "DEACTIVATED" && (
+          <button
+            type="button"
+            disabled={update.isPending}
+            onClick={() =>
+              confirmThenRun(() => update.mutateAsync({ isOpen: !v.isOpen }), {
+                title: v.isOpen ? "Close this store?" : "Open this store?",
+                message: v.isOpen
+                  ? "Buyers can still see it, but can't order until it opens again. The vendor is told."
+                  : "Buyers can order straight away. The vendor is told.",
+                confirmLabel: v.isOpen ? "Close store" : "Open store",
+                variant: v.isOpen ? "danger" : "primary",
+              })
+            }
+            className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-bold font-dm text-gray-800 hover:border-recommend-orange hover:text-recommend-orange disabled:opacity-50"
+          >
+            <Power size={16} />
+            {update.isPending ? "Working…" : v.isOpen ? "Close store" : "Open store"}
+          </button>
+        )}
         {isPending && (
           <>
             <ActionButton
@@ -307,6 +341,13 @@ export default function VendorDetailPage({
           label="Overview"
         />
         <TabButton
+          active={tab === "products"}
+          onClick={() => setTab("products")}
+          icon={Package}
+          label="Products"
+          badge={String(productCount)}
+        />
+        <TabButton
           active={tab === "profile"}
           onClick={() => setTab("profile")}
           icon={User}
@@ -333,13 +374,37 @@ export default function VendorDetailPage({
           productCount={productCount}
           products={products}
           onSelectProduct={setSelectedProduct}
+          onEdit={setEditing}
+          onManageProducts={() => setTab("products")}
         />
       )}
+      {tab === "products" && <VendorProductsTab vendorId={v.id} />}
       {tab === "profile" && (
-        <ProfileTab vendor={v} serviceAreas={data.serviceAreas ?? []} />
+        <ProfileTab
+          vendor={v}
+          serviceAreas={data.serviceAreas ?? []}
+          onEdit={setEditing}
+        />
       )}
       {tab === "payout" && <PayoutTab detail={data} />}
       {tab === "kyc" && <KycTab vendor={v} />}
+
+      {editing === "store" && (
+        <EditStoreDialog vendor={v} onClose={() => setEditing(null)} />
+      )}
+      {editing === "owner" && (
+        <EditOwnerDialog vendor={v} onClose={() => setEditing(null)} />
+      )}
+      {editing === "hours" && (
+        <EditHoursDialog vendor={v} onClose={() => setEditing(null)} />
+      )}
+      {editing === "areas" && (
+        <EditAreasDialog
+          vendor={v}
+          current={data.serviceAreas ?? []}
+          onClose={() => setEditing(null)}
+        />
+      )}
 
       {selectedProduct && (
         <ProductDetailModal
@@ -356,15 +421,23 @@ function OverviewTab({
   productCount,
   products,
   onSelectProduct,
+  onEdit,
+  onManageProducts,
 }: {
   vendor: AdminVendorDetail["vendor"];
   productCount: number;
   products: Product[];
   onSelectProduct: (p: Product) => void;
+  onEdit: (what: Editing) => void;
+  onManageProducts: () => void;
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <InfoCard title="Business" icon={Store}>
+      <InfoCard
+        title="Business"
+        icon={Store}
+        action={<EditButton label="Edit store" onClick={() => onEdit("store")} />}
+      >
         <InfoRow
           icon={Store}
           label="Business name"
@@ -398,7 +471,11 @@ function OverviewTab({
         />
       </InfoCard>
 
-      <InfoCard title="Contact" icon={Phone}>
+      <InfoCard
+        title="Contact"
+        icon={Phone}
+        action={<EditButton label="Edit owner" onClick={() => onEdit("owner")} />}
+      >
         <InfoRow
           icon={User}
           label="Owner"
@@ -429,7 +506,11 @@ function OverviewTab({
         />
       </InfoCard>
 
-      <InfoCard title={`Products (${productCount})`} icon={Package}>
+      <InfoCard
+        title={`Products (${productCount})`}
+        icon={Package}
+        action={<EditButton label="Manage" onClick={onManageProducts} />}
+      >
         {products.length === 0 ? (
           <div className="py-6 text-center">
             <div className="mx-auto w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-2 text-gray-400">
@@ -498,9 +579,11 @@ function OverviewTab({
 function ProfileTab({
   vendor: v,
   serviceAreas: deliveryAreas,
+  onEdit,
 }: {
   vendor: AdminVendorDetail["vendor"];
   serviceAreas: AdminVendorDetail["serviceAreas"];
+  onEdit: (what: Editing) => void;
 }) {
   const operatingHours = v.operatingHours ?? null;
   const hasHours =
@@ -508,7 +591,11 @@ function ProfileTab({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <InfoCard title="Owner profile" icon={User}>
+      <InfoCard
+        title="Owner profile"
+        icon={User}
+        action={<EditButton label="Edit owner" onClick={() => onEdit("owner")} />}
+      >
         <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
           <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-recommend-orange text-xl font-bold font-dm">
             {(v.firstName?.[0] ?? "").toUpperCase()}
@@ -560,11 +647,15 @@ function ProfileTab({
         )}
       </InfoCard>
 
-      <InfoCard title="Operating hours" icon={Clock}>
+      <InfoCard
+        title="Operating hours"
+        icon={Clock}
+        action={<EditButton label="Edit hours" onClick={() => onEdit("hours")} />}
+      >
         {!hasHours ? (
           <EmptyBlock
             icon={Clock}
-            message="Vendor hasn't configured operating hours yet."
+            message="No opening hours set yet."
           />
         ) : (
           <div className="flex flex-col gap-1.5">
@@ -601,7 +692,11 @@ function ProfileTab({
         )}
       </InfoCard>
 
-      <InfoCard title="Delivery areas" icon={MapPin}>
+      <InfoCard
+        title="Delivery areas"
+        icon={MapPin}
+        action={<EditButton label="Edit areas" onClick={() => onEdit("areas")} />}
+      >
         {deliveryAreas.length === 0 ? (
           <EmptyBlock
             icon={MapPin}
@@ -627,7 +722,11 @@ function ProfileTab({
         )}
       </InfoCard>
 
-      <InfoCard title="Storefront" icon={Globe}>
+      <InfoCard
+        title="Storefront"
+        icon={Globe}
+        action={<EditButton label="Edit store" onClick={() => onEdit("store")} />}
+      >
         <InfoRow
           icon={Globe}
           label="Public slug"
@@ -1086,10 +1185,13 @@ function Chip({
 function InfoCard({
   title,
   icon: Icon,
+  action,
   children,
 }: {
   title: string;
   icon: React.ElementType;
+  /** Beside the title — an Edit button. */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -1098,10 +1200,24 @@ function InfoCard({
         <div className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center text-recommend-orange">
           <Icon size={14} />
         </div>
-        <h3 className="text-base font-bold font-dm text-gray-900">{title}</h3>
+        <h3 className="flex-1 text-base font-bold font-dm text-gray-900">{title}</h3>
+        {action}
       </header>
       <div className="flex flex-col gap-3">{children}</div>
     </section>
+  );
+}
+
+function EditButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-bold font-dm text-gray-700 hover:border-recommend-orange hover:text-recommend-orange"
+    >
+      <Pencil size={11} />
+      {label}
+    </button>
   );
 }
 

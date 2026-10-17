@@ -6,3 +6,4 @@ export * from "./auth";
 export * from "./admin";
 export * from "./conversation";
 export * from "./notification";
+export * from "./admin-vendor";
