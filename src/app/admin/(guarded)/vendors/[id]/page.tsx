@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { RemoteImage } from "@/components/atoms/RemoteImage";
 import Link from "next/link";
 import {
@@ -30,6 +30,10 @@ import {
   Banknote,
   Pencil,
   Power,
+  KeyRound,
+  AtSign,
+  UserX,
+  History,
 } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import {
@@ -40,6 +44,9 @@ import {
   useActivateUser,
   useWalletStatement,
   useUpdateVendor,
+  useSendVendorInvite,
+  useChangeVendorEmail,
+  useDeactivateVendor,
 } from "@/hooks";
 import { useConfirm, usePrompt } from "@/components/organisms/DialogProvider";
 import EditStoreDialog from "@/components/organisms/vendor-admin/EditStoreDialog";
@@ -47,6 +54,8 @@ import EditOwnerDialog from "@/components/organisms/vendor-admin/EditOwnerDialog
 import EditHoursDialog from "@/components/organisms/vendor-admin/EditHoursDialog";
 import EditAreasDialog from "@/components/organisms/vendor-admin/EditAreasDialog";
 import VendorProductsTab from "@/components/organisms/vendor-admin/VendorProductsTab";
+import VendorHistoryTab from "@/components/organisms/vendor-admin/VendorHistoryTab";
+import KycUploadButton from "@/components/organisms/vendor-admin/KycUploadButton";
 import type { AdminVendorDetail, Product, WalletEntryType } from "@/types";
 
 const DAY_LABELS: Record<string, string> = {
@@ -71,7 +80,7 @@ function formatMoney(n: number): string {
   return `₦${n.toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
 }
 
-type TabKey = "overview" | "products" | "profile" | "payout" | "kyc";
+type TabKey = "overview" | "products" | "profile" | "payout" | "kyc" | "history";
 
 /** Which edit dialog is open. Changes are saved for the vendor, logged, and they are told. */
 type Editing = "store" | "owner" | "hours" | "areas" | null;
@@ -91,16 +100,30 @@ export default function VendorDetailPage({
   const suspend = useSuspendUser();
   const activate = useActivateUser();
   const update = useUpdateVendor(id);
+  const invite = useSendVendorInvite(id);
+  const changeEmail = useChangeVendorEmail(id);
+  const deactivate = useDeactivateVendor(id);
+  // Arriving from "Set up a vendor": say whether the set-password email went. From the
+  // router, not window.location — after a client-side navigation the address bar can
+  // still be catching up on the first render.
+  const searchParams = useSearchParams();
+  const justCreated = searchParams.get("created") === "1";
+  const inviteFailed = searchParams.get("invite") === "0";
 
   const [actionError, setActionError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [tab, setTab] = useState<TabKey>("overview");
   const [editing, setEditing] = useState<Editing>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  // The "set up" notice is about the moment of creation; the next action replaces it.
+  const [createdSeen, setCreatedSeen] = useState(false);
 
   const goBack = () => router.push("/admin/vendors");
 
   const runAction = async (fn: () => Promise<unknown>) => {
     setActionError(null);
+    setActionNotice(null);
+    setCreatedSeen(true);
     try {
       await fn();
     } catch (err) {
@@ -152,6 +175,7 @@ export default function VendorDetailPage({
   const isPending = v.status === "PENDING";
   const isApproved = v.status === "APPROVED";
   const isSuspended = v.status === "SUSPENDED";
+  const isDeactivated = v.status === "DEACTIVATED";
   const displayName =
     v.businessName || `${v.firstName} ${v.lastName}`.trim() || "Unnamed vendor";
 
@@ -230,6 +254,23 @@ export default function VendorDetailPage({
         </div>
       </section>
 
+      {justCreated && !createdSeen && (
+        <p
+          role="status"
+          className={`text-sm font-dm rounded-lg p-3 ${
+            inviteFailed ? "text-orange-800 bg-orange-50" : "text-green-800 bg-green-50"
+          }`}
+        >
+          {inviteFailed
+            ? `Vendor set up, but the set-password email to ${v.email} didn't send. Use "Send set-password email" to try again.`
+            : `Vendor set up. We've emailed ${v.email} a link to set their password — valid for 72 hours.`}
+        </p>
+      )}
+      {actionNotice && (
+        <p role="status" className="text-sm font-dm text-green-800 bg-green-50 rounded-lg p-3">
+          {actionNotice}
+        </p>
+      )}
       {actionError && (
         <p className="text-sm font-dm text-red-600 bg-red-50 rounded-lg p-3">
           {actionError}
@@ -307,14 +348,14 @@ export default function VendorDetailPage({
               confirmThenRun(() => suspend.mutateAsync(v.id), {
                 title: "Suspend this vendor?",
                 message:
-                  "Their store will go offline and they cannot receive new orders until reactivated.",
+                  "They can still sign in and see their account, but can't change anything or withdraw, and buyers can't find them. Orders already paid can still be finished.",
                 confirmLabel: "Suspend",
                 variant: "danger",
               })
             }
           />
         )}
-        {isSuspended && (
+        {(isSuspended || isDeactivated) && (
           <ActionButton
             icon={PlayCircle}
             label="Reactivate"
@@ -323,12 +364,76 @@ export default function VendorDetailPage({
             onClick={() =>
               confirmThenRun(() => activate.mutateAsync(v.id), {
                 title: "Reactivate this vendor?",
-                message: "Their store will immediately go back online.",
+                message: isDeactivated
+                  ? "They can sign in again and buyers can find them. Their store stays closed until you or they open it."
+                  : "They can make changes and withdraw again, and buyers can find them.",
                 confirmLabel: "Reactivate",
                 variant: "primary",
               })
             }
           />
+        )}
+        {!isDeactivated && (
+          <>
+            <SecondaryButton
+              icon={KeyRound}
+              label="Send set-password email"
+              loading={invite.isPending}
+              onClick={() =>
+                confirmThenRun(
+                  async () => {
+                    await invite.mutateAsync();
+                    setActionNotice(`A link to set their password has been emailed to ${v.email}.`);
+                  },
+                  {
+                    title: "Email a set-password link?",
+                    message: `${v.email} gets a link to choose a password, valid for 72 hours. Their current password keeps working until they use it.`,
+                    confirmLabel: "Send email",
+                    variant: "primary",
+                  }
+                )
+              }
+            />
+            <SecondaryButton
+              icon={AtSign}
+              label="Change email"
+              loading={changeEmail.isPending}
+              onClick={async () => {
+                const email = await prompt({
+                  title: "Change their login email",
+                  message: `They'll sign in with the new address from now on. ${v.email} is told it changed.`,
+                  placeholder: "new@example.com",
+                  defaultValue: v.email,
+                  confirmLabel: "Change email",
+                  required: true,
+                });
+                if (!email || email.trim().toLowerCase() === v.email) return;
+                runAction(async () => {
+                  await changeEmail.mutateAsync(email.trim().toLowerCase());
+                  setActionNotice(`Login email changed. ${v.email} has been told.`);
+                });
+              }}
+            />
+            <SecondaryButton
+              icon={UserX}
+              label="Deactivate"
+              danger
+              loading={deactivate.isPending}
+              onClick={async () => {
+                const reason = await prompt({
+                  title: "Deactivate this vendor?",
+                  message:
+                    "They can't sign in, buyers can't find them, and their store closes. Their orders and earnings records stay. You can reactivate them later.",
+                  placeholder: "Reason (optional) — e.g. Closed the business",
+                  confirmLabel: "Deactivate",
+                  variant: "danger",
+                  multiline: true,
+                });
+                if (reason === null) return;
+                runAction(() => deactivate.mutateAsync(reason.trim() || undefined));
+              }}
+            />
+          </>
         )}
       </div>
 
@@ -366,6 +471,12 @@ export default function VendorDetailPage({
           label="KYC"
           badge={kycDocCount(v) ? String(kycDocCount(v)) : undefined}
         />
+        <TabButton
+          active={tab === "history"}
+          onClick={() => setTab("history")}
+          icon={History}
+          label="History"
+        />
       </div>
 
       {tab === "overview" && (
@@ -388,6 +499,7 @@ export default function VendorDetailPage({
       )}
       {tab === "payout" && <PayoutTab detail={data} />}
       {tab === "kyc" && <KycTab vendor={v} />}
+      {tab === "history" && <VendorHistoryTab vendorId={v.id} />}
 
       {editing === "store" && (
         <EditStoreDialog vendor={v} onClose={() => setEditing(null)} />
@@ -1080,13 +1192,19 @@ function KycTab({ vendor: v }: { vendor: AdminVendorDetail["vendor"] }) {
                     View <ExternalLink size={11} />
                   </Link>
                 )}
+                <KycUploadButton
+                  vendorId={v.id}
+                  documentKey={d.key}
+                  label={d.label}
+                  replacing={!!url}
+                />
               </div>
             );
           })}
         </div>
 
         <p className="text-xs font-dm text-gray-400 mt-2">
-          Documents are served from Cloudinary and open in a new tab.
+          Photos or PDFs, up to 10 MB. The vendor is told when you add one.
         </p>
       </InfoCard>
     </div>
@@ -1294,6 +1412,36 @@ function ActionButton({
       : "bg-red-600 text-white hover:bg-red-700";
   return (
     <button onClick={onClick} disabled={loading} className={`${base} ${style}`}>
+      <Icon size={16} />
+      {loading ? "Working…" : label}
+    </button>
+  );
+}
+
+function SecondaryButton({
+  icon: Icon,
+  label,
+  loading,
+  danger = false,
+  onClick,
+}: {
+  icon: React.ElementType;
+  label: string;
+  loading?: boolean;
+  danger?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      className={`flex items-center gap-2 rounded-full border bg-white px-4 py-2 text-sm font-bold font-dm disabled:opacity-50 ${
+        danger
+          ? "border-red-200 text-red-700 hover:bg-red-50"
+          : "border-gray-300 text-gray-800 hover:border-recommend-orange hover:text-recommend-orange"
+      }`}
+    >
       <Icon size={16} />
       {loading ? "Working…" : label}
     </button>

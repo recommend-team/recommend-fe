@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronRight, ArrowDown } from "lucide-react";
+import { Search, ChevronRight, ArrowDown, Plus } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
 import { useVendors } from "@/hooks";
+import CreateVendorDialog from "@/components/organisms/vendor-admin/CreateVendorDialog";
 import type { UserStatus, VendorOrderSort } from "@/types";
 
 /** Order counts by period — paid, not cancelled or refunded, Lagos time. */
@@ -34,6 +35,7 @@ export default function VendorsPage() {
   const [search, setSearch] = useState("");
   // Ranked on the server, so "top this week" is across every vendor, not this page's.
   const [sort, setSort] = useState<VendorOrderSort | undefined>(undefined);
+  const [creating, setCreating] = useState(false);
 
   const vendors = useVendors({
     page,
@@ -64,7 +66,26 @@ export default function VendorsPage() {
       <PageHeader
         title="Vendors"
         description="Review, approve, and manage vendor accounts."
+        right={
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-recommend-green px-4 py-2 font-dm text-sm font-bold text-white hover:bg-recommend-green-hover"
+          >
+            <Plus size={15} /> Add vendor
+          </button>
+        }
       />
+
+      {creating && (
+        <CreateVendorDialog
+          onClose={() => setCreating(false)}
+          onCreated={(vendor) =>
+            // Their page says whether the set-password email went.
+            router.push(`/admin/vendors/${vendor.id}?created=1&invite=${vendor.inviteSent ? 1 : 0}`)
+          }
+        />
+      )}
 
       <div className="rounded-2xl bg-white border border-[#FFD91D] p-5 md:p-6 flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

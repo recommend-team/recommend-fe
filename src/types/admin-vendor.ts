@@ -59,3 +59,47 @@ export interface UploadedFile {
   url: string;
   secureUrl: string;
 }
+
+/** `POST /admin/vendors` — someone onboarded in person. They're emailed a set-password link. */
+export interface CreateVendorPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  vendorType: "REGISTERED" | "NON_REGISTERED";
+  businessName: string;
+  businessAddress: string;
+  businessCategory: string;
+  businessDescription?: string;
+  areaIds?: string[];
+}
+
+/** The KYC documents, by vendor type. */
+export type KycDocumentKey =
+  | "cacDocumentUrl"
+  | "tinDocumentUrl"
+  | "ninDocumentUrl"
+  | "passportPhotoUrl"
+  | "bankStatementUrl"
+  | "utilityBillUrl";
+
+export type VendorAdminAction =
+  | "CREATED"
+  | "STORE_UPDATED"
+  | "OWNER_UPDATED"
+  | "EMAIL_CHANGED"
+  | "INVITE_SENT"
+  | "KYC_UPDATED"
+  | "PRODUCT_ADDED"
+  | "PRODUCT_UPDATED"
+  | "PRODUCT_REMOVED"
+  | "DEACTIVATED";
+
+/** One thing an admin did to a vendor (`GET /admin/vendors/:id/history`). */
+export interface VendorAdminEdit {
+  id: string;
+  action: VendorAdminAction;
+  summary: string;
+  createdAt: string;
+  admin: { id: string; name: string };
+}

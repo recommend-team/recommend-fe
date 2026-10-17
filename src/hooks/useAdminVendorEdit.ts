@@ -3,6 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addVendorProduct,
+  changeVendorEmail,
+  createVendor,
+  deactivateVendor,
+  getVendorHistory,
+  sendVendorInvite,
+  updateVendorKyc,
   getAreasByState,
   getStates,
   getVendorProducts,
@@ -14,6 +20,9 @@ import { ApiError } from "@/lib/api";
 import type {
   AdminProductPayload,
   AdminUpdateVendorPayload,
+  CreateVendorPayload,
+  KycDocumentKey,
+  VendorAdminEdit,
   LocationArea,
   LocationState,
   PaginatedResult,
@@ -29,6 +38,7 @@ function useRefreshVendor(vendorId: string) {
     queryClient.invalidateQueries({ queryKey: ["admin", "vendors"] });
     queryClient.invalidateQueries({ queryKey: ["admin", "vendor-products", vendorId] });
     queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "vendor-history", vendorId] });
   };
 }
 
@@ -93,5 +103,55 @@ export function useAllAreas(enabled: boolean) {
     },
     enabled,
     staleTime: 1000 * 60 * 10,
+  });
+}
+
+export function useCreateVendor() {
+  const queryClient = useQueryClient();
+  return useMutation<{ id: string; inviteSent: boolean }, ApiError, CreateVendorPayload>({
+    mutationFn: createVendor,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "vendors"] }),
+  });
+}
+
+export function useChangeVendorEmail(vendorId: string) {
+  const refresh = useRefreshVendor(vendorId);
+  return useMutation<unknown, ApiError, string>({
+    mutationFn: (email) => changeVendorEmail(vendorId, email),
+    onSuccess: refresh,
+  });
+}
+
+export function useSendVendorInvite(vendorId: string) {
+  const refresh = useRefreshVendor(vendorId);
+  return useMutation<unknown, ApiError, void>({
+    mutationFn: () => sendVendorInvite(vendorId),
+    onSuccess: refresh,
+  });
+}
+
+export function useUpdateVendorKyc(vendorId: string) {
+  const refresh = useRefreshVendor(vendorId);
+  return useMutation<unknown, ApiError, Partial<Record<KycDocumentKey, string>>>({
+    mutationFn: (documents) => updateVendorKyc(vendorId, documents),
+    onSuccess: refresh,
+  });
+}
+
+export function useDeactivateVendor(vendorId: string) {
+  const refresh = useRefreshVendor(vendorId);
+  return useMutation<unknown, ApiError, string | undefined>({
+    mutationFn: (reason) => deactivateVendor(vendorId, reason),
+    onSuccess: refresh,
+  });
+}
+
+/** What admins have changed on this vendor, newest first. */
+export function useVendorHistory(vendorId: string, enabled: boolean) {
+  return useQuery<VendorAdminEdit[]>({
+    queryKey: ["admin", "vendor-history", vendorId],
+    queryFn: () => getVendorHistory(vendorId),
+    enabled: enabled && !!vendorId,
+    staleTime: 1000 * 15,
   });
 }

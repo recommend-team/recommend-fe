@@ -5,6 +5,9 @@ import EditAreasDialog from "@/components/organisms/vendor-admin/EditAreasDialog
 import EditHoursDialog from "@/components/organisms/vendor-admin/EditHoursDialog";
 import ProductDialog from "@/components/organisms/vendor-admin/ProductDialog";
 import VendorProductsTab from "@/components/organisms/vendor-admin/VendorProductsTab";
+import CreateVendorDialog from "@/components/organisms/vendor-admin/CreateVendorDialog";
+import KycUploadButton from "@/components/organisms/vendor-admin/KycUploadButton";
+import VendorHistoryTab from "@/components/organisms/vendor-admin/VendorHistoryTab";
 import type { AdminVendorDetail, Product } from "@/types";
 
 // ─── Doubles ──────────────────────────────────────────────────────────────────
@@ -13,6 +16,9 @@ const updateVendor = jest.fn();
 const addProduct = jest.fn();
 const editProduct = jest.fn();
 const removeProduct = jest.fn();
+const createVendor = jest.fn();
+const attachKyc = jest.fn();
+let history: unknown[] = [];
 let products: Product[] = [];
 
 const mutation = (fn: jest.Mock) => ({
@@ -28,6 +34,9 @@ jest.mock("@/hooks", () => ({
   useAddVendorProduct: () => mutation(addProduct),
   useUpdateVendorProduct: () => mutation(editProduct),
   useRemoveVendorProduct: () => mutation(removeProduct),
+  useCreateVendor: () => mutation(createVendor),
+  useUpdateVendorKyc: () => mutation(attachKyc),
+  useVendorHistory: () => ({ data: history, isLoading: false, isError: false }),
   useVendorProducts: () => ({
     data: { items: products, total: products.length, page: 1, limit: 100 },
     isLoading: false,
@@ -98,6 +107,7 @@ const product = (over: Partial<Product> = {}): Product => ({
 beforeEach(() => {
   jest.clearAllMocks();
   products = [];
+  history = [];
   confirmAnswer.value = true;
 });
 
@@ -225,7 +235,7 @@ describe("Opening hours", () => {
     fireEvent.change(screen.getByLabelText("Monday closes"), { target: { value: "21:00" } });
     await submit("Save");
     const [[{ operatingHours }]] = updateVendor.mock.calls as [
-      [{ operatingHours: Record<string, { isOpen: boolean; close: string }> }],
+      { operatingHours: Record<string, { isOpen: boolean; close: string }> },
     ][];
     expect(operatingHours.monday).toMatchObject({ isOpen: true, close: "21:00" });
     expect(operatingHours.sunday.isOpen).toBe(false);
@@ -306,5 +316,102 @@ describe("Products", () => {
 
     const add = within(screen.getByRole("banner")).getByRole("button", { name: /Add product/ });
     expect(add).toBeDisabled();
+  });
+});
+
+// ─── Stage 3: set up, documents, history ─────────────────────────────────────
+
+describe("Set up a vendor", () => {
+  it("sends the owner, the business and the chosen areas", async () => {
+    render(<CreateVendorDialog onClose={jest.fn()} onCreated={jest.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Musa" } });
+    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Bello" } });
+    fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: "Musa@Suya.ng " } });
+    fireEvent.change(screen.getByLabelText(/^Phone number/), { target: { value: "0802 222 2222" } });
+    fireEvent.change(screen.getByLabelText("Business name"), { target: { value: "Musa Suya" } });
+    fireEvent.change(screen.getByLabelText("What they sell"), { target: { value: "Food" } });
+    fireEvent.change(screen.getByLabelText("Address"), { target: { value: "3 Allen Avenue, Ikeja" } });
+    fireEvent.click(screen.getByLabelText("Yaba"));
+    await submit("Set up vendor");
+
+    expect(createVendor).toHaveBeenCalledWith(
+      {
+        firstName: "Musa",
+        lastName: "Bello",
+        email: "musa@suya.ng",
+        phoneNumber: "0802 222 2222",
+        vendorType: "NON_REGISTERED",
+        businessName: "Musa Suya",
+        businessCategory: "Food",
+        businessAddress: "3 Allen Avenue, Ikeja",
+        areaIds: ["a2"],
+      },
+      expect.anything()
+    );
+  });
+
+  it("asks for what is missing before sending", async () => {
+    render(<CreateVendorDialog onClose={jest.fn()} onCreated={jest.fn()} />);
+    await submit("Set up vendor");
+
+    expect(createVendor).not.toHaveBeenCalled();
+    expect(await screen.findByText("Enter a valid email")).toBeInTheDocument();
+    expect(screen.getByText("Enter the full address")).toBeInTheDocument();
+  });
+});
+
+describe("KYC upload", () => {
+  it("uploads the file and attaches it as that document", async () => {
+    const { container } = render(
+      <KycUploadButton vendorId="v1" documentKey="ninDocumentUrl" label="NIN document" replacing={false} />
+    );
+    expect(screen.getByRole("button", { name: "Upload NIN document" })).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.change(container.querySelector('input[type="file"]')!, {
+        target: { files: [new File(["%PDF"], "nin.pdf", { type: "application/pdf" })] },
+      });
+    });
+
+    expect(attachKyc).toHaveBeenCalledWith({
+      ninDocumentUrl: "https://res.cloudinary.com/demo/new.jpg",
+    });
+  });
+
+  it("refuses something that isn't a photo or PDF", async () => {
+    const { container } = render(
+      <KycUploadButton vendorId="v1" documentKey="ninDocumentUrl" label="NIN document" replacing />
+    );
+    await act(async () => {
+      fireEvent.change(container.querySelector('input[type="file"]')!, {
+        target: { files: [new File(["x"], "nin.docx", { type: "application/msword" })] },
+      });
+    });
+    expect(attachKyc).not.toHaveBeenCalled();
+    expect(screen.getByText("A photo or a PDF.")).toBeInTheDocument();
+  });
+});
+
+describe("History", () => {
+  it("lists what admins changed, and who", () => {
+    history = [
+      {
+        id: "h1",
+        action: "PRODUCT_UPDATED",
+        summary: "Changed price on Jollof",
+        createdAt: "2026-10-17T10:00:00Z",
+        admin: { id: "a1", name: "Recommend Admin" },
+      },
+    ];
+    render(<VendorHistoryTab vendorId="v1" />);
+
+    expect(screen.getByText("Changed price on Jollof")).toBeInTheDocument();
+    expect(screen.getByText("by Recommend Admin")).toBeInTheDocument();
+  });
+
+  it("says when there is nothing yet", () => {
+    render(<VendorHistoryTab vendorId="v1" />);
+    expect(screen.getByText(/No admin has changed anything/)).toBeInTheDocument();
   });
 });

@@ -3,6 +3,9 @@ import { getAccessToken } from "@/lib/auth";
 import type {
   AdminProductPayload,
   AdminUpdateVendorPayload,
+  CreateVendorPayload,
+  KycDocumentKey,
+  VendorAdminEdit,
   LocationArea,
   LocationState,
   PaginatedResult,
@@ -102,4 +105,48 @@ export async function uploadFile(
     throw new ApiError(body.message ?? "Upload failed.", res.status, undefined, body);
   }
   return body.data;
+}
+
+/** Returns the new vendor's profile — `id` to open their page, `inviteSent` to say so. */
+export async function createVendor(
+  payload: CreateVendorPayload
+): Promise<{ id: string; inviteSent: boolean }> {
+  return request<{ id: string; inviteSent: boolean }>("/admin/vendors", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function changeVendorEmail(id: string, email: string): Promise<unknown> {
+  return request<unknown>(`/admin/vendors/${id}/email`, {
+    method: "PATCH",
+    body: JSON.stringify({ email }),
+  });
+}
+
+/** The set-password link: an invite if they never set one, otherwise a fresh link. */
+export async function sendVendorInvite(id: string): Promise<unknown> {
+  return request<unknown>(`/admin/vendors/${id}/invite`, { method: "POST" });
+}
+
+export async function updateVendorKyc(
+  id: string,
+  documents: Partial<Record<KycDocumentKey, string>>
+): Promise<unknown> {
+  return request<unknown>(`/admin/vendors/${id}/kyc`, {
+    method: "POST",
+    body: JSON.stringify(documents),
+  });
+}
+
+/** "Remove" a vendor — reversible with Reactivate. Their records stay. */
+export async function deactivateVendor(id: string, reason?: string): Promise<unknown> {
+  return request<unknown>(`/admin/vendors/${id}/deactivate`, {
+    method: "PATCH",
+    body: JSON.stringify(reason ? { reason } : {}),
+  });
+}
+
+export async function getVendorHistory(id: string): Promise<VendorAdminEdit[]> {
+  return request<VendorAdminEdit[]>(`/admin/vendors/${id}/history`);
 }
