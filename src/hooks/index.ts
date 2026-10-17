@@ -1,5 +1,5 @@
 export * from "./useStorefront";
-export * from "./useCreateOrder";
+export * from "./useCheckout";
 export * from "./useRegisterRider";
 export * from "./usePlatformStats";
 export * from "./useAdmins";

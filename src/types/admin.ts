@@ -428,7 +428,13 @@ export interface ConversationOrder {
 export interface CartChange {
   productId: string;
   productName: string | null;
-  reason: "REMOVED" | "UNAVAILABLE" | "VENDOR_CLOSED" | "PRICE_CHANGED";
+  reason:
+    | "REMOVED"
+    | "UNAVAILABLE"
+    | "VENDOR_CLOSED"
+    | "PRICE_CHANGED"
+    /** An extra with no main item from its vendor in the basket — never sold alone. */
+    | "ADDON_WITHOUT_MAIN";
   expectedUnitPrice?: number;
   currentUnitPrice?: number;
 }
