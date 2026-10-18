@@ -1,9 +1,19 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import EditStoreDialog, { toInternational } from "@/components/organisms/vendor-admin/EditStoreDialog";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import EditStoreDialog, {
+  toInternational,
+} from "@/components/organisms/vendor-admin/EditStoreDialog";
 import EditOwnerDialog from "@/components/organisms/vendor-admin/EditOwnerDialog";
 import EditAreasDialog from "@/components/organisms/vendor-admin/EditAreasDialog";
 import EditHoursDialog from "@/components/organisms/vendor-admin/EditHoursDialog";
 import ProductDialog from "@/components/organisms/vendor-admin/ProductDialog";
+import ExtraDialog from "@/components/organisms/vendor-admin/ExtraDialog";
 import VendorProductsTab from "@/components/organisms/vendor-admin/VendorProductsTab";
 import CreateVendorDialog from "@/components/organisms/vendor-admin/CreateVendorDialog";
 import KycUploadButton from "@/components/organisms/vendor-admin/KycUploadButton";
@@ -65,12 +75,15 @@ jest.mock("@/components/organisms/DialogProvider", () => ({
 
 jest.mock("@/services", () => ({
   uploadFile: jest.fn(() =>
-    Promise.resolve({ url: "x", secureUrl: "https://res.cloudinary.com/demo/new.jpg" })
+    Promise.resolve({
+      url: "x",
+      secureUrl: "https://res.cloudinary.com/demo/new.jpg",
+    }),
   ),
 }));
 
 const vendor = (
-  over: Partial<AdminVendorDetail["vendor"]> = {}
+  over: Partial<AdminVendorDetail["vendor"]> = {},
 ): AdminVendorDetail["vendor"] =>
   ({
     id: "v1",
@@ -131,8 +144,11 @@ describe("Edit store", () => {
     await submit("Save");
 
     expect(updateVendor).toHaveBeenCalledWith(
-      { businessDescription: "Amala every day", whatsappNumber: "+2348035551234" },
-      expect.anything()
+      {
+        businessDescription: "Amala every day",
+        whatsappNumber: "+2348035551234",
+      },
+      expect.anything(),
     );
   });
 
@@ -145,8 +161,12 @@ describe("Edit store", () => {
   });
 
   it("uploads a new logo and saves its address", async () => {
-    const { container } = render(<EditStoreDialog vendor={vendor()} onClose={jest.fn()} />);
-    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const { container } = render(
+      <EditStoreDialog vendor={vendor()} onClose={jest.fn()} />,
+    );
+    const fileInput = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     await act(async () => {
       fireEvent.change(fileInput, {
         target: { files: [new File(["x"], "logo.png", { type: "image/png" })] },
@@ -156,7 +176,7 @@ describe("Edit store", () => {
 
     expect(updateVendor).toHaveBeenCalledWith(
       { businessLogoUrl: "https://res.cloudinary.com/demo/new.jpg" },
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -173,13 +193,17 @@ describe("Edit owner", () => {
   it("changes the name and lifts the order limit", async () => {
     render(<EditOwnerDialog vendor={vendor()} onClose={jest.fn()} />);
 
-    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Adaeze" } });
-    fireEvent.change(screen.getByLabelText(/Monthly order limit/), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("First name"), {
+      target: { value: "Adaeze" },
+    });
+    fireEvent.change(screen.getByLabelText(/Monthly order limit/), {
+      target: { value: "" },
+    });
     await submit("Save");
 
     expect(updateVendor).toHaveBeenCalledWith(
       { firstName: "Adaeze", orderQuota: null },
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -190,7 +214,7 @@ describe("Edit owner", () => {
 
     expect(updateVendor).toHaveBeenCalledWith(
       { vendorType: "REGISTERED" },
-      expect.anything()
+      expect.anything(),
     );
   });
 });
@@ -204,18 +228,25 @@ describe("Edit areas", () => {
         vendor={vendor()}
         current={[{ id: "a1", name: "Egbeda", stateName: "Lagos" }]}
         onClose={jest.fn()}
-      />
+      />,
     );
     fireEvent.click(screen.getByLabelText("Egbeda"));
     fireEvent.click(screen.getByLabelText("Yaba"));
     await submit("Save");
 
-    expect(updateVendor).toHaveBeenCalledWith({ areaIds: ["a2"] }, expect.anything());
+    expect(updateVendor).toHaveBeenCalledWith(
+      { areaIds: ["a2"] },
+      expect.anything(),
+    );
   });
 
   it("filters by name", () => {
-    render(<EditAreasDialog vendor={vendor()} current={[]} onClose={jest.fn()} />);
-    fireEvent.change(screen.getByLabelText("Search areas"), { target: { value: "yab" } });
+    render(
+      <EditAreasDialog vendor={vendor()} current={[]} onClose={jest.fn()} />,
+    );
+    fireEvent.change(screen.getByLabelText("Search areas"), {
+      target: { value: "yab" },
+    });
 
     expect(screen.getByLabelText("Yaba")).toBeInTheDocument();
     expect(screen.queryByLabelText("Ikeja")).not.toBeInTheDocument();
@@ -227,17 +258,26 @@ describe("Opening hours", () => {
     render(<EditHoursDialog vendor={vendor()} onClose={jest.fn()} />);
 
     fireEvent.click(screen.getByLabelText("Sunday"));
-    fireEvent.change(screen.getByLabelText("Monday closes"), { target: { value: "07:00" } });
+    fireEvent.change(screen.getByLabelText("Monday closes"), {
+      target: { value: "07:00" },
+    });
     await submit("Save");
     expect(updateVendor).not.toHaveBeenCalled();
-    expect(screen.getByRole("alert")).toHaveTextContent(/Monday: closing must be after opening/);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /Monday: closing must be after opening/,
+    );
 
-    fireEvent.change(screen.getByLabelText("Monday closes"), { target: { value: "21:00" } });
+    fireEvent.change(screen.getByLabelText("Monday closes"), {
+      target: { value: "21:00" },
+    });
     await submit("Save");
     const [[{ operatingHours }]] = updateVendor.mock.calls as [
       { operatingHours: Record<string, { isOpen: boolean; close: string }> },
     ][];
-    expect(operatingHours.monday).toMatchObject({ isOpen: true, close: "21:00" });
+    expect(operatingHours.monday).toMatchObject({
+      isOpen: true,
+      close: "21:00",
+    });
     expect(operatingHours.sunday.isOpen).toBe(false);
   });
 });
@@ -245,24 +285,155 @@ describe("Opening hours", () => {
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 describe("Products", () => {
-  it("adds a product with the vendor's own fields", async () => {
-    render(<ProductDialog vendorId="v1" onClose={jest.fn()} />);
+  it("adds an extra on its own form, on every product but the one unticked", async () => {
+    const menu = [
+      product({ id: "beans", name: "Rice and beans" }),
+      product({ id: "chapman", name: "Chapman" }),
+    ];
+    render(<ExtraDialog vendorId="v1" products={menu} onClose={jest.fn()} />);
 
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Amala and Ewedu" } });
-    fireEvent.change(screen.getByLabelText("Price (₦)"), { target: { value: "2500" } });
-    fireEvent.click(screen.getByLabelText(/Extra/));
-    await submit("Add product");
+    fireEvent.change(screen.getByLabelText("Extra name"), {
+      target: { value: "Takeaway pack" },
+    });
+    fireEvent.change(screen.getByLabelText("Price (₦)"), {
+      target: { value: "200" },
+    });
+    expect(screen.getByLabelText("Rice and beans")).toBeChecked();
+    fireEvent.click(screen.getByLabelText("Chapman"));
+    await submit("Add extra");
 
     expect(addProduct).toHaveBeenCalledWith(
-      { name: "Amala and Ewedu", price: 2500, isAvailable: true, isAddOn: true },
-      expect.anything()
+      {
+        name: "Takeaway pack",
+        price: 200,
+        isAvailable: true,
+        isAddOn: true,
+        dishIds: ["beans"],
+      },
+      expect.anything(),
     );
   });
 
+  it("the product form never turns into an extra", () => {
+    render(<ProductDialog vendorId="v1" extras={[]} onClose={jest.fn()} />);
+    expect(screen.queryByText(/This is an extra/)).not.toBeInTheDocument();
+  });
+
+  it("adds a dish per portion, with extras ticked and a required protein", async () => {
+    const extras = [
+      product({ id: "beef", name: "Beef", isAddOn: true }),
+      product({ id: "water", name: "Water", price: 300, isAddOn: true }),
+    ];
+    render(<ProductDialog vendorId="v1" extras={extras} onClose={jest.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Rice and stew" },
+    });
+    fireEvent.change(screen.getByLabelText("Price (₦)"), {
+      target: { value: "1500" },
+    });
+    fireEvent.change(screen.getByLabelText("Price is per"), {
+      target: { value: "portion" },
+    });
+    fireEvent.click(screen.getByLabelText(/^Water/));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add a choice" }));
+    fireEvent.change(screen.getByLabelText("Choice 1 name"), {
+      target: { value: "Choose your protein" },
+    });
+    fireEvent.change(screen.getByLabelText("Option 1"), {
+      target: { value: "Chicken" },
+    });
+    fireEvent.change(screen.getByLabelText("Option 2"), {
+      target: { value: "Fish" },
+    });
+    fireEvent.change(
+      screen.getByLabelText("Extra cost for Fish, per portion"),
+      {
+        target: { value: "300" },
+      },
+    );
+    await submit("Add product");
+
+    expect(addProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Rice and stew",
+        isAddOn: false,
+        unit: "portion",
+        extraIds: ["water"],
+        choices: [
+          {
+            name: "Choose your protein",
+            required: true,
+            minPick: 1,
+            maxPick: 1,
+            options: [
+              { name: "Chicken", priceDelta: 0, isAvailable: true },
+              { name: "Fish", priceDelta: 300, isAvailable: true },
+            ],
+          },
+        ],
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("won't save a choice with no name", async () => {
+    render(<ProductDialog vendorId="v1" extras={[]} onClose={jest.fn()} />);
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Rice" },
+    });
+    fireEvent.change(screen.getByLabelText("Price (₦)"), {
+      target: { value: "1000" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "+ Add a choice" }));
+    await submit("Add product");
+
+    expect(addProduct).not.toHaveBeenCalled();
+    expect(await screen.findByText(/Name the choice/)).toBeInTheDocument();
+  });
+
+  it("lists dishes with what they come with, then the extras", () => {
+    products = [
+      product({
+        id: "stew",
+        name: "Rice and stew",
+        unit: "portion",
+        extraIds: ["water"],
+        choices: [
+          {
+            id: "g",
+            name: "Choose your protein",
+            required: true,
+            minPick: 1,
+            maxPick: 1,
+            options: [],
+          },
+        ],
+      }),
+      product({ id: "water", name: "Water", isAddOn: true }),
+    ];
+    render(<VendorProductsTab vendorId="v1" />);
+
+    expect(
+      screen.getByText("1 extra · Choose your protein (required)"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Water")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Extras/ }));
+    expect(screen.getByText("On 1 product")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Add extra/ }),
+    ).toBeInTheDocument();
+  });
+
   it("refuses a price that isn't one", async () => {
-    render(<ProductDialog vendorId="v1" onClose={jest.fn()} />);
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Amala" } });
-    fireEvent.change(screen.getByLabelText("Price (₦)"), { target: { value: "abc" } });
+    render(<ProductDialog vendorId="v1" extras={[]} onClose={jest.fn()} />);
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Amala" },
+    });
+    fireEvent.change(screen.getByLabelText("Price (₦)"), {
+      target: { value: "abc" },
+    });
     await submit("Add product");
 
     expect(addProduct).not.toHaveBeenCalled();
@@ -270,18 +441,30 @@ describe("Products", () => {
   });
 
   it("edits only what changed", async () => {
-    render(<ProductDialog vendorId="v1" product={product()} onClose={jest.fn()} />);
-    fireEvent.change(screen.getByLabelText("Price (₦)"), { target: { value: "3200" } });
+    render(
+      <ProductDialog
+        vendorId="v1"
+        product={product()}
+        extras={[]}
+        onClose={jest.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Price (₦)"), {
+      target: { value: "3200" },
+    });
     await submit("Save");
 
     expect(editProduct).toHaveBeenCalledWith(
       { productId: "p1", payload: { price: 3200 } },
-      expect.anything()
+      expect.anything(),
     );
   });
 
   it("lists them, switches availability, and removes after asking", async () => {
-    products = [product(), product({ id: "p2", name: "Gbegiri", isAvailable: false })];
+    products = [
+      product(),
+      product({ id: "p2", name: "Gbegiri", isAvailable: false }),
+    ];
     render(<VendorProductsTab vendorId="v1" />);
 
     expect(screen.getByText("Products (2 of 20)")).toBeInTheDocument();
@@ -294,7 +477,9 @@ describe("Products", () => {
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Remove Jollof Rice" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Remove Jollof Rice" }),
+      );
     });
     await waitFor(() => expect(removeProduct).toHaveBeenCalledWith("p1"));
   });
@@ -305,16 +490,22 @@ describe("Products", () => {
     render(<VendorProductsTab vendorId="v1" />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Remove Jollof Rice" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Remove Jollof Rice" }),
+      );
     });
     expect(removeProduct).not.toHaveBeenCalled();
   });
 
   it("stops adding at the vendor's limit of 20", () => {
-    products = Array.from({ length: 20 }, (_, i) => product({ id: `p${i}`, name: `Dish ${i}` }));
+    products = Array.from({ length: 20 }, (_, i) =>
+      product({ id: `p${i}`, name: `Dish ${i}` }),
+    );
     render(<VendorProductsTab vendorId="v1" />);
 
-    const add = within(screen.getByRole("banner")).getByRole("button", { name: /Add product/ });
+    const add = within(screen.getByRole("banner")).getByRole("button", {
+      name: /Add product/,
+    });
     expect(add).toBeDisabled();
   });
 });
@@ -325,13 +516,27 @@ describe("Set up a vendor", () => {
   it("sends the owner, the business and the chosen areas", async () => {
     render(<CreateVendorDialog onClose={jest.fn()} onCreated={jest.fn()} />);
 
-    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Musa" } });
-    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Bello" } });
-    fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: "Musa@Suya.ng " } });
-    fireEvent.change(screen.getByLabelText(/^Phone number/), { target: { value: "0802 222 2222" } });
-    fireEvent.change(screen.getByLabelText("Business name"), { target: { value: "Musa Suya" } });
-    fireEvent.change(screen.getByLabelText("What they sell"), { target: { value: "Food" } });
-    fireEvent.change(screen.getByLabelText("Address"), { target: { value: "3 Allen Avenue, Ikeja" } });
+    fireEvent.change(screen.getByLabelText("First name"), {
+      target: { value: "Musa" },
+    });
+    fireEvent.change(screen.getByLabelText("Last name"), {
+      target: { value: "Bello" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Email/), {
+      target: { value: "Musa@Suya.ng " },
+    });
+    fireEvent.change(screen.getByLabelText(/^Phone number/), {
+      target: { value: "0802 222 2222" },
+    });
+    fireEvent.change(screen.getByLabelText("Business name"), {
+      target: { value: "Musa Suya" },
+    });
+    fireEvent.change(screen.getByLabelText("What they sell"), {
+      target: { value: "Food" },
+    });
+    fireEvent.change(screen.getByLabelText("Address"), {
+      target: { value: "3 Allen Avenue, Ikeja" },
+    });
     fireEvent.click(screen.getByLabelText("Yaba"));
     await submit("Set up vendor");
 
@@ -347,7 +552,7 @@ describe("Set up a vendor", () => {
         businessAddress: "3 Allen Avenue, Ikeja",
         areaIds: ["a2"],
       },
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -364,13 +569,22 @@ describe("Set up a vendor", () => {
 describe("KYC upload", () => {
   it("uploads the file and attaches it as that document", async () => {
     const { container } = render(
-      <KycUploadButton vendorId="v1" documentKey="ninDocumentUrl" label="NIN document" replacing={false} />
+      <KycUploadButton
+        vendorId="v1"
+        documentKey="ninDocumentUrl"
+        label="NIN document"
+        replacing={false}
+      />,
     );
-    expect(screen.getByRole("button", { name: "Upload NIN document" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Upload NIN document" }),
+    ).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.change(container.querySelector('input[type="file"]')!, {
-        target: { files: [new File(["%PDF"], "nin.pdf", { type: "application/pdf" })] },
+        target: {
+          files: [new File(["%PDF"], "nin.pdf", { type: "application/pdf" })],
+        },
       });
     });
 
@@ -381,11 +595,18 @@ describe("KYC upload", () => {
 
   it("refuses something that isn't a photo or PDF", async () => {
     const { container } = render(
-      <KycUploadButton vendorId="v1" documentKey="ninDocumentUrl" label="NIN document" replacing />
+      <KycUploadButton
+        vendorId="v1"
+        documentKey="ninDocumentUrl"
+        label="NIN document"
+        replacing
+      />,
     );
     await act(async () => {
       fireEvent.change(container.querySelector('input[type="file"]')!, {
-        target: { files: [new File(["x"], "nin.docx", { type: "application/msword" })] },
+        target: {
+          files: [new File(["x"], "nin.docx", { type: "application/msword" })],
+        },
       });
     });
     expect(attachKyc).not.toHaveBeenCalled();
@@ -412,6 +633,8 @@ describe("History", () => {
 
   it("says when there is nothing yet", () => {
     render(<VendorHistoryTab vendorId="v1" />);
-    expect(screen.getByText(/No admin has changed anything/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/No admin has changed anything/),
+    ).toBeInTheDocument();
   });
 });
