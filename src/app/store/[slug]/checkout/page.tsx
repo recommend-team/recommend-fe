@@ -2,16 +2,23 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Lock, Minus, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import { useCheckout, useStorefront, queryKeys } from "@/hooks";
 import { ApiError } from "@/lib/api";
-import { formatNaira, useStorefrontCart } from "@/lib/storefront-cart";
+import {
+  formatNaira,
+  toCheckoutLine,
+  useStorefrontCart,
+  type CartLine,
+} from "@/lib/storefront-cart";
+import { CartLineRow } from "@/components/storefront/CartLineRow";
+import { ItemSheet } from "@/components/storefront/ItemSheet";
 import { rememberOrder } from "@/lib/last-order";
 import { SUPPORT_PHONE, SUPPORT_PHONE_HREF } from "@/lib/support";
-import type { CartChange, FulfillmentType } from "@/types";
+import type { CartChange, FulfillmentType, Product } from "@/types";
 
 interface CheckoutForm {
   fulfillmentType: FulfillmentType;
@@ -31,13 +38,35 @@ function toE164(phone: string): string {
   return `+234${digits.replace(/^0/, "")}`;
 }
 
-const CHANGE_WORDING: Record<CartChange["reason"], string> = {
-  REMOVED: "is no longer on the menu",
-  UNAVAILABLE: "is no longer available",
-  VENDOR_CLOSED: "can't be ordered — the store has just closed",
-  PRICE_CHANGED: "has a new price",
-  ADDON_WITHOUT_MAIN: "needs a meal from the menu to go with it",
-};
+/** What changed, in a sentence. */
+function describeChange(change: CartChange): string {
+  const name = change.productName ?? "An item";
+  switch (change.reason) {
+    case "REMOVED":
+      return `${name} is no longer on the menu`;
+    case "UNAVAILABLE":
+      return `${name} is no longer available`;
+    case "VENDOR_CLOSED":
+      return `${name} can't be ordered — the store has just closed`;
+    case "PRICE_CHANGED":
+      return change.currentUnitPrice !== undefined
+        ? `${name} has a new price (now ${formatNaira(change.currentUnitPrice)})`
+        : `${name} has a new price`;
+    case "ADDON_WITHOUT_MAIN":
+      return `${name} needs a meal from the menu to go with it`;
+    case "EXTRA_NOT_OFFERED":
+      return `${name} no longer comes with ${change.dishName ?? "that dish"}, so it's been taken out`;
+    case "CHOICES_NEEDED":
+      return `${name} needs you to pick ${(change.groupName ?? "an option").toLowerCase()}`;
+    case "CHOICE_UNAVAILABLE":
+      return change.optionName
+        ? `${change.optionName} is no longer available for ${name} — pick again`
+        : `One of the options on ${name} has changed — pick again`;
+  }
+}
+
+/** Changes that mean the item itself can't be bought: it comes out of the cart. */
+const GONE: CartChange["reason"][] = ["REMOVED", "UNAVAILABLE", "VENDOR_CLOSED", "ADDON_WITHOUT_MAIN"];
 
 export default function StoreCheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -47,6 +76,8 @@ export default function StoreCheckoutPage() {
   const queryClient = useQueryClient();
   const [problem, setProblem] = useState<string | null>(null);
   const [changes, setChanges] = useState<CartChange[]>([]);
+  const [editing, setEditing] = useState<{ product: Product; line: CartLine } | null>(null);
+  const closeSheet = useCallback(() => setEditing(null), []);
 
   const {
     register,
@@ -113,11 +144,7 @@ export default function StoreCheckoutPage() {
 
     try {
       const placed = await checkout.mutateAsync({
-        items: priced.items.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          expectedUnitPrice: Number(item.product.price),
-        })),
+        items: priced.items.map(toCheckoutLine),
         buyerName: values.buyerName.trim(),
         buyerPhone: toE164(values.buyerPhone),
         buyerEmail: values.buyerEmail.trim().toLowerCase(),
@@ -143,11 +170,12 @@ export default function StoreCheckoutPage() {
 
       if (raw?.code === "CART_CHANGED" && raw.changes?.length) {
         // Show what changed, take out what can no longer be bought, and load today's
-        // prices before they are asked to pay again.
+        // menu before they are asked to pay again — a pack whose choices changed then
+        // asks to be picked again, and an extra no longer offered drops out of it.
         setChanges(raw.changes);
         cart.remove(
           raw.changes
-            .filter((change) => change.reason !== "PRICE_CHANGED")
+            .filter((change) => GONE.includes(change.reason))
             .map((change) => change.productId)
         );
         await queryClient.invalidateQueries({
@@ -184,44 +212,18 @@ export default function StoreCheckoutPage() {
         {/* Order */}
         <section className="px-4 pt-4">
           <h2 className="text-sm font-bold text-gray-800 mb-2">Your order</h2>
-          <ul className="divide-y divide-gray-100 rounded-xl border border-gray-100">
+          <ul className="flex flex-col gap-3.5 rounded-xl border border-gray-100 px-3 py-3 text-[#15171C]">
             {priced.items.map((item) => (
-              <li key={item.product.id} className="flex items-center gap-3 px-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-gray-800">{item.product.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {formatNaira(item.product.price)} each
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => cart.setQuantity(item.product.id, item.quantity - 1)}
-                    aria-label={
-                      item.quantity === 1
-                        ? `Remove ${item.product.name}`
-                        : `One fewer ${item.product.name}`
-                    }
-                    className="grid h-7 w-7 place-items-center rounded-full text-recommend-orange hover:bg-recommend-orange/10"
-                  >
-                    {item.quantity === 1 ? <Trash2 size={13} /> : <Minus size={13} />}
-                  </button>
-                  <span className="w-5 text-center text-sm font-bold tabular-nums">
-                    {item.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => cart.setQuantity(item.product.id, item.quantity + 1)}
-                    aria-label={`One more ${item.product.name}`}
-                    className="grid h-7 w-7 place-items-center rounded-full text-recommend-orange hover:bg-recommend-orange/10"
-                  >
-                    <Plus size={13} />
-                  </button>
-                </div>
-                <span className="w-20 text-right text-sm font-bold text-gray-900 tabular-nums">
-                  {formatNaira(item.lineTotal)}
-                </span>
-              </li>
+              <CartLineRow
+                key={item.key}
+                item={item}
+                onEdit={() => setEditing({ product: item.product, line: item.line })}
+                onChange={(next) =>
+                  item.isPack
+                    ? cart.setPacks(item.key, next)
+                    : cart.setQuantity(item.product.id, next)
+                }
+              />
             ))}
           </ul>
 
@@ -247,12 +249,9 @@ export default function StoreCheckoutPage() {
           <div role="alert" className="mx-4 mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
             <p className="font-bold">Your order changed — please check it and pay again.</p>
             <ul className="mt-1 list-disc pl-5">
-              {changes.map((change) => (
-                <li key={`${change.productId}-${change.reason}`}>
-                  {change.productName ?? "An item"} {CHANGE_WORDING[change.reason]}
-                  {change.reason === "PRICE_CHANGED" && change.currentUnitPrice !== undefined
-                    ? ` (now ${formatNaira(change.currentUnitPrice)})`
-                    : ""}
+              {changes.map((change, index) => (
+                <li key={`${change.productId}-${change.reason}-${index}`}>
+                  {describeChange(change)}
                 </li>
               ))}
             </ul>
@@ -400,14 +399,20 @@ export default function StoreCheckoutPage() {
         {/* Pay */}
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-100 bg-white px-4 pb-4 pt-3">
           <div className="max-w-[448px] mx-auto">
-            {!vendor.isOpen && (
+            {!vendor.isOpen ? (
               <p className="mb-2 text-center text-xs text-red-600">
                 {storeName} is closed right now — you can pay once they open.
               </p>
+            ) : (
+              priced.problem && (
+                <p className="mb-2 text-center text-xs font-medium text-[#9A3412]">
+                  {priced.problem.product.name}: {priced.problem.problem}
+                </p>
+              )
             )}
             <button
               type="submit"
-              disabled={checkout.isPending || !vendor.isOpen}
+              disabled={checkout.isPending || !vendor.isOpen || !!priced.problem}
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-recommend-orange py-3.5 text-base font-bold text-white hover:bg-[#D84A15] disabled:bg-gray-300"
             >
               <Lock size={16} aria-hidden />
@@ -419,6 +424,22 @@ export default function StoreCheckoutPage() {
           </div>
         </div>
       </form>
+
+      {editing && (
+        <ItemSheet
+          product={editing.product}
+          products={data.products}
+          storeName={storeName}
+          inCart={cart.quantityOf(editing.product.id)}
+          editing={editing.line}
+          locked={null}
+          etaText=""
+          onSave={(quantity) => cart.setQuantity(editing.product.id, quantity)}
+          onSavePack={(draft) => cart.replacePack(editing.line.key, draft)}
+          onRemove={() => cart.removeLine(editing.line.key)}
+          onClose={closeSheet}
+        />
+      )}
     </div>
   );
 }

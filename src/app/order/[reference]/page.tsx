@@ -177,7 +177,7 @@ function Paid({
               {item.name}
             </span>
             <span className="tabular-nums text-gray-700">
-              {formatNaira(item.unitPrice * item.quantity)}
+              {formatNaira(item.lineTotal ?? item.unitPrice * item.quantity)}
             </span>
           </li>
         ))}

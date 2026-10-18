@@ -20,9 +20,15 @@ import {
   SUPPORT_PHONE as CONTACT_PHONE,
   SUPPORT_PHONE_HREF as PHONE_HREF,
 } from "@/lib/support";
+import { CartLineRow } from "@/components/storefront/CartLineRow";
 import { ItemSheet } from "@/components/storefront/ItemSheet";
 import { ProductPhoto } from "@/components/storefront/ProductPhoto";
-import { formatNaira, useStorefrontCart } from "@/lib/storefront-cart";
+import {
+  formatNaira,
+  isBuildable,
+  useStorefrontCart,
+  type CartLine,
+} from "@/lib/storefront-cart";
 import type { Product } from "@/types";
 
 /**
@@ -31,11 +37,9 @@ import type { Product } from "@/types";
  *
  * One column on a phone with the cart pinned to the bottom; on a wide screen the menu
  * sits beside the order.
+ *
+ * Extras aren't listed on their own: each dish offers its own, in the sheet that builds it.
  */
-
-const EXTRAS_LOCKED = "Add something from the menu first — extras go with a meal.";
-
-type Tab = "all" | "extras";
 
 function StoreSkeleton() {
   return (
@@ -59,25 +63,22 @@ export default function StorefrontPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data, isLoading, error } = useStorefront(slug);
   const cart = useStorefrontCart(slug, data?.products);
-  const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState<Product | null>(null);
+  /** The sheet: a product, and the pack being changed when opened from the cart. */
+  const [open, setOpen] = useState<{ product: Product; editing: CartLine | null } | null>(
+    null
+  );
   const [shared, setShared] = useState(false);
   const closeSheet = useCallback(() => setOpen(null), []);
 
   const products = data?.products;
-  const { mains, extras } = useMemo(() => {
+  const menu = useMemo(() => {
     const term = query.trim().toLowerCase();
     const matches = (p: Product) =>
       !term ||
       p.name.toLowerCase().includes(term) ||
       (p.description ?? "").toLowerCase().includes(term);
-    const available = (products ?? []).filter((p) => p.isAvailable && matches(p));
-    return {
-      mains: available.filter((p) => !p.isAddOn),
-      // Extras — drinks, extra protein — go with a meal from this store, never alone.
-      extras: available.filter((p) => p.isAddOn),
-    };
+    return (products ?? []).filter((p) => p.isAvailable && !p.isAddOn && matches(p));
   }, [products, query]);
 
   if (isLoading) return <StoreSkeleton />;
@@ -99,10 +100,6 @@ export default function StorefrontPage() {
   const deliveryFee = data.deliveryFee ?? 0;
   const eta = data.deliveryEtaMinutes ?? 30;
   const etaText = `${Math.max(5, eta - 10)}–${eta} min`;
-  const hasExtras = (products ?? []).some((p) => p.isAvailable && p.isAddOn);
-  const totalAvailable = (products ?? []).filter((p) => p.isAvailable).length;
-  const showMains = tab === "all";
-  const lockedFor = (p: Product) => (p.isAddOn && !priced.hasMain ? EXTRAS_LOCKED : null);
 
   const share = async () => {
     const url = window.location.href.split("?")[0];
@@ -126,8 +123,8 @@ export default function StorefrontPage() {
           key={product.id}
           product={product}
           quantity={cart.quantityOf(product.id)}
-          locked={lockedFor(product)}
-          onOpen={() => setOpen(product)}
+          buildable={isBuildable(product)}
+          onOpen={() => setOpen({ product, editing: null })}
           onChange={(next) => cart.setQuantity(product.id, next)}
         />
       ))}
@@ -258,48 +255,14 @@ export default function StorefrontPage() {
                   className="flex-1 bg-transparent text-[15px] text-[#15171C] outline-none"
                 />
               </label>
-              {hasExtras && (
-                <div className="flex gap-2">
-                  <TabButton active={tab === "all"} onClick={() => setTab("all")}>
-                    All · {totalAvailable}
-                  </TabButton>
-                  <TabButton active={tab === "extras"} onClick={() => setTab("extras")}>
-                    Extras
-                  </TabButton>
-                </div>
-              )}
             </div>
 
             <div className="flex flex-col gap-7 px-5 pt-4 lg:px-0 lg:pt-6">
-              {showMains &&
-                (mains.length > 0 ? (
-                  <section className="flex flex-col gap-3.5">
-                    {hasExtras && (
-                      <h2 className="font-display hidden text-[22px] font-bold lg:block">Menu</h2>
-                    )}
-                    {grid(mains)}
-                  </section>
-                ) : (
-                  <p className="py-10 text-center text-sm text-[#5B6270]">
-                    {query ? "Nothing here matches your search." : "No products available right now."}
-                  </p>
-                ))}
-
-              {extras.length > 0 && (
-                <section className="flex flex-col gap-3.5">
-                  <div>
-                    <h2 className="font-display text-[22px] font-bold">Extras</h2>
-                    <p className="mt-0.5 text-[13px] text-[#5B6270]">
-                      {priced.hasMain ? "Add these to your order." : EXTRAS_LOCKED}
-                    </p>
-                  </div>
-                  {grid(extras)}
-                </section>
-              )}
-
-              {tab === "extras" && extras.length === 0 && (
+              {menu.length > 0 ? (
+                <section className="flex flex-col gap-3.5">{grid(menu)}</section>
+              ) : (
                 <p className="py-10 text-center text-sm text-[#5B6270]">
-                  Nothing here matches your search.
+                  {query ? "Nothing here matches your search." : "No products available right now."}
                 </p>
               )}
             </div>
@@ -321,19 +284,18 @@ export default function StorefrontPage() {
               </p>
             ) : (
               <>
-                <ul className="flex flex-col gap-3">
-                  {priced.items.map(({ product, quantity, lineTotal }) => (
-                    <li key={product.id} className="flex items-center gap-3">
-                      <span className="flex-1 text-[15px]">{product.name}</span>
-                      <MiniStepper
-                        label={product.name}
-                        quantity={quantity}
-                        onChange={(next) => cart.setQuantity(product.id, next)}
-                      />
-                      <span className="w-[78px] text-right text-[15px] font-bold tabular-nums">
-                        {formatNaira(lineTotal)}
-                      </span>
-                    </li>
+                <ul className="flex flex-col gap-3.5">
+                  {priced.items.map((item) => (
+                    <CartLineRow
+                      key={item.key}
+                      item={item}
+                      onEdit={() => setOpen({ product: item.product, editing: item.line })}
+                      onChange={(next) =>
+                        item.isPack
+                          ? cart.setPacks(item.key, next)
+                          : cart.setQuantity(item.product.id, next)
+                      }
+                    />
                   ))}
                 </ul>
                 <div className="flex flex-col gap-2 border-t border-dashed border-[#DCDBD5] pt-3.5 text-[15px]">
@@ -405,12 +367,18 @@ export default function StorefrontPage() {
 
       {open && (
         <ItemSheet
-          product={open}
+          product={open.product}
+          products={products ?? []}
           storeName={storeName}
-          inCart={cart.quantityOf(open.id)}
-          locked={lockedFor(open)}
+          inCart={cart.quantityOf(open.product.id)}
+          editing={open.editing}
+          locked={null}
           etaText={etaText}
-          onSave={(quantity) => cart.setQuantity(open.id, quantity)}
+          onSave={(quantity) => cart.setQuantity(open.product.id, quantity)}
+          onSavePack={(draft) =>
+            open.editing ? cart.replacePack(open.editing.key, draft) : cart.addPack(draft)
+          }
+          onRemove={() => open.editing && cart.removeLine(open.editing.key)}
           onClose={closeSheet}
         />
       )}
@@ -434,31 +402,6 @@ function Tag({
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] ${colours}`}>
       {children}
     </span>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={`h-9 rounded-full px-3.5 text-sm lg:h-10 lg:px-4 ${
-        active
-          ? "bg-[#15171C] font-bold text-white"
-          : "border border-[#DCDBD5] bg-white font-medium text-[#3B404A] hover:bg-gray-50"
-      }`}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -502,17 +445,20 @@ function CheckoutLink({
   );
 }
 
-/** A product as a card: tap it for the details, or add straight from the photo. */
+/**
+ * A product as a card: tap it for the details, or add straight from the photo. A dish
+ * with extras or choices opens to be built instead, and shows how many packs are in.
+ */
 function ProductCard({
   product,
   quantity,
-  locked,
+  buildable,
   onOpen,
   onChange,
 }: {
   product: Product;
   quantity: number;
-  locked: string | null;
+  buildable: boolean;
   onOpen: () => void;
   onChange: (next: number) => void;
 }) {
@@ -528,14 +474,26 @@ function ProductCard({
           <ProductPhoto product={product} sizes="(min-width: 1024px) 280px, 50vw" />
         </button>
 
-        {quantity === 0 ? (
+        {buildable ? (
+          <button
+            type="button"
+            onClick={onOpen}
+            aria-label={quantity > 0 ? `Add another ${product.name}` : `Add ${product.name}`}
+            className="absolute right-2 bottom-2 flex h-11 min-w-11 items-center justify-center gap-1 rounded-full bg-white px-3 text-recommend-orange shadow-[0_4px_12px_rgba(21,23,28,0.18)]"
+          >
+            {quantity > 0 && (
+              <span className="text-[15px] font-bold tabular-nums text-[#15171C]">
+                {quantity} in cart
+              </span>
+            )}
+            <Plus size={20} strokeWidth={2.4} />
+          </button>
+        ) : quantity === 0 ? (
           <button
             type="button"
             onClick={() => onChange(1)}
-            disabled={!!locked}
-            title={locked ?? undefined}
             aria-label={`Add ${product.name}`}
-            className="absolute right-2 bottom-2 grid h-11 w-11 place-items-center rounded-full bg-white text-recommend-orange shadow-[0_4px_12px_rgba(21,23,28,0.18)] disabled:text-gray-300"
+            className="absolute right-2 bottom-2 grid h-11 w-11 place-items-center rounded-full bg-white text-recommend-orange shadow-[0_4px_12px_rgba(21,23,28,0.18)]"
           >
             <Plus size={20} strokeWidth={2.4} />
           </button>
@@ -577,41 +535,11 @@ function ProductCard({
         )}
         <span className="mt-1 text-base font-bold text-[#006837] tabular-nums lg:text-[17px]">
           {formatNaira(product.price)}
+          {product.unit && (
+            <span className="text-[13px] font-medium text-[#5B6270]"> / {product.unit}</span>
+          )}
         </span>
       </button>
     </div>
-  );
-}
-
-/** − n + for a line in the order panel. */
-function MiniStepper({
-  label,
-  quantity,
-  onChange,
-}: {
-  label: string;
-  quantity: number;
-  onChange: (next: number) => void;
-}) {
-  return (
-    <span className="inline-flex h-8 items-center rounded-full bg-[#F4F3EF] px-1 text-sm font-bold">
-      <button
-        type="button"
-        onClick={() => onChange(quantity - 1)}
-        aria-label={`One fewer ${label}`}
-        className="grid h-7 w-7 place-items-center"
-      >
-        <Minus size={13} />
-      </button>
-      <span className="min-w-[1rem] text-center tabular-nums">{quantity}</span>
-      <button
-        type="button"
-        onClick={() => onChange(quantity + 1)}
-        aria-label={`One more ${label}`}
-        className="grid h-7 w-7 place-items-center"
-      >
-        <Plus size={13} />
-      </button>
-    </span>
   );
 }
