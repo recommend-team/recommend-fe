@@ -3,9 +3,14 @@ export type FulfillmentType = "PICKUP" | "DELIVERY";
 /** One line of a storefront cart, as sent to checkout. */
 export interface CheckoutLine {
   productId: string;
+  /** Portions in each pack, for a dish built as a pack; otherwise how many. */
   quantity: number;
   /** What the buyer was shown. Never used to price — only to spot a change since. */
   expectedUnitPrice?: number;
+  /** A dish built as a pack: how many identical packs, and what goes in each. */
+  packs?: number;
+  extras?: { productId: string; quantity: number; expectedUnitPrice?: number }[];
+  choices?: { groupId: string; optionIds: string[] }[];
 }
 
 /** `POST /checkout` — the same checkout the chat uses, recorded as a storefront order. */
@@ -60,6 +65,10 @@ export interface OrderStatusView {
   deliveryCode: string | null;
   vendors: {
     status: CheckoutStatus;
-    items: { name: string; quantity: number; unitPrice: number }[];
+    /**
+     * One per dish as built — "Rice and beans (2 portions, with Beef ×2)"; `quantity` is
+     * packs for a built dish. `lineTotal` is absent from an older server.
+     */
+    items: { name: string; quantity: number; unitPrice: number; lineTotal?: number }[];
   }[];
 }

@@ -1,5 +1,5 @@
 import type { UserStatus, RiderType, VendorType } from "./auth";
-import type { Product } from "./product";
+import type { ChoiceGroup, Product } from "./product";
 
 export type AdminRole = "ADMIN" | "SUPER_ADMIN";
 
@@ -281,6 +281,12 @@ export interface AdminOrderSummary {
     quantity: number;
     lineTotal: string;
   }[];
+  /**
+   * The items as built — one per dish, packs, choices and extras folded into `name`
+   * ("Rice and beans (2 portions, with Beef ×2)"); `quantity` is packs for a built dish.
+   * Absent from an older server.
+   */
+  lines?: { name: string; quantity: number; lineTotal: number }[];
   /** The payment this order was part of. */
   checkout: {
     id: string;
@@ -380,12 +386,20 @@ export interface CatalogProduct {
   vendorSlug: string | null;
   /** An extra, sold only with a main item from the same store. Listed after its dishes. */
   isAddOn?: boolean;
+  /** A dish: what its price is per, the extras ticked on it, its choices. Absent from an older server. */
+  unit?: string | null;
+  extras?: { id: string; name: string; price: number }[];
+  choices?: ChoiceGroup[];
 }
 
 /** One line of a basket an admin is building for a buyer. */
 export interface AdminOrderLine {
   productId: string;
+  /** Portions in each pack, for a dish built as a pack; otherwise how many. */
   quantity: number;
+  packs?: number;
+  extras?: { productId: string; quantity: number }[];
+  choices?: { groupId: string; optionIds: string[] }[];
 }
 
 export interface PlaceAdminOrderPayload {
@@ -447,9 +461,23 @@ export interface CartChange {
     | "VENDOR_CLOSED"
     | "PRICE_CHANGED"
     /** An extra with no main item from its vendor in the basket — never sold alone. */
-    | "ADDON_WITHOUT_MAIN";
+    | "ADDON_WITHOUT_MAIN"
+    /** An extra no longer offered with the dish it was added to. */
+    | "EXTRA_NOT_OFFERED"
+    /** A required choice unanswered, or too many / too few picked. */
+    | "CHOICES_NEEDED"
+    /** A chosen option removed or sold out since. */
+    | "CHOICE_UNAVAILABLE";
   expectedUnitPrice?: number;
   currentUnitPrice?: number;
+  /** On an extra: the dish it was added to. */
+  dishId?: string;
+  dishName?: string;
+  /** On a choice problem: which choice, and which option. */
+  groupId?: string;
+  groupName?: string;
+  optionId?: string;
+  optionName?: string | null;
 }
 
 export interface AdminBuyerDetail {

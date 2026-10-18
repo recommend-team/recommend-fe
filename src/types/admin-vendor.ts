@@ -3,6 +3,8 @@
  * money: payout accounts, withdrawals and the wallet stay with the vendor.
  */
 
+import type { ChoiceGroupInput } from "./product";
+
 export type DaySchedule = { isOpen: boolean; open: string; close: string };
 
 export type WeekDay =
@@ -42,6 +44,12 @@ export interface AdminProductPayload {
   isAvailable?: boolean;
   /** An extra — sold only with a main item from the same vendor. */
   isAddOn?: boolean;
+  /** Dishes only: what the price is per, the extras ticked on it, its choices. */
+  unit?: string | null;
+  extraIds?: string[];
+  choices?: ChoiceGroupInput[];
+  /** Extras only: the products it goes with. */
+  dishIds?: string[];
 }
 
 export interface LocationState {
