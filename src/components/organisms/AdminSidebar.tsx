@@ -18,6 +18,7 @@ import {
   LogOut,
   Menu,
   X,
+  MapPin,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks";
 import type { AuthUser } from "@/types";
@@ -35,6 +36,7 @@ const items: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Vendors", href: "/admin/vendors", icon: Store },
   { label: "Riders", href: "/admin/riders", icon: Bike },
+  { label: "Areas", href: "/admin/areas", icon: MapPin },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { label: "Transactions", href: "/admin/transactions", icon: Receipt },
   { label: "Withdrawals", href: "/admin/withdrawals", icon: Banknote },
