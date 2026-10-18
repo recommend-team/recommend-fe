@@ -29,6 +29,12 @@ import type {
   PlacedAdminOrder,
 } from "@/types";
 import { PICKUP_ENABLED } from "@/lib/features";
+import PackBuilder, {
+  isBuildable,
+  packSummary,
+  packTotal,
+  type BuiltPack,
+} from "./PackBuilder";
 
 const naira = (amount: number) =>
   `₦${amount.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
@@ -40,6 +46,9 @@ const REASONS: Record<CartChange["reason"], string> = {
   VENDOR_CLOSED: "is from a vendor that is closed",
   PRICE_CHANGED: "changed price while you were building this",
   ADDON_WITHOUT_MAIN: "is an extra and needs a main item from the same vendor",
+  EXTRA_NOT_OFFERED: "is no longer offered with that dish",
+  CHOICES_NEEDED: "needs one of its choices picked",
+  CHOICE_UNAVAILABLE: "has an option that is no longer available",
 };
 
 /**
@@ -49,14 +58,30 @@ const REASONS: Record<CartChange["reason"], string> = {
  */
 function cartChanges(error: unknown): CartChange[] | null {
   if (!(error instanceof ApiError)) return null;
-  const raw = error.raw as { code?: string; changes?: CartChange[] } | undefined;
+  const raw = error.raw as
+    | { code?: string; changes?: CartChange[] }
+    | undefined;
   if (raw?.code !== "CART_CHANGED") return null;
   return raw.changes ?? [];
 }
 
 interface Line {
+  /** Tells two builds of the same dish apart. */
+  key: string;
   product: CatalogProduct;
+  /** How many, for a plain item. A pack keeps its own counts. */
   quantity: number;
+  /** A dish built as a pack. */
+  pack?: BuiltPack;
+}
+
+let lineCounter = 0;
+const newKey = () => `line-${lineCounter++}`;
+
+function lineTotal(line: Line): number {
+  return line.pack
+    ? packTotal(line.product, line.pack)
+    : Number(line.product.price) * line.quantity;
 }
 
 /**
@@ -65,10 +90,13 @@ interface Line {
  */
 function withoutOrphanedExtras(lines: Line[]): Line[] {
   const storesWithMeal = new Set(
-    lines.filter((line) => !line.product.isAddOn).map((line) => line.product.vendorId)
+    lines
+      .filter((line) => !line.product.isAddOn)
+      .map((line) => line.product.vendorId),
   );
   return lines.filter(
-    (line) => !line.product.isAddOn || storesWithMeal.has(line.product.vendorId)
+    (line) =>
+      !line.product.isAddOn || storesWithMeal.has(line.product.vendorId),
   );
 }
 
@@ -138,7 +166,7 @@ export default function OrderBuilder({
   const [name, setName] = useState(conversation.buyerName ?? "");
   const [phone, setPhone] = useState(conversation.buyerPhone ?? "");
   const [fulfillment, setFulfillment] = useState<"PICKUP" | "DELIVERY">(
-    "DELIVERY"
+    "DELIVERY",
   );
   const [address, setAddress] = useState("");
   const [sendToBuyer, setSendToBuyer] = useState(true);
@@ -146,6 +174,11 @@ export default function OrderBuilder({
   const [rejected, setRejected] = useState<CartChange[] | null>(null);
   const [placed, setPlaced] = useState<PlacedAdminOrder | null>(null);
   const [copied, setCopied] = useState(false);
+  /** The dish being built as a pack — a new one, or the basket line being changed. */
+  const [building, setBuilding] = useState<{
+    product: CatalogProduct;
+    key: string | null;
+  } | null>(null);
 
   const [step, setStep] = useState<Step>("stores");
   /** Set only when the admin overrides what the conversation already believes. */
@@ -161,7 +194,7 @@ export default function OrderBuilder({
   const { data: areaContext } = useCatalogAreas(
     conversation.id,
     step === "area" ? search : "",
-    open
+    open,
   );
 
   // Derived, not synced: whatever the thread already believes, until the admin says
@@ -175,7 +208,7 @@ export default function OrderBuilder({
   const { data: categories } = useCatalogCategories(
     conversation.id,
     areaId,
-    open && step === "stores"
+    open && step === "stores",
   );
 
   const { data: stores, isFetching: loadingStores } = useCatalogStores(
@@ -185,7 +218,7 @@ export default function OrderBuilder({
       category: category ?? undefined,
       search: step === "stores" ? search : "",
     },
-    open && step === "stores"
+    open && step === "stores",
   );
 
   const { data: products, isFetching: loadingProducts } = useCatalogProducts(
@@ -195,56 +228,82 @@ export default function OrderBuilder({
       vendorId: store?.id,
       // Only when browsing the whole area — inside one store its own category is a
       // tautology, and would silently empty the shelf if the store were miscategorised.
-      category: store ? undefined : category ?? undefined,
+      category: store ? undefined : (category ?? undefined),
       search: step === "products" ? search : "",
     },
-    open && step === "products"
+    open && step === "products",
   );
 
   const isFetching = loadingStores || loadingProducts;
 
   const goodsTotal = useMemo(
-    () =>
-      lines.reduce(
-        (sum, line) => sum + Number(line.product.price) * line.quantity,
-        0
-      ),
-    [lines]
+    () => lines.reduce((sum, line) => sum + lineTotal(line), 0),
+    [lines],
   );
 
   const add = (product: CatalogProduct) => {
+    setTerm("");
+    // A dish with extras or choices is built as a pack, as a buyer would.
+    if (isBuildable(product)) {
+      setBuilding({ product, key: null });
+      return;
+    }
     setLines((current) => {
-      const existing = current.find((line) => line.product.id === product.id);
+      const existing = current.find(
+        (line) => line.product.id === product.id && !line.pack,
+      );
       if (existing) {
         return current.map((line) =>
-          line.product.id === product.id
-            ? { ...line, quantity: line.quantity + 1 }
-            : line
+          line === existing ? { ...line, quantity: line.quantity + 1 } : line,
         );
       }
-      return [...current, { product, quantity: 1 }];
+      return [...current, { key: newKey(), product, quantity: 1 }];
     });
-    setTerm("");
   };
 
-  const setQuantity = (productId: string, quantity: number) =>
+  const savePack = (pack: BuiltPack) => {
+    if (!building) return;
+    const { product, key } = building;
+    setLines((current) =>
+      key
+        ? current.map((line) => (line.key === key ? { ...line, pack } : line))
+        : [
+            ...current,
+            { key: newKey(), product, quantity: pack.quantity, pack },
+          ],
+    );
+    setBuilding(null);
+  };
+
+  /** Packs on a pack, the count on a plain item. 0 takes the line out. */
+  const setCount = (key: string, count: number) =>
     setLines((current) =>
       withoutOrphanedExtras(
-        quantity <= 0
-          ? current.filter((line) => line.product.id !== productId)
+        count <= 0
+          ? current.filter((line) => line.key !== key)
           : current.map((line) =>
-              line.product.id === productId ? { ...line, quantity } : line
-            )
-      )
+              line.key !== key
+                ? line
+                : line.pack
+                  ? {
+                      ...line,
+                      pack: { ...line.pack, packs: Math.min(50, count) },
+                    }
+                  : { ...line, quantity: count },
+            ),
+      ),
     );
 
   // Stores with a dish in the basket — only their extras can be added.
   const storesWithMeal = new Set(
-    lines.filter((line) => !line.product.isAddOn).map((line) => line.product.vendorId)
+    lines
+      .filter((line) => !line.product.isAddOn)
+      .map((line) => line.product.vendorId),
   );
 
   const reset = () => {
     setLines([]);
+    setBuilding(null);
     setTerm("");
     setFailure(null);
     setRejected(null);
@@ -284,15 +343,30 @@ export default function OrderBuilder({
       const result = await place.mutateAsync({
         id: conversation.id,
         payload: {
-          items: lines.map((line) => ({
-            productId: line.product.id,
-            quantity: line.quantity,
-          })),
+          items: lines.map((line) =>
+            line.pack
+              ? {
+                  productId: line.product.id,
+                  quantity: line.pack.quantity,
+                  packs: line.pack.packs,
+                  extras: line.pack.extras.map((e) => ({
+                    productId: e.id,
+                    quantity: e.quantity,
+                  })),
+                  choices: line.pack.choices.map((c) => ({
+                    groupId: c.groupId,
+                    optionIds: c.options.map((o) => o.id),
+                  })),
+                }
+              : { productId: line.product.id, quantity: line.quantity },
+          ),
           buyerName: name.trim() || undefined,
           buyerPhone: phone.trim() || undefined,
           fulfillmentType: fulfillment,
           deliveryAddress:
-            fulfillment === "DELIVERY" ? address.trim() || undefined : undefined,
+            fulfillment === "DELIVERY"
+              ? address.trim() || undefined
+              : undefined,
           sendToBuyer,
         },
       });
@@ -306,7 +380,7 @@ export default function OrderBuilder({
         return;
       }
       setFailure(
-        cause instanceof ApiError ? cause.message : "That didn't work."
+        cause instanceof ApiError ? cause.message : "That didn't work.",
       );
     }
   };
@@ -533,11 +607,13 @@ export default function OrderBuilder({
                 </li>
               ))}
 
-            {step === "products" && (products ?? []).length === 0 && !isFetching && (
-              <li className="px-3 py-2 font-dm text-xs text-gray-400">
-                Nothing here{search ? ` matches “${search}”` : " yet"}.
-              </li>
-            )}
+            {step === "products" &&
+              (products ?? []).length === 0 &&
+              !isFetching && (
+                <li className="px-3 py-2 font-dm text-xs text-gray-400">
+                  Nothing here{search ? ` matches “${search}”` : " yet"}.
+                </li>
+              )}
 
             {step === "products" &&
               (products ?? []).map((product) => {
@@ -545,39 +621,51 @@ export default function OrderBuilder({
                 const blocked =
                   !!product.isAddOn && !storesWithMeal.has(product.vendorId);
                 return (
-                <li key={product.id}>
-                  <button
-                    onClick={() => add(product)}
-                    disabled={blocked}
-                    title={blocked ? "Add a dish from this store first" : undefined}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
-                  >
-                    <Thumb src={product.imageUrl} alt={product.name} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-dm text-xs text-gray-800">
-                        {product.name}
-                        {product.isAddOn && <ExtraTag />}
+                  <li key={product.id}>
+                    <button
+                      onClick={() => add(product)}
+                      disabled={blocked}
+                      title={
+                        blocked ? "Add a dish from this store first" : undefined
+                      }
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                    >
+                      <Thumb src={product.imageUrl} alt={product.name} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-dm text-xs text-gray-800">
+                          {product.name}
+                          {product.isAddOn && <ExtraTag />}
+                        </span>
+                        <span className="block truncate font-dm text-[11px] text-gray-400">
+                          {blocked
+                            ? "Add a dish from this store first"
+                            : (product.vendorName ?? "Unknown store")}
+                        </span>
                       </span>
-                      <span className="block truncate font-dm text-[11px] text-gray-400">
-                        {blocked
-                          ? "Add a dish from this store first"
-                          : product.vendorName ?? "Unknown store"}
+                      <span className="shrink-0 font-dm text-xs font-bold text-gray-700">
+                        {naira(Number(product.price))}
                       </span>
-                    </span>
-                    <span className="shrink-0 font-dm text-xs font-bold text-gray-700">
-                      {naira(Number(product.price))}
-                    </span>
-                  </button>
-                </li>
+                    </button>
+                  </li>
                 );
               })}
           </ul>
+
+          {building && (
+            <PackBuilder
+              key={building.key ?? building.product.id}
+              product={building.product}
+              initial={lines.find((line) => line.key === building.key)?.pack}
+              onDone={savePack}
+              onCancel={() => setBuilding(null)}
+            />
+          )}
 
           {lines.length > 0 && (
             <ul className="mb-3 flex flex-col gap-1.5">
               {lines.map((line) => (
                 <li
-                  key={line.product.id}
+                  key={line.key}
                   className="flex items-center gap-2 rounded-md bg-black/[0.03] px-2 py-1.5"
                 >
                   {/* Also in the basket, so an admin reading the order back to a customer
@@ -588,29 +676,52 @@ export default function OrderBuilder({
                       {line.product.name}
                       {line.product.isAddOn && <ExtraTag />}
                     </span>
+                    {line.pack && (
+                      <span className="block font-dm text-[11px] leading-snug text-gray-600">
+                        {packSummary(line.product, line.pack)}{" "}
+                        <button
+                          onClick={() =>
+                            setBuilding({
+                              product: line.product,
+                              key: line.key,
+                            })
+                          }
+                          aria-label={`Edit ${line.product.name}`}
+                          className="font-semibold text-recommend-green hover:underline"
+                        >
+                          Edit
+                        </button>
+                      </span>
+                    )}
                     <span className="block truncate font-dm text-[11px] text-gray-400">
                       {line.product.vendorName ?? "Unknown store"} ·{" "}
-                      {naira(Number(line.product.price) * line.quantity)}
+                      {naira(lineTotal(line))}
                     </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-1">
                     <button
                       onClick={() =>
-                        setQuantity(line.product.id, line.quantity - 1)
+                        setCount(
+                          line.key,
+                          (line.pack?.packs ?? line.quantity) - 1,
+                        )
                       }
-                      aria-label={`One fewer ${line.product.name}`}
+                      aria-label={`One fewer ${line.pack ? "pack of " : ""}${line.product.name}`}
                       className="grid h-6 w-6 place-items-center rounded border border-black/10 text-gray-600 hover:bg-white"
                     >
                       <Minus className="h-3 w-3" />
                     </button>
-                    <span className="w-5 text-center font-dm text-xs font-bold text-gray-800">
-                      {line.quantity}
+                    <span className="w-6 text-center font-dm text-xs font-bold text-gray-800">
+                      {line.pack ? `×${line.pack.packs}` : line.quantity}
                     </span>
                     <button
                       onClick={() =>
-                        setQuantity(line.product.id, line.quantity + 1)
+                        setCount(
+                          line.key,
+                          (line.pack?.packs ?? line.quantity) + 1,
+                        )
                       }
-                      aria-label={`One more ${line.product.name}`}
+                      aria-label={`One more ${line.pack ? "pack of " : ""}${line.product.name}`}
                       className="grid h-6 w-6 place-items-center rounded border border-black/10 text-gray-600 hover:bg-white"
                     >
                       <Plus className="h-3 w-3" />
@@ -636,16 +747,16 @@ export default function OrderBuilder({
             />
             {/* Delivery only while pickup is switched off. */}
             {PICKUP_ENABLED && (
-            <select
-              value={fulfillment}
-              onChange={(event) =>
-                setFulfillment(event.target.value as "PICKUP" | "DELIVERY")
-              }
-              className="rounded-md border border-black/10 px-2.5 py-2 font-dm text-xs outline-none focus:border-recommend-green"
-            >
-              <option value="DELIVERY">Delivery</option>
-              <option value="PICKUP">Pickup</option>
-            </select>
+              <select
+                value={fulfillment}
+                onChange={(event) =>
+                  setFulfillment(event.target.value as "PICKUP" | "DELIVERY")
+                }
+                className="rounded-md border border-black/10 px-2.5 py-2 font-dm text-xs outline-none focus:border-recommend-green"
+              >
+                <option value="DELIVERY">Delivery</option>
+                <option value="PICKUP">Pickup</option>
+              </select>
             )}
             {fulfillment === "DELIVERY" && (
               <input
@@ -665,12 +776,14 @@ export default function OrderBuilder({
                 This basket can&apos;t be ordered right now:
               </p>
               <ul className="mt-1 list-disc pl-4">
-                {rejected.map((change) => (
+                {rejected.map((change, index) => (
                   <li
-                    key={change.productId}
+                    key={`${change.productId}-${index}`}
                     className="font-dm text-xs text-amber-900"
                   >
                     {change.productName ?? "An item"} {REASONS[change.reason]}
+                    {change.dishName ? ` (${change.dishName})` : ""}
+                    {change.optionName ? ` — ${change.optionName}` : ""}
                     {change.reason === "PRICE_CHANGED" &&
                       change.currentUnitPrice !== undefined &&
                       ` — it is now ${naira(change.currentUnitPrice)}`}
@@ -703,7 +816,7 @@ export default function OrderBuilder({
             </span>
             <button
               onClick={submit}
-              disabled={lines.length === 0 || place.isPending}
+              disabled={lines.length === 0 || place.isPending || !!building}
               className="rounded-lg bg-recommend-green px-3 py-2 font-dm text-xs font-bold text-white hover:bg-recommend-green-hover disabled:opacity-50"
             >
               {place.isPending ? "Placing…" : "Place order"}
