@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import OrderLinesList from "@/components/atoms/admin/OrderLinesList";
 import { Search } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
 import Paginator from "@/components/atoms/admin/Paginator";
@@ -61,6 +62,7 @@ export default function AdminOrdersPage() {
       o.buyerName.toLowerCase().includes(needle) ||
       o.buyerPhone.includes(needle) ||
       o.items.some((i) => i.productName.toLowerCase().includes(needle)) ||
+      (o.lines ?? []).some((l) => l.name.toLowerCase().includes(needle)) ||
       (o.checkout?.reference ?? "").toLowerCase().includes(needle) ||
       (o.vendor.businessName ?? "").toLowerCase().includes(needle)
     );
@@ -148,19 +150,7 @@ export default function AdminOrdersPage() {
                     <td className="py-3 pr-4">
                       {/* An order holds many lines — listing them beats a Qty column
                           that could only ever describe one of them. */}
-                      <div className="flex flex-col gap-0.5">
-                        {o.items.map((item) => (
-                          <span key={item.id} className="text-gray-900">
-                            <span className="font-bold text-gray-400">
-                              {item.quantity}×{" "}
-                            </span>
-                            {item.productName}
-                          </span>
-                        ))}
-                        {o.items.length === 0 && (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </div>
+                      <OrderLinesList order={o} />
                     </td>
                     <td className="py-3 pr-4 text-gray-700">
                       {o.vendor.businessName ??

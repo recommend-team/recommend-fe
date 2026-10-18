@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import OrderLinesList from "@/components/atoms/admin/OrderLinesList";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Ban, PlayCircle } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
@@ -199,19 +200,7 @@ export default function BuyerDetailPage({
                 {orders.slice(0, 10).map((o) => (
                   <tr key={o.id} className="border-b border-gray-100">
                     <td className="py-2 pr-4 text-gray-800">
-                      <div className="flex flex-col gap-0.5">
-                        {o.items.map((item) => (
-                          <span key={item.id}>
-                            <span className="font-bold text-gray-400">
-                              {item.quantity}×{" "}
-                            </span>
-                            {item.productName}
-                          </span>
-                        ))}
-                        {o.items.length === 0 && (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </div>
+                      <OrderLinesList order={o} />
                     </td>
                     <td className="py-2 pr-4 text-gray-700">
                       {o.vendor
