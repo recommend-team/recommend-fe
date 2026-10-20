@@ -22,8 +22,9 @@ const TIME =
   "h-9 rounded-lg border border-gray-300 bg-white px-2 font-dm text-sm focus:border-recommend-green focus:outline-none disabled:bg-gray-50 disabled:text-gray-300";
 
 /**
- * Opening hours, shown to buyers. They do not open or close the store by themselves —
- * that is the open/closed switch — so this is information, not a schedule.
+ * Opening hours. Buyers can order only inside them, and only while the store isn't paused
+ * (the open/closed switch). A closing time earlier than the opening time closes the next
+ * day; the same time means open all day — the backend's rule, so neither is refused.
  */
 export default function EditHoursDialog({
   vendor,
@@ -42,20 +43,18 @@ export default function EditHoursDialog({
   const set = (day: WeekDay, patch: Partial<DaySchedule>) =>
     setWeek((current) => ({ ...current, [day]: { ...current[day], ...patch } }));
 
-  const backwards = DAYS.filter(
-    ({ key }) => week[key].isOpen && week[key].close <= week[key].open
-  );
+  const noneOpen = !DAYS.some(({ key }) => week[key].isOpen);
 
   return (
     <Modal
       title="Opening hours"
-      description="Shown to buyers. The store's open/closed switch is separate."
+      description="Buyers can order only inside these hours, and only while the store isn't paused."
       onClose={onClose}
     >
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (backwards.length > 0) return;
+          if (noneOpen) return;
           update.mutate({ operatingHours: week }, { onSuccess: onClose });
         }}
         className="flex flex-col gap-3"
@@ -94,6 +93,9 @@ export default function EditHoursDialog({
                 ) : (
                   <span className="italic text-gray-400">Closed</span>
                 )}
+                {dayNote(day) && (
+                  <span className="text-xs font-bold text-recommend-green">{dayNote(day)}</span>
+                )}
               </div>
             );
           })}
@@ -101,8 +103,8 @@ export default function EditHoursDialog({
 
         <FormError
           message={
-            backwards.length > 0
-              ? `${backwards.map((d) => d.label).join(", ")}: closing must be after opening.`
+            noneOpen
+              ? "Open at least one day — to stop orders for now, pause the store instead."
               : update.isError
                 ? update.error.message
                 : null
@@ -112,4 +114,12 @@ export default function EditHoursDialog({
       </form>
     </Modal>
   );
+}
+
+/** What an unusual pair of times means, rather than refusing it. */
+function dayNote(day: DaySchedule): string | null {
+  if (!day.isOpen) return null;
+  if (day.close === day.open) return "Open 24 hours";
+  if (day.close < day.open) return "Closes the next day";
+  return null;
 }

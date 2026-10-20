@@ -254,31 +254,61 @@ describe("Edit areas", () => {
 });
 
 describe("Opening hours", () => {
-  it("saves the week, and refuses a day that closes before it opens", async () => {
+  it("saves the whole week, with hours past midnight and all day", async () => {
     render(<EditHoursDialog vendor={vendor()} onClose={jest.fn()} />);
 
     fireEvent.click(screen.getByLabelText("Sunday"));
-    fireEvent.change(screen.getByLabelText("Monday closes"), {
-      target: { value: "07:00" },
+    fireEvent.change(screen.getByLabelText("Friday opens"), {
+      target: { value: "18:00" },
     });
-    await submit("Save");
-    expect(updateVendor).not.toHaveBeenCalled();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /Monday: closing must be after opening/,
-    );
+    fireEvent.change(screen.getByLabelText("Friday closes"), {
+      target: { value: "02:00" },
+    });
+    fireEvent.change(screen.getByLabelText("Saturday opens"), {
+      target: { value: "00:00" },
+    });
+    fireEvent.change(screen.getByLabelText("Saturday closes"), {
+      target: { value: "00:00" },
+    });
+    expect(screen.getByText("Closes the next day")).toBeInTheDocument();
+    expect(screen.getByText("Open 24 hours")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Monday closes"), {
-      target: { value: "21:00" },
-    });
     await submit("Save");
     const [[{ operatingHours }]] = updateVendor.mock.calls as [
-      { operatingHours: Record<string, { isOpen: boolean; close: string }> },
+      {
+        operatingHours: Record<
+          string,
+          { isOpen: boolean; open: string; close: string }
+        >;
+      },
     ][];
-    expect(operatingHours.monday).toMatchObject({
+    expect(Object.keys(operatingHours)).toHaveLength(7);
+    expect(operatingHours.friday).toEqual({
       isOpen: true,
-      close: "21:00",
+      open: "18:00",
+      close: "02:00",
     });
     expect(operatingHours.sunday.isOpen).toBe(false);
+  });
+
+  it("refuses a week with every day off, pointing to the pause", async () => {
+    render(<EditHoursDialog vendor={vendor()} onClose={jest.fn()} />);
+
+    for (const day of [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ]) {
+      fireEvent.click(screen.getByLabelText(day));
+    }
+    await submit("Save");
+
+    expect(updateVendor).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(/pause the store/);
   });
 });
 
