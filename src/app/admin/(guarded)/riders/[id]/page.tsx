@@ -38,6 +38,7 @@ import {
   useAdminTransactions,
 } from "@/hooks";
 import { useConfirm, usePrompt } from "@/components/organisms/DialogProvider";
+import { mapsUrl } from "@/lib/maps";
 
 function maskAccount(acct: string | null | undefined): string {
   if (!acct) return "";
@@ -462,6 +463,16 @@ function RiderDeliveries({ riderId }: { riderId: string }) {
                   </td>
                   <td className="py-2.5 pr-4 max-w-xs text-gray-700">
                     {t.deliveryAddress ?? "—"}
+                    {t.deliveryPin && (
+                      <a
+                        href={mapsUrl(t.deliveryPin)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-1.5 font-semibold text-recommend-green hover:underline"
+                      >
+                        Map
+                      </a>
+                    )}
                   </td>
                   <td className="py-2.5 pr-4">
                     <StatusPill status={t.status} />

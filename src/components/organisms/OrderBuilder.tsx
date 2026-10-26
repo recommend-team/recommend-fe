@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -21,11 +21,13 @@ import {
   useSetConversationArea,
 } from "@/hooks";
 import { RemoteImage } from "@/components/atoms/RemoteImage";
+import { AddressPicker } from "@/components/storefront/AddressPicker";
 import { ApiError } from "@/lib/api";
 import type {
   CatalogProduct,
   CartChange,
   ConversationDetail,
+  PickedPlace,
   PlacedAdminOrder,
 } from "@/types";
 import { PICKUP_ENABLED } from "@/lib/features";
@@ -169,6 +171,11 @@ export default function OrderBuilder({
     "DELIVERY",
   );
   const [address, setAddress] = useState("");
+  // Picked from Google; typed only when it can't be found, or Google can't be reached.
+  const [picked, setPicked] = useState<PickedPlace | null>(null);
+  const [details, setDetails] = useState("");
+  const [typing, setTyping] = useState(false);
+  const typeInstead = useCallback(() => setTyping(true), []);
   const [sendToBuyer, setSendToBuyer] = useState(true);
   const [failure, setFailure] = useState<string | null>(null);
   const [rejected, setRejected] = useState<CartChange[] | null>(null);
@@ -363,15 +370,22 @@ export default function OrderBuilder({
           buyerName: name.trim() || undefined,
           buyerPhone: phone.trim() || undefined,
           fulfillmentType: fulfillment,
+          // Neither: the server uses the address the buyer gave in the chat.
           deliveryAddress:
-            fulfillment === "DELIVERY"
+            fulfillment === "DELIVERY" && typing
               ? address.trim() || undefined
+              : undefined,
+          deliveryPlace:
+            fulfillment === "DELIVERY" && !typing && picked
+              ? { token: picked.token, details: details.trim() || undefined }
               : undefined,
           sendToBuyer,
         },
       });
       setPlaced(result);
       setLines([]);
+      setPicked(null);
+      setDetails("");
       onPlaced?.(result);
     } catch (cause) {
       const changes = cartChanges(cause);
@@ -758,15 +772,54 @@ export default function OrderBuilder({
                 <option value="PICKUP">Pickup</option>
               </select>
             )}
-            {fulfillment === "DELIVERY" && (
-              <input
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-                placeholder="Delivery address"
-                className="rounded-md border border-black/10 px-2.5 py-2 font-dm text-xs outline-none focus:border-recommend-green"
-              />
-            )}
           </div>
+
+          {fulfillment === "DELIVERY" && (
+            <div className="mb-3">
+              {typing ? (
+                <input
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  placeholder="Delivery address"
+                  aria-label="Delivery address"
+                  className="w-full rounded-md border border-black/10 px-2.5 py-2 font-dm text-xs outline-none focus:border-recommend-green"
+                />
+              ) : (
+                <AddressPicker
+                  picked={picked}
+                  onPick={setPicked}
+                  onClear={() => setPicked(null)}
+                  onUnavailable={typeInstead}
+                  areaId={areaId ?? undefined}
+                />
+              )}
+              {!typing && picked && (
+                <input
+                  value={details}
+                  onChange={(event) => setDetails(event.target.value)}
+                  placeholder="House or flat number, landmark"
+                  aria-label="House or flat number, landmark"
+                  className="mt-2 w-full rounded-md border border-black/10 px-2.5 py-2 font-dm text-xs outline-none focus:border-recommend-green"
+                />
+              )}
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <span className="font-dm text-[11px] text-gray-400">
+                  {picked || (typing && address.trim())
+                    ? ""
+                    : "Leave empty to use the address the buyer gave."}
+                </span>
+                {!picked && (
+                  <button
+                    type="button"
+                    onClick={() => setTyping((now) => !now)}
+                    className="font-dm text-[11px] font-semibold text-recommend-green hover:underline"
+                  >
+                    {typing ? "Search for it instead" : "Type it instead"}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Named, with the reason — "some items changed" tells an admin nothing they
               can act on while a buyer is waiting. */}

@@ -6,3 +6,4 @@ export * from "./conversation.service";
 export * from "./notification.service";
 export * from "./admin-vendors.service";
 export * from "./admin-areas.service";
+export * from "./places.service";

@@ -26,6 +26,7 @@ import {
   useVerifyTransaction,
 } from "@/hooks";
 import type { AdminTransactionSummary, CheckoutSource, OrderStatus } from "@/types";
+import { mapsUrl } from "@/lib/maps";
 
 /**
  * The money view: one row per payment.
@@ -542,6 +543,20 @@ function TransactionRow({
                 {transaction.fulfillmentType === "DELIVERY"
                   ? `Delivering to ${transaction.deliveryAddress ?? "—"}`
                   : "For pickup"}
+                {transaction.fulfillmentType === "DELIVERY" &&
+                  transaction.deliveryPin && (
+                    <>
+                      {" · "}
+                      <a
+                        href={mapsUrl(transaction.deliveryPin)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-recommend-green hover:underline"
+                      >
+                        Open in Maps
+                      </a>
+                    </>
+                  )}
                 {transaction.paidAt
                   ? ` · paid ${new Date(transaction.paidAt).toLocaleString()}`
                   : " · not paid"}

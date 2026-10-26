@@ -1,3 +1,4 @@
+import type { DeliveryPin } from "@/lib/maps";
 import type { UserStatus, RiderType, VendorType } from "./auth";
 import type { ChoiceGroup, Product } from "./product";
 
@@ -312,6 +313,8 @@ export interface AdminTransactionSummary {
   buyerEmail: string | null;
   fulfillmentType: "PICKUP" | "DELIVERY";
   deliveryAddress: string | null;
+  /** Where the address was picked on the map. Null when typed; absent on older servers. */
+  deliveryPin?: DeliveryPin | null;
   goodsTotal: number;
   deliveryFee: number;
   totalAmount: number;
@@ -409,6 +412,8 @@ export interface PlaceAdminOrderPayload {
   buyerEmail?: string;
   fulfillmentType?: "PICKUP" | "DELIVERY";
   deliveryAddress?: string;
+  /** Picked from Google instead of typed: the token, and the house number or landmark. */
+  deliveryPlace?: { token: string; details?: string };
   notes?: string;
   /** Default true — the buyer gets the same inline payment card as any other checkout. */
   sendToBuyer?: boolean;

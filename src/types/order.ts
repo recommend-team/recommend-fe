@@ -9,7 +9,11 @@ export interface CheckoutLine {
   expectedUnitPrice?: number;
   /** A dish built as a pack: how many identical packs, and what goes in each. */
   packs?: number;
-  extras?: { productId: string; quantity: number; expectedUnitPrice?: number }[];
+  extras?: {
+    productId: string;
+    quantity: number;
+    expectedUnitPrice?: number;
+  }[];
   choices?: { groupId: string; optionIds: string[] }[];
 }
 
@@ -23,6 +27,11 @@ export interface CheckoutPayload {
   buyerEmail: string;
   fulfillmentType: FulfillmentType;
   deliveryAddress?: string;
+  /**
+   * The address picked from Google instead of typed: the token `GET /places/resolve`
+   * gave, and the house number or landmark Google can't know.
+   */
+  deliveryPlace?: { token: string; details?: string };
   /** One of the vendor's service areas. Required for a delivery. */
   areaId?: string;
   notes?: string;
@@ -69,6 +78,11 @@ export interface OrderStatusView {
      * One per dish as built — "Rice and beans (2 portions, with Beef ×2)"; `quantity` is
      * packs for a built dish. `lineTotal` is absent from an older server.
      */
-    items: { name: string; quantity: number; unitPrice: number; lineTotal?: number }[];
+    items: {
+      name: string;
+      quantity: number;
+      unitPrice: number;
+      lineTotal?: number;
+    }[];
   }[];
 }

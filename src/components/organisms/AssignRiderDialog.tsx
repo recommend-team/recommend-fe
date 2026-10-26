@@ -6,6 +6,7 @@ import { Check, Phone, Search, UserPlus } from "lucide-react";
 import Modal from "@/components/atoms/admin/Modal";
 import { useAssignRider, useRiders } from "@/hooks";
 import type { AdminTransactionSummary } from "@/types";
+import { mapsUrl } from "@/lib/maps";
 
 /**
  * Choose who carries a delivery, or swap the rider on it.
@@ -41,6 +42,17 @@ export default function AssignRiderDialog({
       onClose={onClose}
       width="max-w-lg"
     >
+      {transaction.deliveryPin && (
+        <a
+          href={mapsUrl(transaction.deliveryPin)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-3 inline-block font-dm text-xs font-semibold text-recommend-green hover:underline"
+        >
+          Open the address in Google Maps — send the link to the rider
+        </a>
+      )}
+
       {current && (
         <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 font-dm text-xs text-amber-900">
           Currently <b>{current.name}</b>

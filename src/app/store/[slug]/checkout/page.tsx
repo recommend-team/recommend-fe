@@ -16,14 +16,22 @@ import {
 } from "@/lib/storefront-cart";
 import { CartLineRow } from "@/components/storefront/CartLineRow";
 import { ItemSheet } from "@/components/storefront/ItemSheet";
+import { AddressPicker } from "@/components/storefront/AddressPicker";
 import { rememberOrder } from "@/lib/last-order";
 import { SUPPORT_PHONE, SUPPORT_PHONE_HREF } from "@/lib/support";
-import type { CartChange, FulfillmentType, Product } from "@/types";
+import type {
+  CartChange,
+  FulfillmentType,
+  PickedPlace,
+  Product,
+} from "@/types";
 
 interface CheckoutForm {
   fulfillmentType: FulfillmentType;
   areaId: string;
   deliveryAddress: string;
+  /** With a picked address: the house or flat number, a landmark. */
+  addressDetails: string;
   buyerName: string;
   buyerPhone: string;
   buyerEmail: string;
@@ -66,7 +74,12 @@ function describeChange(change: CartChange): string {
 }
 
 /** Changes that mean the item itself can't be bought: it comes out of the cart. */
-const GONE: CartChange["reason"][] = ["REMOVED", "UNAVAILABLE", "VENDOR_CLOSED", "ADDON_WITHOUT_MAIN"];
+const GONE: CartChange["reason"][] = [
+  "REMOVED",
+  "UNAVAILABLE",
+  "VENDOR_CLOSED",
+  "ADDON_WITHOUT_MAIN",
+];
 
 export default function StoreCheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -76,8 +89,21 @@ export default function StoreCheckoutPage() {
   const queryClient = useQueryClient();
   const [problem, setProblem] = useState<string | null>(null);
   const [changes, setChanges] = useState<CartChange[]>([]);
-  const [editing, setEditing] = useState<{ product: Product; line: CartLine } | null>(null);
+  const [editing, setEditing] = useState<{
+    product: Product;
+    line: CartLine;
+  } | null>(null);
   const closeSheet = useCallback(() => setEditing(null), []);
+  // The address is picked from Google; typed only when it can't be found, or Google
+  // can't be reached.
+  const [picked, setPicked] = useState<PickedPlace | null>(null);
+  const [typing, setTyping] = useState(false);
+  const [searchDown, setSearchDown] = useState(false);
+  const [addressProblem, setAddressProblem] = useState<string | null>(null);
+  const searchUnavailable = useCallback(() => {
+    setSearchDown(true);
+    setTyping(true);
+  }, []);
 
   const {
     register,
@@ -89,6 +115,7 @@ export default function StoreCheckoutPage() {
       fulfillmentType: "DELIVERY",
       areaId: "",
       deliveryAddress: "",
+      addressDetails: "",
       buyerName: "",
       buyerPhone: "",
       buyerEmail: "",
@@ -112,7 +139,9 @@ export default function StoreCheckoutPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center font-dm">
         <p className="text-lg font-bold text-gray-800 mb-2">Store not found</p>
-        <p className="text-sm text-gray-500">This vendor may no longer be available.</p>
+        <p className="text-sm text-gray-500">
+          This vendor may no longer be available.
+        </p>
       </div>
     );
   }
@@ -123,11 +152,19 @@ export default function StoreCheckoutPage() {
   const deliveryFee = delivery ? (data.deliveryFee ?? 0) : 0;
   const total = priced.goodsTotal + deliveryFee;
   const storeName = vendor.businessName ?? "this store";
+  const served = new Set(vendor.serviceAreas.map((area) => area.id));
+  const pickedArea = picked?.place.areaId ?? null;
+  // Picked somewhere this vendor doesn't deliver — said before paying, not after.
+  const outsideAreas = !!picked && !!pickedArea && !served.has(pickedArea);
+  // An area to choose: typing, or a pick we couldn't place in one of ours.
+  const chooseArea = typing || (!!picked && !pickedArea);
 
   if (priced.count === 0) {
     return (
       <div className="min-h-screen max-w-[480px] mx-auto flex flex-col items-center justify-center p-6 text-center font-dm">
-        <p className="text-lg font-bold text-gray-800 mb-2">Your cart is empty</p>
+        <p className="text-lg font-bold text-gray-800 mb-2">
+          Your cart is empty
+        </p>
         <Link
           href={`/store/${slug}`}
           className="mt-2 rounded-full bg-recommend-orange px-5 py-2.5 text-sm font-bold text-white"
@@ -142,6 +179,22 @@ export default function StoreCheckoutPage() {
     setProblem(null);
     setChanges([]);
 
+    if (delivery && !typing) {
+      if (!picked) {
+        setAddressProblem(
+          "Choose your address from the list — or type it instead.",
+        );
+        return;
+      }
+      if (outsideAreas) {
+        setAddressProblem(
+          `${storeName} doesn't deliver to ${picked.place.areaName} yet.`,
+        );
+        return;
+      }
+    }
+    const usePick = delivery && !typing && !!picked;
+
     try {
       const placed = await checkout.mutateAsync({
         items: priced.items.map(toCheckoutLine),
@@ -149,8 +202,18 @@ export default function StoreCheckoutPage() {
         buyerPhone: toE164(values.buyerPhone),
         buyerEmail: values.buyerEmail.trim().toLowerCase(),
         fulfillmentType: values.fulfillmentType,
-        deliveryAddress: delivery ? values.deliveryAddress.trim() : undefined,
-        areaId: delivery ? values.areaId : undefined,
+        deliveryAddress:
+          delivery && !usePick ? values.deliveryAddress.trim() : undefined,
+        deliveryPlace: usePick
+          ? {
+              token: picked.token,
+              details: values.addressDetails.trim() || undefined,
+            }
+          : undefined,
+        areaId: delivery
+          ? (usePick ? (pickedArea ?? values.areaId) : values.areaId) ||
+            undefined
+          : undefined,
         notes: values.notes.trim() || undefined,
       });
 
@@ -176,7 +239,7 @@ export default function StoreCheckoutPage() {
         cart.remove(
           raw.changes
             .filter((change) => GONE.includes(change.reason))
-            .map((change) => change.productId)
+            .map((change) => change.productId),
         );
         await queryClient.invalidateQueries({
           queryKey: queryKeys.storefront(slug),
@@ -187,7 +250,7 @@ export default function StoreCheckoutPage() {
       setProblem(
         error instanceof Error
           ? error.message
-          : "Something went wrong. Please try again."
+          : "Something went wrong. Please try again.",
       );
     }
   };
@@ -217,7 +280,9 @@ export default function StoreCheckoutPage() {
               <CartLineRow
                 key={item.key}
                 item={item}
-                onEdit={() => setEditing({ product: item.product, line: item.line })}
+                onEdit={() =>
+                  setEditing({ product: item.product, line: item.line })
+                }
                 onChange={(next) =>
                   item.isPack
                     ? cart.setPacks(item.key, next)
@@ -246,8 +311,13 @@ export default function StoreCheckoutPage() {
         </section>
 
         {changes.length > 0 && (
-          <div role="alert" className="mx-4 mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-            <p className="font-bold">Your order changed — please check it and pay again.</p>
+          <div
+            role="alert"
+            className="mx-4 mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"
+          >
+            <p className="font-bold">
+              Your order changed — please check it and pay again.
+            </p>
             <ul className="mt-1 list-disc pl-5">
               {changes.map((change, index) => (
                 <li key={`${change.productId}-${change.reason}-${index}`}>
@@ -275,20 +345,102 @@ export default function StoreCheckoutPage() {
                       : "border-gray-200 text-gray-600"
                   }`}
                 >
-                  <input type="radio" value={option} {...register("fulfillmentType")} className="sr-only" />
+                  <input
+                    type="radio"
+                    value={option}
+                    {...register("fulfillmentType")}
+                    className="sr-only"
+                  />
                   {option === "DELIVERY" ? "Delivery" : "Pickup"}
                 </label>
               ))}
             </div>
           )}
 
-          {delivery && (
+          {delivery && !typing && (
+            <>
+              <Field
+                label="Delivery address"
+                error={addressProblem ?? undefined}
+              >
+                <AddressPicker
+                  picked={picked}
+                  onPick={(next) => {
+                    setPicked(next);
+                    setAddressProblem(null);
+                  }}
+                  onClear={() => setPicked(null)}
+                  onUnavailable={searchUnavailable}
+                  // Lean towards the one area a single-area vendor serves.
+                  areaId={
+                    vendor.serviceAreas.length === 1
+                      ? vendor.serviceAreas[0].id
+                      : undefined
+                  }
+                  invalid={!!addressProblem}
+                />
+                {picked && pickedArea && !outsideAreas && (
+                  <p className="mt-1 text-xs font-bold text-green-700">
+                    ✓ {storeName} delivers to {picked.place.areaName}.
+                  </p>
+                )}
+                {outsideAreas && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {storeName} doesn&apos;t deliver to {picked?.place.areaName}{" "}
+                    — only to{" "}
+                    {vendor.serviceAreas.map((area) => area.name).join(", ")}.
+                  </p>
+                )}
+                {!picked && (
+                  <button
+                    type="button"
+                    onClick={() => setTyping(true)}
+                    className="mt-1.5 text-xs font-bold text-[#C2410C] hover:underline"
+                  >
+                    Can&apos;t find it? Type it instead
+                  </button>
+                )}
+              </Field>
+
+              {picked && (
+                <Field
+                  label="House or flat number, landmark"
+                  error={errors.addressDetails?.message}
+                >
+                  <input
+                    placeholder="e.g. House 12, the blue gate opposite the church"
+                    {...register("addressDetails", {
+                      validate: (value) =>
+                        !delivery ||
+                        typing ||
+                        !picked ||
+                        value.trim().length >= 2 ||
+                        "Add your house or flat number, or a landmark, so the rider finds you",
+                    })}
+                    className={inputClass(!!errors.addressDetails)}
+                  />
+                </Field>
+              )}
+            </>
+          )}
+
+          {delivery && typing && searchDown && (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Address search isn&apos;t available right now — type your address
+              below.
+            </p>
+          )}
+
+          {delivery && chooseArea && (
             <>
               <Field label="Area" error={errors.areaId?.message}>
                 <select
                   {...register("areaId", {
                     validate: (value) =>
-                      !delivery || !!value || "Choose the area we're delivering to",
+                      !delivery ||
+                      !chooseArea ||
+                      !!value ||
+                      "Choose the area we're delivering to",
                   })}
                   className={inputClass(!!errors.areaId)}
                 >
@@ -300,24 +452,41 @@ export default function StoreCheckoutPage() {
                   ))}
                 </select>
                 <p className="mt-1 text-xs text-gray-400">
-                  {storeName} delivers to these areas only.
+                  {typing
+                    ? `${storeName} delivers to these areas only.`
+                    : "We couldn't tell which area this is in — choose it."}
                 </p>
               </Field>
-
-              <Field label="Delivery address" error={errors.deliveryAddress?.message}>
-                <textarea
-                  rows={2}
-                  placeholder="House number, street, landmark"
-                  {...register("deliveryAddress", {
-                    validate: (value) =>
-                      !delivery ||
-                      value.trim().length >= 5 ||
-                      "Enter the full address — at least a house number and street",
-                  })}
-                  className={inputClass(!!errors.deliveryAddress)}
-                />
-              </Field>
             </>
+          )}
+
+          {delivery && typing && (
+            <Field
+              label="Delivery address"
+              error={errors.deliveryAddress?.message}
+            >
+              <textarea
+                rows={2}
+                placeholder="House number, street, landmark"
+                {...register("deliveryAddress", {
+                  validate: (value) =>
+                    !delivery ||
+                    !typing ||
+                    value.trim().length >= 5 ||
+                    "Enter the full address — at least a house number and street",
+                })}
+                className={inputClass(!!errors.deliveryAddress)}
+              />
+              {!searchDown && (
+                <button
+                  type="button"
+                  onClick={() => setTyping(false)}
+                  className="mt-1.5 text-xs font-bold text-[#C2410C] hover:underline"
+                >
+                  Search for it instead
+                </button>
+              )}
+            </Field>
           )}
         </section>
 
@@ -369,16 +538,22 @@ export default function StoreCheckoutPage() {
             />
             <p className="mt-1 text-xs text-gray-500">
               Your receipt and delivery code come here.{" "}
-              <b className="text-gray-700">Use one you can open</b> — it&apos;s also how
-              you sign in to follow your order.
+              <b className="text-gray-700">Use one you can open</b> — it&apos;s
+              also how you sign in to follow your order.
             </p>
           </Field>
 
-          <Field label="Note for the vendor (optional)" error={errors.notes?.message}>
+          <Field
+            label="Note for the vendor (optional)"
+            error={errors.notes?.message}
+          >
             <input
               placeholder="e.g. Extra pepper, no onions"
               {...register("notes", {
-                maxLength: { value: 500, message: "Keep it under 500 characters" },
+                maxLength: {
+                  value: 500,
+                  message: "Keep it under 500 characters",
+                },
               })}
               className={inputClass(!!errors.notes)}
             />
@@ -391,7 +566,10 @@ export default function StoreCheckoutPage() {
         />
 
         {problem && (
-          <p role="alert" className="mx-4 mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+          <p
+            role="alert"
+            className="mx-4 mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700"
+          >
             {problem}
           </p>
         )}
@@ -412,11 +590,15 @@ export default function StoreCheckoutPage() {
             )}
             <button
               type="submit"
-              disabled={checkout.isPending || !vendor.isOpen || !!priced.problem}
+              disabled={
+                checkout.isPending || !vendor.isOpen || !!priced.problem
+              }
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-recommend-orange py-3.5 text-base font-bold text-white hover:bg-[#D84A15] disabled:bg-gray-300"
             >
               <Lock size={16} aria-hidden />
-              {checkout.isPending ? "Starting payment…" : `Pay ${formatNaira(total)}`}
+              {checkout.isPending
+                ? "Starting payment…"
+                : `Pay ${formatNaira(total)}`}
             </button>
             <p className="mt-1.5 text-center text-[11px] text-gray-400">
               Paid securely with Paystack
@@ -450,18 +632,31 @@ export default function StoreCheckoutPage() {
  * waiting. No link from here: leaving checkout half-way helps nobody. The order page they
  * return to has the button.
  */
-function AfterYouPay({ email, delivery }: { email: string | null; delivery: boolean }) {
+function AfterYouPay({
+  email,
+  delivery,
+}: {
+  email: string | null;
+  delivery: boolean;
+}) {
   const steps: React.ReactNode[] = [
-    <>Pay securely with Paystack. You&apos;ll come back here to see your order confirmed.</>,
+    <>
+      Pay securely with Paystack. You&apos;ll come back here to see your order
+      confirmed.
+    </>,
     <>
       We email your receipt to{" "}
-      {email ? <b className="text-gray-900 [overflow-wrap:anywhere]">{email}</b> : "your email"}
+      {email ? (
+        <b className="text-gray-900 [overflow-wrap:anywhere]">{email}</b>
+      ) : (
+        "your email"
+      )}
       {delivery ? ", and your delivery code when the rider leaves." : "."}
     </>,
     <>
-      <b className="text-gray-900">Follow your order on Recommend.</b> Open the Recommend
-      chat and sign in with this same email — your order will already be there, with every
-      update, and you can message us about it.
+      <b className="text-gray-900">Follow your order on Recommend.</b> Open the
+      Recommend chat and sign in with this same email — your order will already
+      be there, with every update, and you can message us about it.
     </>,
   ];
 
@@ -475,7 +670,10 @@ function AfterYouPay({ email, delivery }: { email: string | null; delivery: bool
       </h2>
       <ol className="mt-3 space-y-3">
         {steps.map((step, index) => (
-          <li key={index} className="flex gap-3 text-sm leading-snug text-gray-700">
+          <li
+            key={index}
+            className="flex gap-3 text-sm leading-snug text-gray-700"
+          >
             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-recommend-orange text-xs font-bold text-white">
               {index + 1}
             </span>
@@ -485,7 +683,10 @@ function AfterYouPay({ email, delivery }: { email: string | null; delivery: bool
       </ol>
       <p className="mt-3 border-t border-[#EADFB8] pt-3 text-sm text-gray-700">
         Prefer to call?{" "}
-        <a href={SUPPORT_PHONE_HREF} className="font-bold whitespace-nowrap text-[#C2410C] hover:underline">
+        <a
+          href={SUPPORT_PHONE_HREF}
+          className="font-bold whitespace-nowrap text-[#C2410C] hover:underline"
+        >
           {SUPPORT_PHONE}
         </a>
       </p>
@@ -504,9 +705,13 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-bold text-gray-700">{label}</span>
+      <span className="mb-1 block text-sm font-bold text-gray-700">
+        {label}
+      </span>
       {children}
-      {error && <span className="mt-1 block text-xs text-red-600">{error}</span>}
+      {error && (
+        <span className="mt-1 block text-xs text-red-600">{error}</span>
+      )}
     </label>
   );
 }
