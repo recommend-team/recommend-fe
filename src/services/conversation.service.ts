@@ -1,4 +1,5 @@
-import { request } from "@/lib/api";
+import { API_URL, ApiError, request } from "@/lib/api";
+import { getAccessToken } from "@/lib/auth";
 import type {
   CatalogArea,
   CatalogCategory,
@@ -10,8 +11,10 @@ import type {
   ConversationListFilters,
   ConversationOrder,
   ConversationSummary,
+  DeletedConversations,
   PlaceAdminOrderPayload,
   PlacedAdminOrder,
+  WaitlistPage,
 } from "@/types";
 
 function qs(params: Record<string, string | number | boolean | undefined>) {
@@ -30,6 +33,7 @@ export async function getConversations(
     `/admin/conversations${qs({
       search: filters.search,
       needingAttention: filters.needingAttention || undefined,
+      deleted: filters.deleted || undefined,
       page: filters.page,
       limit: filters.limit,
     })}`
@@ -40,6 +44,49 @@ export async function getConversation(
   id: string
 ): Promise<ConversationDetail> {
   return request<ConversationDetail>(`/admin/conversations/${id}`);
+}
+
+/**
+ * Out of the inbox, restorable. One with orders is never deleted — it comes back under
+ * `refused` with the reason.
+ */
+export async function deleteConversations(
+  ids: string[]
+): Promise<DeletedConversations> {
+  return request<DeletedConversations>(`/admin/conversations/delete`, {
+    method: "POST",
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export async function restoreConversation(id: string): Promise<{ id: string }> {
+  return request<{ id: string }>(`/admin/conversations/${id}/restore`, {
+    method: "POST",
+  });
+}
+
+export async function getWaitlist(
+  page = 1,
+  limit = 50
+): Promise<WaitlistPage> {
+  return request<WaitlistPage>(`/admin/waitlist${qs({ page, limit })}`);
+}
+
+/** The whole waitlist as a CSV file, saved by the browser. */
+export async function downloadWaitlistCsv(): Promise<void> {
+  const token = getAccessToken();
+  const res = await fetch(`${API_URL}/admin/waitlist/export`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    throw new ApiError(`Couldn't download the waitlist (${res.status})`, res.status);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `recommend-waitlist-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 /** The assistant stops replying from this moment. The buyer is not told. */

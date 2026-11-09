@@ -53,6 +53,8 @@ export interface ConversationSummary {
   handoverRequestedAt: string | null;
   handoverReason: string | null;
   createdAt: string;
+  /** Set in the Deleted list. Absent on older servers. */
+  deletedAt?: string | null;
 }
 
 export interface ConversationDetail {
@@ -70,6 +72,8 @@ export interface ConversationDetail {
   attentionReason: string | null;
   handoverRequestedAt: string | null;
   handoverReason: string | null;
+  /** Deleted by an admin: shown read-only, with Restore. Absent on older servers. */
+  deletedAt?: string | null;
   messages: ConversationMessage[];
 }
 
@@ -85,4 +89,29 @@ export interface ConversationFeed {
 export interface ConversationListFilters extends PaginationParams {
   search?: string;
   needingAttention?: boolean;
+  /** The deleted ones instead, most recently deleted first. */
+  deleted?: boolean;
+}
+
+/** What a delete did: chats with orders are never deleted, and say why. */
+export interface DeletedConversations {
+  deleted: string[];
+  refused: { id: string; reason: string }[];
+}
+
+/** Someone who left a phone number or email while the chat was paused. */
+export interface WaitlistSignup {
+  id: string;
+  kind: "PHONE" | "EMAIL";
+  /** +234… for a phone, lower-case for an email. */
+  contact: string;
+  conversationId: string | null;
+  createdAt: string;
+}
+
+export interface WaitlistPage {
+  items: WaitlistSignup[];
+  total: number;
+  page: number;
+  limit: number;
 }

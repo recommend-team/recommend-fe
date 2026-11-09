@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   MapPin,
+  ListChecks,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks";
 import type { AuthUser } from "@/types";
@@ -45,6 +46,7 @@ const items: NavItem[] = [
     href: "/admin/conversations",
     icon: MessagesSquare,
   },
+  { label: "Waitlist", href: "/admin/waitlist", icon: ListChecks },
   { label: "KYC Verifications", href: "/admin/kyc", icon: ShieldCheck },
   { label: "Buyers", href: "/admin/buyers", icon: Users },
   {

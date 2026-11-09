@@ -9,20 +9,25 @@ import {
   BadgeCheck,
   Bot,
   Hand,
+  RotateCcw,
   Send,
   Sparkles,
+  Trash2,
   UserCheck,
 } from "lucide-react";
 import {
   useConversation,
   useConversationStream,
   useCurrentUser,
+  useDeleteConversations,
   useReleaseConversation,
+  useRestoreConversation,
   useSendConversationMessage,
   useTakeConversation,
   useTypingSignal,
 } from "@/hooks";
 import OrderBuilder from "@/components/organisms/OrderBuilder";
+import { useConfirm } from "@/components/organisms/DialogProvider";
 import ConversationOrderStrip from "@/components/organisms/ConversationOrderStrip";
 import { ApiError } from "@/lib/api";
 import type { ConversationMessage } from "@/types";
@@ -74,6 +79,9 @@ export default function AdminConversationPage() {
   const take = useTakeConversation();
   const release = useReleaseConversation();
   const send = useSendConversationMessage();
+  const remove = useDeleteConversations();
+  const restore = useRestoreConversation();
+  const confirm = useConfirm();
   const signalTyping = useTypingSignal(id);
 
   useConversationStream(id);
@@ -86,8 +94,13 @@ export default function AdminConversationPage() {
     !!conversation?.heldByAdminId && conversation.heldByAdminId === me?.id;
   const heldByOther =
     !!conversation?.heldByAdminId && conversation.heldByAdminId !== me?.id;
+  // Deleted: read-only, until restored.
+  const deleted = !!conversation?.deletedAt;
+  const canReply = heldByMe && !deleted;
   const handedOver =
-    !!conversation?.handoverRequestedAt && !conversation.heldByAdminId;
+    !deleted &&
+    !!conversation?.handoverRequestedAt &&
+    !conversation.heldByAdminId;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,9 +112,29 @@ export default function AdminConversationPage() {
       await action();
     } catch (cause) {
       setFailure(
-        cause instanceof ApiError ? cause.message : "That didn't work."
+        cause instanceof ApiError || cause instanceof Error
+          ? cause.message
+          : "That didn't work."
       );
     }
+  };
+
+  const deleteThis = async () => {
+    if (!conversation) return;
+    const ok = await confirm({
+      title: "Delete this conversation?",
+      message:
+        "It leaves the inbox and can be restored from Deleted. If the buyer comes back, they start a fresh chat.",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
+    await act(async () => {
+      const result = await remove.mutateAsync([conversation.id]);
+      // Refused — it has orders. Said here rather than silently doing nothing.
+      if (result.refused[0]) throw new Error(result.refused[0].reason);
+      router.push("/admin/conversations");
+    });
   };
 
   const submit = async (event: FormEvent) => {
@@ -161,13 +194,36 @@ export default function AdminConversationPage() {
           )}
         </div>
 
-        {heldByOther && (
+        {heldByOther && !deleted && (
           <span className="rounded-full bg-black/5 px-3 py-1.5 font-dm text-xs font-semibold text-gray-600">
             Another admin is answering
           </span>
         )}
 
-        {heldByMe ? (
+        {deleted ? (
+          <button
+            onClick={() =>
+              void act(() => restore.mutateAsync(conversation.id))
+            }
+            disabled={restore.isPending}
+            className="inline-flex items-center gap-2 rounded-full bg-recommend-green px-4 py-2 font-dm text-sm font-bold text-white transition hover:bg-recommend-green-hover disabled:opacity-40"
+          >
+            <RotateCcw className="h-4 w-4" />
+            {restore.isPending ? "Restoring…" : "Restore"}
+          </button>
+        ) : (
+          <button
+            onClick={() => void deleteThis()}
+            disabled={remove.isPending}
+            aria-label="Delete conversation"
+            title="Delete conversation"
+            className="grid h-9 w-9 place-items-center rounded-full text-gray-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+
+        {deleted ? null : heldByMe ? (
           <button
             onClick={() => void act(() => release.mutateAsync(conversation.id))}
             disabled={release.isPending}
@@ -188,6 +244,13 @@ export default function AdminConversationPage() {
         )}
       </header>
 
+      {deleted && (
+        <p className="flex shrink-0 items-center gap-2 bg-black/5 px-4 py-2.5 font-dm text-xs font-semibold text-gray-700">
+          <Trash2 className="h-3.5 w-3.5 shrink-0" />
+          Deleted — read only. Restore it to take over or reply.
+        </p>
+      )}
+
       {handedOver && (
         <p className="flex shrink-0 items-center gap-2 bg-red-500/10 px-4 py-2.5 font-dm text-xs font-semibold text-red-700">
           <Hand className="h-3.5 w-3.5 shrink-0" />
@@ -197,14 +260,14 @@ export default function AdminConversationPage() {
         </p>
       )}
 
-      {conversation.attentionReason && !heldByMe && !handedOver && (
+      {conversation.attentionReason && !heldByMe && !handedOver && !deleted && (
         <p className="flex shrink-0 items-center gap-2 bg-recommend-orange/10 px-4 py-2.5 font-dm text-xs font-semibold text-recommend-orange">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           {conversation.attentionReason}
         </p>
       )}
 
-      {heldByMe && (
+      {canReply && (
         <p className="flex shrink-0 items-center gap-2 bg-recommend-green/10 px-4 py-2.5 font-dm text-xs font-semibold text-recommend-green">
           <Sparkles className="h-3.5 w-3.5 shrink-0" />
           The assistant is silent. Everything you send arrives as Recommend.
@@ -239,7 +302,7 @@ export default function AdminConversationPage() {
       {/* Only while you hold the conversation — ordering for a buyer the assistant is
           still serving would write a checkout underneath a running flow, and the
           endpoint refuses it anyway. */}
-      {(heldByMe || !!conversation.buyerPhone) && (
+      {!deleted && (heldByMe || !!conversation.buyerPhone) && (
         <div className="shrink-0 border-t border-black/10 bg-white px-4 pt-3">
           <div className="mx-auto flex max-w-2xl flex-col gap-2">
             {/* Visible to any admin looking, held or not — "did they pay?" is the
@@ -267,9 +330,11 @@ export default function AdminConversationPage() {
               setDraft(event.target.value);
               signalTyping(event.target.value.length > 0);
             }}
-            disabled={!heldByMe}
+            disabled={!canReply}
             placeholder={
-              heldByMe
+              deleted
+                ? "Deleted — restore it to reply"
+                : heldByMe
                 ? "Reply as Recommend…"
                 : heldByOther
                   ? "Another admin is answering this one"
@@ -279,7 +344,7 @@ export default function AdminConversationPage() {
           />
           <button
             type="submit"
-            disabled={!heldByMe || !draft.trim() || send.isPending}
+            disabled={!canReply || !draft.trim() || send.isPending}
             aria-label="Send"
             className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-recommend-green text-white transition hover:bg-recommend-green-hover disabled:opacity-30"
           >

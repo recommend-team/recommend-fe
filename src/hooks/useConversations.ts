@@ -4,11 +4,14 @@ import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { io, type Socket } from "socket.io-client";
 import {
+  deleteConversations,
   getConversation,
   getConversationOrder,
   getConversations,
+  getWaitlist,
   placeConversationOrder,
   releaseConversation,
+  restoreConversation,
   sendConversationMessage,
   setConversationTyping,
   takeConversation,
@@ -23,6 +26,7 @@ import type {
   ConversationOrder,
   PlaceAdminOrderPayload,
   PlacedAdminOrder,
+  WaitlistPage,
 } from "@/types";
 
 const FEED_KEY = ["admin", "conversations"] as const;
@@ -56,6 +60,34 @@ function useConversationAction(action: (id: string) => Promise<unknown>) {
         queryKey: ["admin", "conversation", id],
       });
     },
+  });
+}
+
+/** Several at once from the rail, or one from its page. */
+export function useDeleteConversations() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteConversations,
+    onSuccess: (_result, ids) => {
+      void queryClient.invalidateQueries({ queryKey: FEED_KEY });
+      for (const id of ids) {
+        void queryClient.invalidateQueries({
+          queryKey: ["admin", "conversation", id],
+        });
+      }
+    },
+  });
+}
+
+export function useRestoreConversation() {
+  return useConversationAction(restoreConversation);
+}
+
+export function useWaitlist(page: number) {
+  return useQuery<WaitlistPage>({
+    queryKey: ["admin", "waitlist", page],
+    queryFn: () => getWaitlist(page),
+    refetchInterval: 60_000,
   });
 }
 
