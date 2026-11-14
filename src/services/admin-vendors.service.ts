@@ -11,6 +11,7 @@ import type {
   PaginatedResult,
   Product,
   UploadedFile,
+  KycDocumentField,
 } from "@/types";
 
 /** An admin changing a vendor's store and owner details. Logged; the vendor is told. */
@@ -105,6 +106,53 @@ export async function uploadFile(
     throw new ApiError(body.message ?? "Upload failed.", res.status, undefined, body);
   }
   return body.data;
+}
+
+/**
+ * Upload an identity document for someone, privately — nothing about it is public. What
+ * comes back is a reference to attach to their account, not a link.
+ */
+export async function uploadKycDocument(
+  file: File,
+  forUserId: string
+): Promise<{ ref: string; format: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const token = getAccessToken();
+
+  let res: Response;
+  try {
+    res = await fetch(
+      `${API_URL}/storage/kyc?for=${encodeURIComponent(forUserId)}`,
+      {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      }
+    );
+  } catch (cause) {
+    throw new ApiError("Upload failed. Check your connection and try again.", 0, undefined, cause);
+  }
+
+  const body = (await res.json().catch(() => ({}))) as {
+    success?: boolean;
+    message?: string;
+    data?: { ref: string; format: string };
+  };
+  if (!res.ok || body.success === false || !body.data?.ref) {
+    throw new ApiError(body.message ?? "Upload failed.", res.status, undefined, body);
+  }
+  return body.data;
+}
+
+/** A link to one identity document that works for five minutes. Each view is recorded. */
+export async function getKycDocumentLink(
+  userId: string,
+  document: KycDocumentField
+): Promise<{ url: string; expiresAt: string | null }> {
+  return request<{ url: string; expiresAt: string | null }>(
+    `/admin/users/${userId}/kyc/${document}`
+  );
 }
 
 /** Returns the new vendor's profile — `id` to open their page, `inviteSent` to say so. */

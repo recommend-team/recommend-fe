@@ -73,6 +73,12 @@ jest.mock("@/components/organisms/DialogProvider", () => ({
   useConfirm: () => () => Promise.resolve(confirmAnswer.value),
 }));
 
+const uploadKycDocument = jest.fn<
+  Promise<{ ref: string; format: string }>,
+  [File, string]
+>(() =>
+  Promise.resolve({ ref: "kyc:image/recommend/kyc/v1/new", format: "jpg" }),
+);
 jest.mock("@/services", () => ({
   uploadFile: jest.fn(() =>
     Promise.resolve({
@@ -80,6 +86,8 @@ jest.mock("@/services", () => ({
       secureUrl: "https://res.cloudinary.com/demo/new.jpg",
     }),
   ),
+  uploadKycDocument: (file: File, forUserId: string) =>
+    uploadKycDocument(file, forUserId),
 }));
 
 const vendor = (
@@ -618,8 +626,10 @@ describe("KYC upload", () => {
       });
     });
 
+    // Uploaded privately for this vendor, and attached as a reference — never a link.
+    expect(uploadKycDocument).toHaveBeenCalledWith(expect.any(File), "v1");
     expect(attachKyc).toHaveBeenCalledWith({
-      ninDocumentUrl: "https://res.cloudinary.com/demo/new.jpg",
+      ninDocumentUrl: "kyc:image/recommend/kyc/v1/new",
     });
   });
 

@@ -20,7 +20,6 @@ import {
   Users,
   Landmark,
   FileText,
-  ExternalLink,
   Tag,
   MessageCircle,
   Truck,
@@ -39,6 +38,8 @@ import {
 } from "@/hooks";
 import { useConfirm, usePrompt } from "@/components/organisms/DialogProvider";
 import { mapsUrl } from "@/lib/maps";
+import KycDocumentButton from "@/components/organisms/KycDocumentButton";
+import type { KycDocumentField } from "@/types";
 
 function maskAccount(acct: string | null | undefined): string {
   if (!acct) return "";
@@ -355,12 +356,20 @@ export default function RiderDetailPage({
 
         <InfoCard title="KYC documents" icon={FileText}>
           <KycDocRow
+            riderId={r.id}
+            document="governmentIdUrl"
             label="Government ID"
             url={r.governmentIdUrl}
           />
-          <KycDocRow label="Selfie" url={r.selfieUrl} />
+          <KycDocRow
+            riderId={r.id}
+            document="selfieUrl"
+            label="Selfie"
+            url={r.selfieUrl}
+          />
           <p className="text-xs font-dm text-gray-400 mt-1">
-            Documents open in a new tab (served from Cloudinary).
+            Stored privately. Each opens in a new tab for a few minutes, and each view
+            is recorded.
           </p>
         </InfoCard>
 
@@ -597,9 +606,13 @@ function InfoRow({
 }
 
 function KycDocRow({
+  riderId,
+  document,
   label,
   url,
 }: {
+  riderId: string;
+  document: KycDocumentField;
   label: string;
   url: string | null | undefined;
 }) {
@@ -619,14 +632,7 @@ function KycDocRow({
         </p>
       </div>
       {url && (
-        <Link
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-lg bg-white border border-gray-200 px-2.5 py-1 text-xs font-bold font-dm text-gray-700 hover:border-recommend-orange hover:text-recommend-orange"
-        >
-          View <ExternalLink size={11} />
-        </Link>
+        <KycDocumentButton userId={riderId} document={document} label={label} />
       )}
     </div>
   );

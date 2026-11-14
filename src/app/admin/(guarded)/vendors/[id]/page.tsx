@@ -57,6 +57,7 @@ import VendorProductsTab from "@/components/organisms/vendor-admin/VendorProduct
 import VendorHistoryTab from "@/components/organisms/vendor-admin/VendorHistoryTab";
 import KycUploadButton from "@/components/organisms/vendor-admin/KycUploadButton";
 import type { AdminVendorDetail, Product, WalletEntryType } from "@/types";
+import KycDocumentButton from "@/components/organisms/KycDocumentButton";
 
 const DAY_LABELS: Record<string, string> = {
   monday: "Monday",
@@ -1183,14 +1184,11 @@ function KycTab({ vendor: v }: { vendor: AdminVendorDetail["vendor"] }) {
                   </p>
                 </div>
                 {url && (
-                  <Link
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg bg-white border border-gray-200 px-2.5 py-1 text-xs font-bold font-dm text-gray-700 hover:border-recommend-orange hover:text-recommend-orange"
-                  >
-                    View <ExternalLink size={11} />
-                  </Link>
+                  <KycDocumentButton
+                    userId={v.id}
+                    document={d.key}
+                    label={d.label}
+                  />
                 )}
                 <KycUploadButton
                   vendorId={v.id}
@@ -1204,7 +1202,8 @@ function KycTab({ vendor: v }: { vendor: AdminVendorDetail["vendor"] }) {
         </div>
 
         <p className="text-xs font-dm text-gray-400 mt-2">
-          Photos or PDFs, up to 10 MB. The vendor is told when you add one.
+          Photos or PDFs, up to 10 MB, stored privately. The vendor is told when you
+          add one; each view is recorded.
         </p>
       </InfoCard>
     </div>

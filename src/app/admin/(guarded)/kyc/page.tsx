@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, X, FileText, ExternalLink } from "lucide-react";
+import { Check, X } from "lucide-react";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
 import {
@@ -12,6 +12,8 @@ import {
 } from "@/hooks";
 import { useConfirm, usePrompt } from "@/components/organisms/DialogProvider";
 import type { PendingApproval } from "@/types";
+import KycDocumentButton from "@/components/organisms/KycDocumentButton";
+import type { KycDocumentField } from "@/types";
 
 type RoleFilter = "ALL" | "SELLER" | "RIDER";
 const ROLE_FILTERS: Array<{ value: RoleFilter; label: string }> = [
@@ -22,30 +24,30 @@ const ROLE_FILTERS: Array<{ value: RoleFilter; label: string }> = [
 
 const PAGE_SIZE = 20;
 
-function docsFor(p: PendingApproval): Array<{ label: string; url: string }> {
-  const list: Array<{ label: string; url: string }> = [];
-  if (p.role === "SELLER") {
-    if (p.vendorType === "REGISTERED") {
-      if (p.cacDocumentUrl)
-        list.push({ label: "CAC certificate", url: p.cacDocumentUrl });
-      if (p.tinDocumentUrl)
-        list.push({ label: "TIN certificate", url: p.tinDocumentUrl });
-    } else {
-      if (p.ninDocumentUrl)
-        list.push({ label: "NIN document", url: p.ninDocumentUrl });
-      if (p.passportPhotoUrl)
-        list.push({ label: "Passport photo", url: p.passportPhotoUrl });
-      if (p.bankStatementUrl)
-        list.push({ label: "Bank statement", url: p.bankStatementUrl });
-      if (p.utilityBillUrl)
-        list.push({ label: "Utility bill", url: p.utilityBillUrl });
-    }
-  } else if (p.role === "RIDER") {
-    if (p.governmentIdUrl)
-      list.push({ label: "Government ID", url: p.governmentIdUrl });
-    if (p.selfieUrl) list.push({ label: "Selfie", url: p.selfieUrl });
-  }
-  return list;
+/** The documents this applicant has uploaded. Each opens privately, on request. */
+function docsFor(
+  p: PendingApproval
+): Array<{ label: string; document: KycDocumentField }> {
+  const candidates: Array<{ label: string; document: KycDocumentField }> =
+    p.role === "SELLER"
+      ? p.vendorType === "REGISTERED"
+        ? [
+            { label: "CAC certificate", document: "cacDocumentUrl" },
+            { label: "TIN certificate", document: "tinDocumentUrl" },
+          ]
+        : [
+            { label: "NIN document", document: "ninDocumentUrl" },
+            { label: "Passport photo", document: "passportPhotoUrl" },
+            { label: "Bank statement", document: "bankStatementUrl" },
+            { label: "Utility bill", document: "utilityBillUrl" },
+          ]
+      : p.role === "RIDER"
+        ? [
+            { label: "Government ID", document: "governmentIdUrl" },
+            { label: "Selfie", document: "selfieUrl" },
+          ]
+        : [];
+  return candidates.filter((d) => !!p[d.document]);
 }
 
 export default function KycPage() {
@@ -233,17 +235,13 @@ export default function KycPage() {
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           {docs.map((d) => (
-                            <Link
-                              key={d.label}
-                              href={d.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-lg bg-white border border-gray-200 px-2.5 py-1 text-xs font-dm text-gray-700 hover:border-recommend-orange hover:text-recommend-orange transition-colors"
-                            >
-                              <FileText size={12} />
-                              {d.label}
-                              <ExternalLink size={10} />
-                            </Link>
+                            <KycDocumentButton
+                              key={d.document}
+                              userId={p.id}
+                              document={d.document}
+                              label={d.label}
+                              compact
+                            />
                           ))}
                         </div>
                       )}

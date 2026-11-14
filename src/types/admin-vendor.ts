@@ -91,6 +91,12 @@ export type KycDocumentKey =
   | "bankStatementUrl"
   | "utilityBillUrl";
 
+/**
+ * Every identity document, a vendor's or a rider's. The value stored is a private
+ * reference (`kyc:…`), not a link: open one with `getKycDocumentLink`.
+ */
+export type KycDocumentField = KycDocumentKey | "governmentIdUrl" | "selfieUrl";
+
 export type VendorAdminAction =
   | "CREATED"
   | "STORE_UPDATED"

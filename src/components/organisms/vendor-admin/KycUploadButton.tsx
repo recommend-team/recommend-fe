@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Loader2, Upload } from "lucide-react";
 import { useUpdateVendorKyc } from "@/hooks";
-import { uploadFile } from "@/services";
+import { uploadKycDocument } from "@/services";
 import type { KycDocumentKey } from "@/types";
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -41,8 +41,9 @@ export default function KycUploadButton({
     }
     setUploading(true);
     try {
-      const uploaded = await uploadFile(file, "kyc");
-      await attach.mutateAsync({ [documentKey]: uploaded.secureUrl });
+      // Private: what is attached is a reference to the file, not a link to it.
+      const uploaded = await uploadKycDocument(file, vendorId);
+      await attach.mutateAsync({ [documentKey]: uploaded.ref });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Upload failed.");
     } finally {
