@@ -22,7 +22,15 @@ export interface Vendor {
   businessLogoUrl: string | null;
   businessBannerUrl: string | null;
   whatsappNumber: string | null;
+  /** "Run by Ngozi" — the owner's first name only. Absent from an older server. */
+  ownerFirstName?: string | null;
+  /** When they joined Recommend (ISO). Absent from an older server. */
+  memberSince?: string | null;
   isOpen: boolean;
+  /** When a closed shop next opens (ISO); null if open, paused, or no open day. */
+  opensAt?: string | null;
+  /** When an open shop closes (ISO); null if closed or it never closes. */
+  closesAt?: string | null;
   operatingHours: Record<string, OperatingHours> | null;
   slug: string | null;
 }
