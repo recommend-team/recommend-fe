@@ -132,18 +132,14 @@ describe("storefront page", () => {
     expect(screen.getByText("Run by Ngozi")).toBeInTheDocument();
     expect(screen.getByText("Selling on Recommend since March 2026")).toBeInTheDocument();
 
-    // Questions go to Recommend's team; nothing links to the vendor directly.
-    expect(screen.getByRole("heading", { name: "Questions before you order?" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Call Recommend/ })).toHaveAttribute(
-      "href",
-      expect.stringMatching(/^tel:\+234/)
-    );
+    // Nothing links to the vendor: the only number on the page is Recommend's, in the footer.
     const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href") ?? "");
     expect(hrefs.filter((href) => /wa\.me|whatsapp/i.test(href))).toEqual([]);
-    // Recommend's number, twice (the question box and the footer) — and no other.
-    const dialled = new Set(hrefs.filter((href) => href.startsWith("tel:")));
-    expect(dialled.size).toBe(1);
+    expect(hrefs.filter((href) => href.startsWith("tel:"))).toEqual([
+      expect.stringMatching(/^tel:\+234/),
+    ]);
     expect(screen.queryByRole("link", { name: /Message/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Talk to|Questions before/ })).not.toBeInTheDocument();
   });
 
   it("says plainly when a closed shop opens, and shows the week", () => {

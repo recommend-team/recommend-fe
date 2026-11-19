@@ -10,7 +10,6 @@ import {
   Clock,
   CreditCard,
   Lock,
-  Phone,
   Search,
   Share2,
   ShieldCheck,
@@ -113,12 +112,9 @@ export default function StorefrontPage() {
   const { vendor } = data;
   const storeName = vendor.businessName ?? "This store";
   const owner = vendor.ownerFirstName?.trim() || null;
-  /** Who the team asks on the buyer's behalf: Ngozi, or the shop when we have no name. */
-  const contactName = owner ?? storeName;
   const since = memberSinceText(vendor.memberSince);
   const food = sellsFood(vendor.businessCategory);
-  const areas = vendor.serviceAreas ?? [];
-  const areaNames = areas.map((area) => area.name);
+  const areaNames = (vendor.serviceAreas ?? []).map((area) => area.name);
   const hours = weekRows(vendor.operatingHours, now);
   const status = vendor.isOpen
     ? openUntilText(vendor.closesAt)
@@ -368,87 +364,63 @@ export default function StorefrontPage() {
           )}
         </section>
 
-        {/* How it works */}
-        <section className="pt-16">
-          <h2 className="font-display mb-5 text-[28px] font-bold tracking-tight">How ordering works</h2>
-          <ol className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {[
-              [
-                "Add what you want",
-                data.pickupEnabled
-                  ? "Pick your items and any options, then choose delivery or pickup."
-                  : "Pick your items and any options.",
-              ],
-              ["Pay with Paystack", "Card, transfer or USSD. Your receipt comes by email."],
-              [
-                "Give your code on arrival",
-                "Your order is only handed over when you give your code — so it reaches you, not someone else.",
-              ],
-            ].map(([title, body], index) => (
-              <li key={title} className="rounded-[18px] border border-[#E7E2D6] bg-white p-5">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-[#FFF1E8] font-bold text-[#C2410C]">
-                  {index + 1}
-                </span>
-                <p className="mt-3 text-[17px] font-bold">{title}</p>
-                <p className="mt-1 text-sm leading-relaxed text-[#4A4A44]">{body}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {/* Reach them */}
-        <section className="flex flex-wrap items-stretch gap-5 pt-16">
-          <div className="flex min-w-0 flex-[999_1_460px] flex-col gap-4 rounded-[22px] border border-[#E7E2D6] bg-white p-6 lg:p-7">
-            <h2 className="font-display text-[28px] font-bold tracking-tight">Questions before you order?</h2>
-            <p className="text-[15px] leading-relaxed text-[#4A4A44]">
-              {food
-                ? `Planning a big order, want it less spicy, or checking what ${contactName} has ready today? Our team will ask for you.`
-                : `Checking a size, a colour or whether ${contactName} has something in stock? Our team will ask for you.`}
-            </p>
-            <a
-              href={SUPPORT_PHONE_HREF}
-              className="flex h-[52px] items-center justify-center gap-2.5 rounded-[14px] bg-[#0E3B26] text-[15px] font-bold text-white hover:bg-[#0A2A1B] sm:max-w-[360px]"
-            >
-              <Phone size={18} aria-hidden /> Call Recommend · {SUPPORT_PHONE}
-            </a>
-            {areaNames.length > 0 && (
-              <div className="flex flex-col gap-2 border-t border-[#E7E2D6] pt-4">
-                <p className="text-xs font-bold tracking-[0.08em] text-[#5B5B55] uppercase">Delivers to</p>
-                <div className="flex flex-wrap gap-2">
-                  {areas.map((area) => (
-                    <span
-                      key={area.id}
-                      className="rounded-full bg-[#E6F0EA] px-3 py-1.5 text-sm font-semibold text-[#0E3B26]"
-                    >
-                      {area.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* How it works, beside when they're open */}
+        <section className="flex flex-wrap items-start gap-x-8 gap-y-10 pt-16">
+          <div className="min-w-0 flex-[999_1_480px]">
+            <h2 className="font-display mb-5 text-[28px] font-bold tracking-tight">How ordering works</h2>
+            <ol className="flex flex-col gap-3">
+              {[
+                [
+                  "Add what you want",
+                  data.pickupEnabled
+                    ? "Pick your items and any options, then choose delivery or pickup."
+                    : "Pick your items and any options.",
+                ],
+                ["Pay with Paystack", "Card, transfer or USSD. Your receipt comes by email."],
+                [
+                  "Give your code on arrival",
+                  "Your order is only handed over when you give your code — so it reaches you, not someone else.",
+                ],
+              ].map(([title, body], index) => (
+                <li
+                  key={title}
+                  className="flex items-start gap-4 rounded-[18px] border border-[#E7E2D6] bg-white p-5"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#FFF1E8] font-bold text-[#C2410C]">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="text-[17px] font-bold">{title}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-[#4A4A44]">{body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
 
           {hours && (
-            <div className="flex-[1_1_320px] rounded-[22px] border border-[#E7E2D6] bg-white p-6 lg:p-7">
-              <h3 className="font-display mb-3 flex items-center gap-2 text-[22px] font-bold">
-                <Clock size={20} className="text-[#0E3B26]" aria-hidden /> Opening hours
-              </h3>
-              <dl>
-                {hours.map((row) => (
-                  <div
-                    key={row.day}
-                    className={`flex justify-between border-b border-[#F1ECE0] py-2 text-[15px] last:border-b-0 ${
-                      row.today ? "font-bold" : ""
-                    }`}
-                  >
-                    <dt>
-                      {row.day}
-                      {row.today && <span className="font-medium text-[#5B5B55]"> (today)</span>}
-                    </dt>
-                    <dd className={row.closed ? "text-[#9F1D12]" : ""}>{row.text}</dd>
-                  </div>
-                ))}
-              </dl>
+            <div className="min-w-0 flex-[1_1_320px]">
+              <h2 className="font-display mb-5 flex items-center gap-2 text-[28px] font-bold tracking-tight">
+                <Clock size={24} className="text-[#0E3B26]" aria-hidden /> Opening hours
+              </h2>
+              <div className="rounded-[18px] border border-[#E7E2D6] bg-white px-5 py-3">
+                <dl>
+                  {hours.map((row) => (
+                    <div
+                      key={row.day}
+                      className={`flex justify-between border-b border-[#F1ECE0] py-2 text-[15px] last:border-b-0 ${
+                        row.today ? "font-bold" : ""
+                      }`}
+                    >
+                      <dt>
+                        {row.day}
+                        {row.today && <span className="font-medium text-[#5B5B55]"> (today)</span>}
+                      </dt>
+                      <dd className={row.closed ? "text-[#9F1D12]" : ""}>{row.text}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
             </div>
           )}
         </section>
