@@ -10,7 +10,6 @@ import {
   Clock,
   CreditCard,
   Lock,
-  MessageCircle,
   Phone,
   Search,
   Share2,
@@ -34,14 +33,11 @@ import {
   type CartLine,
 } from "@/lib/storefront-cart";
 import {
-  displayPhone,
   memberSinceText,
   openUntilText,
   opensText,
-  phoneHref,
   sellsFood,
   weekRows,
-  whatsappHref,
 } from "@/lib/storefront-profile";
 import type { Product } from "@/types";
 
@@ -49,8 +45,8 @@ import type { Product } from "@/types";
  * A vendor's own shop — the link they share on Instagram, WhatsApp and TikTok.
  *
  * Built around the person behind the business (STOREFRONT design, option B): who runs
- * it, how to reach them, when they are open, then what they sell. A buyer who can see a
- * face and a WhatsApp button reaches out; a vendor who sees that page shares it.
+ * it, when they are open, then what they sell. Buyers never get a vendor's number —
+ * questions go through Recommend, which asks the vendor for them.
  *
  * Extras aren't listed on their own: each dish offers its own, in the sheet that builds it.
  */
@@ -117,12 +113,9 @@ export default function StorefrontPage() {
   const { vendor } = data;
   const storeName = vendor.businessName ?? "This store";
   const owner = vendor.ownerFirstName?.trim() || null;
-  /** Who a buyer talks to: Ngozi, or the shop when we don't have a name. */
+  /** Who the team asks on the buyer's behalf: Ngozi, or the shop when we have no name. */
   const contactName = owner ?? storeName;
   const since = memberSinceText(vendor.memberSince);
-  const whatsapp = whatsappHref(vendor.whatsappNumber, storeName);
-  const call = phoneHref(vendor.whatsappNumber);
-  const phoneText = displayPhone(vendor.whatsappNumber);
   const food = sellsFood(vendor.businessCategory);
   const areas = vendor.serviceAreas ?? [];
   const areaNames = areas.map((area) => area.name);
@@ -235,11 +228,9 @@ export default function StorefrontPage() {
                   <p className="text-[15px] font-bold">
                     {owner ? `Run by ${owner}` : storeName}
                   </p>
-                  <p className="text-[13px] text-[#5B5B55]">
-                    {[since && `Selling on Recommend since ${since}`, whatsapp && "Replies on WhatsApp"]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
+                  {since && (
+                    <p className="text-[13px] text-[#5B5B55]">Selling on Recommend since {since}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -251,17 +242,6 @@ export default function StorefrontPage() {
               >
                 {food ? "See the menu" : "Shop now"}
               </a>
-              {whatsapp && (
-                <a
-                  href={whatsapp}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-[52px] items-center justify-center gap-2.5 rounded-[14px] border-2 border-[#0E3B26] bg-white px-6 text-base font-bold text-[#0E3B26] hover:bg-[#E6F0EA]"
-                >
-                  <MessageCircle size={18} aria-hidden />
-                  Message {contactName}
-                </a>
-              )}
             </div>
 
             <ul className="flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-semibold text-[#3A3A35]">
@@ -419,41 +399,18 @@ export default function StorefrontPage() {
         {/* Reach them */}
         <section className="flex flex-wrap items-stretch gap-5 pt-16">
           <div className="flex min-w-0 flex-[999_1_460px] flex-col gap-4 rounded-[22px] border border-[#E7E2D6] bg-white p-6 lg:p-7">
-            <h2 className="font-display text-[28px] font-bold tracking-tight">Talk to {contactName}</h2>
+            <h2 className="font-display text-[28px] font-bold tracking-tight">Questions before you order?</h2>
             <p className="text-[15px] leading-relaxed text-[#4A4A44]">
               {food
-                ? "Planning a big order, want it less spicy, or checking what's ready today? Ask before you order."
-                : "Checking a size, a colour or whether something is in stock? Ask before you order."}
+                ? `Planning a big order, want it less spicy, or checking what ${contactName} has ready today? Our team will ask for you.`
+                : `Checking a size, a colour or whether ${contactName} has something in stock? Our team will ask for you.`}
             </p>
-            {whatsapp || call ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {whatsapp && (
-                  <a
-                    href={whatsapp}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-[52px] items-center justify-center gap-2.5 rounded-[14px] bg-[#0E3B26] text-[15px] font-bold text-white hover:bg-[#0A2A1B]"
-                  >
-                    <MessageCircle size={18} aria-hidden /> WhatsApp
-                  </a>
-                )}
-                {call && (
-                  <a
-                    href={call}
-                    className="flex h-[52px] items-center justify-center gap-2.5 rounded-[14px] border-2 border-[#0E3B26] text-[15px] font-bold text-[#0E3B26] hover:bg-[#E6F0EA]"
-                  >
-                    <Phone size={18} aria-hidden /> {phoneText}
-                  </a>
-                )}
-              </div>
-            ) : (
-              <a
-                href={SUPPORT_PHONE_HREF}
-                className="flex h-[52px] items-center justify-center gap-2.5 rounded-[14px] border-2 border-[#0E3B26] text-[15px] font-bold text-[#0E3B26] hover:bg-[#E6F0EA]"
-              >
-                <Phone size={18} aria-hidden /> Ask Recommend · {SUPPORT_PHONE}
-              </a>
-            )}
+            <a
+              href={SUPPORT_PHONE_HREF}
+              className="flex h-[52px] items-center justify-center gap-2.5 rounded-[14px] bg-[#0E3B26] text-[15px] font-bold text-white hover:bg-[#0A2A1B] sm:max-w-[360px]"
+            >
+              <Phone size={18} aria-hidden /> Call Recommend · {SUPPORT_PHONE}
+            </a>
             {areaNames.length > 0 && (
               <div className="flex flex-col gap-2 border-t border-[#E7E2D6] pt-4">
                 <p className="text-xs font-bold tracking-[0.08em] text-[#5B5B55] uppercase">Delivers to</p>

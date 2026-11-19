@@ -1,14 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import {
   clockText,
-  displayPhone,
   memberSinceText,
   openUntilText,
   opensText,
-  phoneHref,
   sellsFood,
   weekRows,
-  whatsappHref,
 } from "@/lib/storefront-profile";
 import type { Product, StorefrontData } from "@/types";
 
@@ -40,22 +37,6 @@ const week = {
 };
 
 describe("storefront profile helpers", () => {
-  it("opens a WhatsApp chat with the vendor, saying where the buyer came from", () => {
-    const href = whatsappHref("08012345678", "Mama Ngozi Kitchen");
-    expect(href).toBe(
-      "https://wa.me/2348012345678?text=" +
-        encodeURIComponent("Hi Mama Ngozi Kitchen, I found your shop on Recommend.")
-    );
-    expect(whatsappHref("+234 801 234 5678", "X")).toContain("wa.me/2348012345678");
-    expect(whatsappHref(null, "X")).toBeNull();
-    expect(whatsappHref("12345", "X")).toBeNull();
-  });
-
-  it("writes and dials a Nigerian number the usual way", () => {
-    expect(displayPhone("+2348012345678")).toBe("+234 801 234 5678");
-    expect(phoneHref("0801 234 5678")).toBe("tel:+2348012345678");
-  });
-
   it("reads clock times as people say them", () => {
     expect(clockText("09:00")).toBe("9am");
     expect(clockText("21:30")).toBe("9:30pm");
@@ -119,7 +100,6 @@ const shop = (over: Partial<StorefrontData["vendor"]> = {}, products?: Product[]
     serviceAreas: [{ id: "a1", name: "Egbeda" }],
     businessLogoUrl: null,
     businessBannerUrl: null,
-    whatsappNumber: "+2348012345678",
     ownerFirstName: "Ngozi",
     memberSince: "2026-03-04T10:00:00.000Z",
     isOpen: false,
@@ -144,24 +124,26 @@ describe("storefront page", () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it("puts the person behind the shop, and a way to reach them, up front", () => {
+  it("puts the person behind the shop up front, but never a way round Recommend", () => {
     storefront = shop();
     render(<StorefrontPage />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Mama Ngozi Kitchen" })).toBeInTheDocument();
     expect(screen.getByText("Run by Ngozi")).toBeInTheDocument();
-    expect(
-      screen.getByText("Selling on Recommend since March 2026 · Replies on WhatsApp")
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Message Ngozi/ })).toHaveAttribute(
+    expect(screen.getByText("Selling on Recommend since March 2026")).toBeInTheDocument();
+
+    // Questions go to Recommend's team; nothing links to the vendor directly.
+    expect(screen.getByRole("heading", { name: "Questions before you order?" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Call Recommend/ })).toHaveAttribute(
       "href",
-      expect.stringContaining("https://wa.me/2348012345678")
+      expect.stringMatching(/^tel:\+234/)
     );
-    expect(screen.getByRole("link", { name: /\+234 801 234 5678/ })).toHaveAttribute(
-      "href",
-      "tel:+2348012345678"
-    );
-    expect(screen.getByRole("heading", { name: "Talk to Ngozi" })).toBeInTheDocument();
+    const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href") ?? "");
+    expect(hrefs.filter((href) => /wa\.me|whatsapp/i.test(href))).toEqual([]);
+    // Recommend's number, twice (the question box and the footer) — and no other.
+    const dialled = new Set(hrefs.filter((href) => href.startsWith("tel:")));
+    expect(dialled.size).toBe(1);
+    expect(screen.queryByRole("link", { name: /Message/ })).not.toBeInTheDocument();
   });
 
   it("says plainly when a closed shop opens, and shows the week", () => {
@@ -173,16 +155,13 @@ describe("storefront page", () => {
     expect(within(today).getByText("noon – 9pm")).toBeInTheDocument();
   });
 
-  it("leaves out what it doesn't know rather than showing an empty button", () => {
-    storefront = shop({ whatsappNumber: null, ownerFirstName: null, memberSince: null, operatingHours: null });
+  it("leaves out what it doesn't know rather than showing it empty", () => {
+    storefront = shop({ ownerFirstName: null, memberSince: null, operatingHours: null });
     render(<StorefrontPage />);
 
-    expect(screen.queryByRole("link", { name: /Message/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/Run by/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Selling on Recommend since/)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /Opening hours/ })).not.toBeInTheDocument();
-    // Still somewhere to ask: Recommend itself.
-    expect(screen.getByRole("heading", { name: "Talk to Mama Ngozi Kitchen" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Ask Recommend/ })).toBeInTheDocument();
   });
 
   it("shows a short menu as cards, and a long one as compact rows", () => {

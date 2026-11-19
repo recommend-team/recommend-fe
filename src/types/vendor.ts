@@ -21,7 +21,6 @@ export interface Vendor {
   serviceAreas: { id: string; name: string }[];
   businessLogoUrl: string | null;
   businessBannerUrl: string | null;
-  whatsappNumber: string | null;
   /** "Run by Ngozi" — the owner's first name only. Absent from an older server. */
   ownerFirstName?: string | null;
   /** When they joined Recommend (ISO). Absent from an older server. */
