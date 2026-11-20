@@ -2,7 +2,7 @@ export type VendorType = "REGISTERED" | "NON_REGISTERED";
 
 export type RiderType = "INDIVIDUAL" | "COMPANY";
 
-export type UserRole = "SELLER" | "RIDER" | "BUYER" | "ADMIN" | "SUPER_ADMIN";
+export type UserRole = "SELLER" | "RIDER" | "BUYER" | "ADMIN" | "SUPER_ADMIN" | "SUPPORT";
 
 export type UserStatus = "PENDING" | "APPROVED" | "SUSPENDED" | "DEACTIVATED";
 

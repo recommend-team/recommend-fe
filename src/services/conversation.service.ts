@@ -7,6 +7,7 @@ import type {
   CatalogProduct,
   CatalogStore,
   ConversationDetail,
+  ConversationHandling,
   ConversationFeed,
   ConversationListFilters,
   ConversationOrder,
@@ -14,6 +15,7 @@ import type {
   DeletedConversations,
   PlaceAdminOrderPayload,
   PlacedAdminOrder,
+  SupportTeam,
   WaitlistPage,
 } from "@/types";
 
@@ -218,4 +220,27 @@ export async function setConversationTyping(
     method: "POST",
     body: JSON.stringify({ isTyping }),
   });
+}
+
+/** Everyone who has answered this chat, first to last. */
+export async function getConversationHistory(
+  id: string
+): Promise<ConversationHandling[]> {
+  return request<ConversationHandling[]>(`/admin/conversations/${id}/history`);
+}
+
+/** Pass a chat someone has to a colleague. Admins only. */
+export async function reassignConversation(
+  id: string,
+  adminId: string
+): Promise<ConversationSummary> {
+  return request<ConversationSummary>(`/admin/conversations/${id}/reassign`, {
+    method: "POST",
+    body: JSON.stringify({ adminId }),
+  });
+}
+
+/** The team answering buyers, with their figures for the last `days` days. Admins only. */
+export async function getSupportTeam(days = 7): Promise<SupportTeam> {
+  return request<SupportTeam>(`/admin/support-team${qs({ days })}`);
 }

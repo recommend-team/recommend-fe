@@ -68,6 +68,24 @@ export async function suspendAdmin(id: string): Promise<AdminUser> {
   });
 }
 
+/** Lets a suspended admin or customer service agent sign in again. */
+export async function activateAdmin(id: string): Promise<AdminUser> {
+  return request<AdminUser>(`/super-admin/admins/${id}/activate`, {
+    method: "PATCH",
+  });
+}
+
+/** Admin ↔ customer service. Applies from their next request. */
+export async function changeAdminRole(params: {
+  id: string;
+  role: "ADMIN" | "SUPPORT";
+}): Promise<AdminUser> {
+  return request<AdminUser>(`/super-admin/admins/${params.id}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role: params.role }),
+  });
+}
+
 // Pending approvals / KYC queue
 export async function getPendingApprovals(
   params: PaginationParams = {}

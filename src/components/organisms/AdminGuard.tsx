@@ -3,16 +3,8 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCurrentUser } from "@/hooks";
-import type { AdminRole, AuthUser } from "@/types";
-
-function isAdmin(user: AuthUser | null | undefined): boolean {
-  if (!user) return false;
-  return user.role === "ADMIN" || user.role === "SUPER_ADMIN";
-}
-
-function isSuperAdmin(user: AuthUser | null | undefined): boolean {
-  return user?.role === "SUPER_ADMIN";
-}
+import { isStaff, staffCanOpen, staffHome } from "@/lib/staff-access";
+import type { AdminRole } from "@/types";
 
 /** Nothing to listen to: being in the browser never changes once true. */
 const subscribeNothing = () => () => undefined;
@@ -31,6 +23,10 @@ function LoadingFallback() {
   );
 }
 
+/**
+ * Admins, the super admin and customer service get in. Customer service only reach
+ * Conversations — anywhere else sends them there.
+ */
 export default function AdminGuard({ children, requireRole }: AdminGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -43,7 +39,9 @@ export default function AdminGuard({ children, requireRole }: AdminGuardProps) {
     () => false
   );
 
-  const allowed = requireRole === "SUPER_ADMIN" ? isSuperAdmin(user) : isAdmin(user);
+  const role = user?.role;
+  const allowed = requireRole === "SUPER_ADMIN" ? role === "SUPER_ADMIN" : isStaff(role);
+  const canOpen = allowed && staffCanOpen(role, pathname);
 
   useEffect(() => {
     if (!mounted || isLoading) return;
@@ -52,9 +50,11 @@ export default function AdminGuard({ children, requireRole }: AdminGuardProps) {
       return;
     }
     if (!allowed) {
-      router.replace("/");
+      router.replace(isStaff(role) ? staffHome(role) : "/");
+      return;
     }
-  }, [mounted, isLoading, user, allowed, router, pathname]);
+    if (!canOpen) router.replace(staffHome(role));
+  }, [mounted, isLoading, user, role, allowed, canOpen, router, pathname]);
 
   // Render the same LoadingFallback on server and on the first client render,
   // so the hydrated DOM matches the SSR output. Once `mounted` flips true (only
@@ -63,6 +63,6 @@ export default function AdminGuard({ children, requireRole }: AdminGuardProps) {
     return <LoadingFallback />;
   }
 
-  if (!user || !allowed) return null;
+  if (!user || !canOpen) return null;
   return <>{children}</>;
 }

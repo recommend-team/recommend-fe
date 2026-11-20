@@ -1,10 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Ban, Search } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { useAdmins, useCreateAdmin, useSuspendAdmin, useCurrentUser } from "@/hooks";
+import { Plus, X, Ban, Search, RotateCcw, Repeat } from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
+import {
+  useActivateAdmin,
+  useAdmins,
+  useChangeAdminRole,
+  useCreateAdmin,
+  useSuspendAdmin,
+  useCurrentUser,
+} from "@/hooks";
 import { useConfirm } from "@/components/organisms/DialogProvider";
+import { staffRoleLabel } from "@/lib/staff-access";
 import type { AdminUser } from "@/types";
 
 interface CreateAdminFormValues {
@@ -12,7 +20,22 @@ interface CreateAdminFormValues {
   lastName: string;
   email: string;
   password: string;
+  role: "ADMIN" | "SUPPORT";
 }
+
+/** What each role can do, said where the choice is made. */
+const ROLE_CHOICES: { value: "ADMIN" | "SUPPORT"; label: string; hint: string }[] = [
+  {
+    value: "SUPPORT",
+    label: "Customer Service",
+    hint: "Answers buyers in Conversations. Sees nothing else.",
+  },
+  {
+    value: "ADMIN",
+    label: "Admin",
+    hint: "Runs the platform: vendors, orders, KYC, payouts and chats.",
+  },
+];
 
 const PASSWORD_RULE =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,50}$/;
@@ -31,14 +54,16 @@ function timeAgo(iso: string | null): string {
   return date.toLocaleDateString();
 }
 
-function roleLabel(role: string): string {
-  return role === "SUPER_ADMIN" ? "Super Admin" : "Admin";
+function roleBadgeStyle(role: string): string {
+  if (role === "SUPER_ADMIN") return "bg-orange-100 text-orange-700";
+  if (role === "SUPPORT") return "bg-blue-100 text-blue-700";
+  return "bg-green-100 text-green-700";
 }
 
-function roleBadgeStyle(role: string): string {
-  return role === "SUPER_ADMIN"
-    ? "bg-orange-100 text-orange-700"
-    : "bg-green-100 text-green-700";
+function errorText(err: unknown, fallback: string): string {
+  return err && typeof err === "object" && "message" in err
+    ? (err as { message: string }).message
+    : fallback;
 }
 
 export default function AdminManagementPage() {
@@ -51,6 +76,9 @@ export default function AdminManagementPage() {
 
   const admins = useAdmins(page, 20);
   const suspend = useSuspendAdmin();
+  const activate = useActivateAdmin();
+  const changeRole = useChangeAdminRole();
+  const busy = suspend.isPending || activate.isPending || changeRole.isPending;
 
   const isSuperAdmin = currentUser?.role === "SUPER_ADMIN";
 
@@ -77,11 +105,42 @@ export default function AdminManagementPage() {
     try {
       await suspend.mutateAsync(admin.id);
     } catch (err) {
-      setActionError(
-        err && typeof err === "object" && "message" in err
-          ? (err as { message: string }).message
-          : "Could not suspend admin."
-      );
+      setActionError(errorText(err, "Could not suspend this account."));
+    }
+  };
+
+  const handleActivate = async (admin: AdminUser) => {
+    const ok = await confirm({
+      title: `Reactivate ${admin.firstName} ${admin.lastName}?`,
+      message: `They will be able to sign in again as ${staffRoleLabel(admin.role)}.`,
+      confirmLabel: "Reactivate",
+    });
+    if (!ok) return;
+    setActionError(null);
+    try {
+      await activate.mutateAsync(admin.id);
+    } catch (err) {
+      setActionError(errorText(err, "Could not reactivate this account."));
+    }
+  };
+
+  const handleChangeRole = async (admin: AdminUser) => {
+    const role = admin.role === "SUPPORT" ? "ADMIN" : "SUPPORT";
+    const ok = await confirm({
+      title: `Make ${admin.firstName} ${staffRoleLabel(role)}?`,
+      message:
+        role === "SUPPORT"
+          ? "They will only see Conversations, and lose access to vendors, orders, KYC and payouts. This applies from their next action."
+          : "They will get full admin access: vendors, orders, KYC, payouts and chats.",
+      confirmLabel: `Make ${staffRoleLabel(role)}`,
+      variant: role === "ADMIN" ? "danger" : undefined,
+    });
+    if (!ok) return;
+    setActionError(null);
+    try {
+      await changeRole.mutateAsync({ id: admin.id, role });
+    } catch (err) {
+      setActionError(errorText(err, "Could not change their role."));
     }
   };
 
@@ -89,10 +148,10 @@ export default function AdminManagementPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold font-dm text-gray-900">
-          Admin User Management
+          Admins &amp; Customer Service
         </h1>
         <p className="text-sm font-dm text-gray-500">
-          Create and manage administrator accounts.
+          Create accounts for admins and customer service, and choose what each can do.
         </p>
       </div>
 
@@ -116,7 +175,7 @@ export default function AdminManagementPage() {
               className="flex items-center gap-2 rounded-full bg-recommend-orange px-4 py-2 text-sm font-bold font-dm text-white hover:bg-orange-600 transition-colors"
             >
               <Plus size={16} />
-              Create New Admin
+              Add team member
             </button>
           )}
         </div>
@@ -136,11 +195,11 @@ export default function AdminManagementPage() {
           <table className="w-full text-sm font-dm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
-                <th className="py-3 pr-4">Admin Name</th>
+                <th className="py-3 pr-4">Name</th>
                 <th className="py-3 pr-4">Role</th>
                 <th className="py-3 pr-4">Status</th>
                 <th className="py-3 pr-4">Last Active</th>
-                <th className="py-3 pr-4 w-24">Actions</th>
+                <th className="py-3 pr-4 w-32">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -150,7 +209,7 @@ export default function AdminManagementPage() {
                     colSpan={5}
                     className="py-6 text-center text-gray-400"
                   >
-                    Loading admins…
+                    Loading the team…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
@@ -159,7 +218,7 @@ export default function AdminManagementPage() {
                     colSpan={5}
                     className="py-6 text-center text-gray-400"
                   >
-                    {search ? "No admins match your search." : "No admins yet."}
+                    {search ? "Nobody matches your search." : "No admins or customer service yet."}
                   </td>
                 </tr>
               ) : (
@@ -182,7 +241,7 @@ export default function AdminManagementPage() {
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${roleBadgeStyle(admin.role)}`}
                       >
-                        {roleLabel(admin.role)}
+                        {staffRoleLabel(admin.role)}
                       </span>
                     </td>
                     <td className="py-3 pr-4">
@@ -192,18 +251,47 @@ export default function AdminManagementPage() {
                       {timeAgo(admin.lastLoginAt)}
                     </td>
                     <td className="py-3 pr-4">
-                      {isSuperAdmin &&
-                      admin.role !== "SUPER_ADMIN" &&
-                      admin.status !== "SUSPENDED" &&
-                      admin.status !== "DEACTIVATED" ? (
-                        <button
-                          onClick={() => handleSuspend(admin)}
-                          disabled={suspend.isPending}
-                          title="Suspend admin"
-                          className="p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 transition-colors"
-                        >
-                          <Ban size={16} />
-                        </button>
+                      {isSuperAdmin && admin.role !== "SUPER_ADMIN" ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleChangeRole(admin)}
+                            disabled={busy}
+                            title={
+                              admin.role === "SUPPORT"
+                                ? "Make admin"
+                                : "Make customer service"
+                            }
+                            aria-label={
+                              admin.role === "SUPPORT"
+                                ? `Make ${admin.firstName} an admin`
+                                : `Make ${admin.firstName} customer service`
+                            }
+                            className="p-2 rounded-lg text-gray-500 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50 transition-colors"
+                          >
+                            <Repeat size={16} />
+                          </button>
+                          {admin.status === "SUSPENDED" ? (
+                            <button
+                              onClick={() => handleActivate(admin)}
+                              disabled={busy}
+                              title="Reactivate"
+                              aria-label={`Reactivate ${admin.firstName}`}
+                              className="p-2 rounded-lg text-gray-500 hover:bg-green-50 hover:text-green-700 disabled:opacity-50 transition-colors"
+                            >
+                              <RotateCcw size={16} />
+                            </button>
+                          ) : admin.status !== "DEACTIVATED" ? (
+                            <button
+                              onClick={() => handleSuspend(admin)}
+                              disabled={busy}
+                              title="Suspend"
+                              aria-label={`Suspend ${admin.firstName}`}
+                              className="p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 transition-colors"
+                            >
+                              <Ban size={16} />
+                            </button>
+                          ) : null}
+                        </div>
                       ) : (
                         <span className="text-xs text-gray-300">—</span>
                       )}
@@ -218,7 +306,7 @@ export default function AdminManagementPage() {
         {admins.data && admins.data.total > 0 && (
           <div className="flex items-center justify-between pt-2">
             <p className="text-xs font-dm text-gray-500">
-              Showing {rows.length} of {admins.data.total} admin accounts
+              Showing {rows.length} of {admins.data.total} accounts
             </p>
             <div className="flex gap-2">
               <button
@@ -292,10 +380,18 @@ function CreateAdminModal({ onClose }: { onClose: () => void }) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<CreateAdminFormValues>({
-    defaultValues: { firstName: "", lastName: "", email: "", password: "" },
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      role: "SUPPORT",
+    },
   });
+  const role = useWatch({ control, name: "role" });
 
   const onSubmit = async (values: CreateAdminFormValues) => {
     setSubmitError(null);
@@ -305,14 +401,11 @@ function CreateAdminModal({ onClose }: { onClose: () => void }) {
         lastName: values.lastName.trim(),
         email: values.email.trim().toLowerCase(),
         password: values.password,
+        role: values.role,
       });
       onClose();
     } catch (err) {
-      setSubmitError(
-        err && typeof err === "object" && "message" in err
-          ? (err as { message: string }).message
-          : "Could not create admin."
-      );
+      setSubmitError(errorText(err, "Could not create the account."));
     }
   };
 
@@ -327,14 +420,37 @@ function CreateAdminModal({ onClose }: { onClose: () => void }) {
           <X size={20} />
         </button>
         <h2 className="text-xl font-bold font-dm text-gray-900 mb-1">
-          Create new admin
+          Add a team member
         </h2>
         <p className="text-sm font-dm text-gray-500 mb-4">
-          New admins are created with standard ADMIN role. Only super admins can
-          create new accounts.
+          Choose what they will do. You can change it later.
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+          <fieldset className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <legend className="text-sm font-bold font-dm text-gray-700 mb-1">Role</legend>
+            {ROLE_CHOICES.map((choice) => (
+              <label
+                key={choice.value}
+                className={`flex cursor-pointer flex-col gap-0.5 rounded-xl border p-3 font-dm ${
+                  role === choice.value
+                    ? "border-recommend-green bg-green-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <span className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                  <input
+                    type="radio"
+                    value={choice.value}
+                    {...register("role")}
+                    className="accent-recommend-green"
+                  />
+                  {choice.label}
+                </span>
+                <span className="text-xs text-gray-500">{choice.hint}</span>
+              </label>
+            ))}
+          </fieldset>
           <div className="grid grid-cols-2 gap-3">
             <Field label="First name" error={errors.firstName?.message}>
               <input
@@ -399,7 +515,9 @@ function CreateAdminModal({ onClose }: { onClose: () => void }) {
             disabled={create.isPending}
             className="w-full rounded-full bg-recommend-orange px-4 py-2.5 text-sm font-bold font-dm text-white hover:bg-orange-600 disabled:opacity-50 transition-colors"
           >
-            {create.isPending ? "Creating…" : "Create admin"}
+            {create.isPending
+              ? "Creating…"
+              : `Create ${role === "SUPPORT" ? "customer service" : "admin"} account`}
           </button>
         </form>
       </div>

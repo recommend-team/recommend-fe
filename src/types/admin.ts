@@ -2,7 +2,8 @@ import type { DeliveryPin } from "@/lib/maps";
 import type { UserStatus, RiderType, VendorType } from "./auth";
 import type { ChoiceGroup, Product } from "./product";
 
-export type AdminRole = "ADMIN" | "SUPER_ADMIN";
+/** Customer service (SUPPORT) answer buyers in Conversations and nothing else. */
+export type AdminRole = "ADMIN" | "SUPER_ADMIN" | "SUPPORT";
 
 export interface AdminUser {
   id: string;
@@ -20,6 +21,8 @@ export interface CreateAdminPayload {
   lastName: string;
   email: string;
   password: string;
+  /** Admin (the default) or customer service. */
+  role?: "ADMIN" | "SUPPORT";
 }
 
 export interface PaginatedResult<T> {
@@ -497,7 +500,7 @@ export interface AdminUserDetail {
   lastName: string;
   email: string;
   phoneNumber: string;
-  role: "SELLER" | "RIDER" | "BUYER" | "ADMIN" | "SUPER_ADMIN";
+  role: "SELLER" | "RIDER" | "BUYER" | "ADMIN" | "SUPER_ADMIN" | "SUPPORT";
   status: UserStatus;
   profilePicture?: string | null;
   isEmailVerified: boolean;

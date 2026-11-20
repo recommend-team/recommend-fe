@@ -29,7 +29,9 @@ import {
 import OrderBuilder from "@/components/organisms/OrderBuilder";
 import { useConfirm } from "@/components/organisms/DialogProvider";
 import ConversationOrderStrip from "@/components/organisms/ConversationOrderStrip";
+import ConversationHandlingStrip from "@/components/organisms/ConversationHandlingStrip";
 import { ApiError } from "@/lib/api";
+import { isSupport, senderKey } from "@/lib/staff-access";
 import type { ConversationMessage } from "@/types";
 
 const STATE_LABELS: Record<string, string> = {
@@ -94,6 +96,10 @@ export default function AdminConversationPage() {
     !!conversation?.heldByAdminId && conversation.heldByAdminId === me?.id;
   const heldByOther =
     !!conversation?.heldByAdminId && conversation.heldByAdminId !== me?.id;
+  /** Who has it, by name — so nobody wonders whether to step in. */
+  const holder = conversation?.heldByName ?? "A colleague";
+  // Deleting and restoring are for admins; customer service only answer.
+  const canDelete = !isSupport(me?.role);
   // Deleted: read-only, until restored.
   const deleted = !!conversation?.deletedAt;
   const canReply = heldByMe && !deleted;
@@ -195,12 +201,12 @@ export default function AdminConversationPage() {
         </div>
 
         {heldByOther && !deleted && (
-          <span className="rounded-full bg-black/5 px-3 py-1.5 font-dm text-xs font-semibold text-gray-600">
-            Another admin is answering
+          <span className="rounded-full bg-blue-500/10 px-3 py-1.5 font-dm text-xs font-semibold text-blue-700">
+            {holder} is answering
           </span>
         )}
 
-        {deleted ? (
+        {!canDelete ? null : deleted ? (
           <button
             onClick={() =>
               void act(() => restore.mutateAsync(conversation.id))
@@ -244,6 +250,12 @@ export default function AdminConversationPage() {
         )}
       </header>
 
+      <ConversationHandlingStrip
+        conversation={conversation}
+        me={me}
+        onError={setFailure}
+      />
+
       {deleted && (
         <p className="flex shrink-0 items-center gap-2 bg-black/5 px-4 py-2.5 font-dm text-xs font-semibold text-gray-700">
           <Trash2 className="h-3.5 w-3.5 shrink-0" />
@@ -283,15 +295,20 @@ export default function AdminConversationPage() {
             const newDay =
               !previous ||
               dayLabel(previous.createdAt) !== dayLabel(message.createdAt);
-            // Consecutive messages from the same side belong together; only the last of
-            // a run is stamped, so a burst of three does not carry three timestamps.
+            // Consecutive messages from the same sender belong together; only the last of
+            // a run is stamped, so a burst of three does not carry three timestamps. A
+            // different agent (or the assistant) starts a new run with its own name.
             const next = conversation.messages[index + 1];
-            const endsRun = !next || sameSide(next) !== sameSide(message);
+            const endsRun = !next || senderKey(next) !== senderKey(message);
 
             return (
               <div key={message.id}>
                 {newDay && <DaySeparator label={dayLabel(message.createdAt)} />}
-                <Bubble message={message} showMeta={endsRun} />
+                <Bubble
+                  message={message}
+                  showMeta={endsRun}
+                  myId={me?.id ?? null}
+                />
               </div>
             );
           })}
@@ -337,7 +354,7 @@ export default function AdminConversationPage() {
                 : heldByMe
                 ? "Reply as Recommend…"
                 : heldByOther
-                  ? "Another admin is answering this one"
+                  ? `${holder} is answering this one`
                   : "Take over to reply"
             }
             className="min-h-11 flex-1 rounded-full border border-black/10 bg-white px-4 font-dm text-sm outline-none focus:border-recommend-green disabled:bg-black/[0.03] disabled:text-gray-400"
@@ -356,9 +373,12 @@ export default function AdminConversationPage() {
   );
 }
 
-function sameSide(message: ConversationMessage): "buyer" | "us" {
-  return message.author === "BUYER" ? "buyer" : "us";
+/** "You, as Recommend" or "Amaka N., as Recommend" — the buyer saw neither name. */
+function personLabel(message: ConversationMessage, myId: string | null): string {
+  if (message.adminId === myId) return "You, as Recommend";
+  return `${message.adminName ?? "A colleague"}, as Recommend`;
 }
+
 
 function DaySeparator({ label }: { label: string }) {
   return (
@@ -375,9 +395,12 @@ function DaySeparator({ label }: { label: string }) {
 function Bubble({
   message,
   showMeta,
+  myId,
 }: {
   message: ConversationMessage;
   showMeta: boolean;
+  /** The signed-in agent: their replies read "You", a colleague's carry a name. */
+  myId: string | null;
 }) {
   const fromBuyer = message.author === "BUYER";
   const byPerson = !!message.adminId;
@@ -404,7 +427,7 @@ function Bubble({
 
         {showMeta && (
           <p className="mt-1 px-1 font-dm text-[11px] text-gray-400">
-            {fromBuyer ? "Buyer" : byPerson ? "You, as Recommend" : "Assistant"}
+            {fromBuyer ? "Buyer" : byPerson ? personLabel(message, myId) : "Assistant"}
             {" · "}
             {new Date(message.createdAt).toLocaleTimeString("en-NG", {
               hour: "2-digit",

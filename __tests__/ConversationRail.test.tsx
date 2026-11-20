@@ -6,7 +6,9 @@ let items: ConversationSummary[] = [];
 const lastFilters: { deleted?: boolean }[] = [];
 const deleteMany = jest.fn();
 const confirm = jest.fn();
+let me: { id: string; role: string } = { id: "admin-1", role: "ADMIN" };
 jest.mock("@/hooks", () => ({
+  useCurrentUser: () => ({ data: me }),
   useConversations: (filters: { deleted?: boolean }) => {
     lastFilters.push(filters);
     return {
@@ -81,7 +83,44 @@ describe("ConversationRail", () => {
     render(<ConversationRail activeId={null} />);
 
     expect(screen.queryByText(/Waiting for you/)).not.toBeInTheDocument();
-    expect(screen.getByText("Answering")).toBeInTheDocument();
+    expect(screen.getByText("You're answering")).toBeInTheDocument();
+  });
+
+  describe("a team on one queue", () => {
+    afterEach(() => {
+      me = { id: "admin-1", role: "ADMIN" };
+    });
+
+    it("says which colleague has a chat, so nobody else opens it", () => {
+      items = [row({ heldByAdminId: "agent-2", heldByName: "Amaka N." })];
+
+      render(<ConversationRail activeId={null} />);
+
+      expect(screen.getByText("Amaka N. answering")).toBeInTheDocument();
+    });
+
+    it("tells customer service the queue is longest-waiting first", () => {
+      me = { id: "agent-1", role: "SUPPORT" };
+      items = [
+        row({ id: "c1", handoverRequestedAt: minutesAgo(9) }),
+        row({ id: "c2", handoverRequestedAt: minutesAgo(1) }),
+      ];
+
+      render(<ConversationRail activeId={null} />);
+      fireEvent.click(screen.getByRole("button", { name: "Needs a person" }));
+
+      expect(screen.getByText("Longest waiting first.")).toBeInTheDocument();
+    });
+
+    it("gives customer service no way to delete chats or see deleted ones", () => {
+      me = { id: "agent-1", role: "SUPPORT" };
+      items = [row()];
+
+      render(<ConversationRail activeId={null} />);
+
+      expect(screen.queryByRole("button", { name: "Select" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Deleted" })).not.toBeInTheDocument();
+    });
   });
 
   describe("deleting", () => {

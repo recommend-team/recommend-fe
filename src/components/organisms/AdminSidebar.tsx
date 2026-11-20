@@ -20,9 +20,11 @@ import {
   X,
   MapPin,
   ListChecks,
+  Headset,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks";
 import type { AuthUser } from "@/types";
+import { staffCanOpen, staffHome, staffRoleLabel } from "@/lib/staff-access";
 import AdminAlertSettings from "./AdminAlertSettings";
 import NotificationBell from "./NotificationBell";
 
@@ -45,6 +47,11 @@ const items: NavItem[] = [
     label: "Conversations",
     href: "/admin/conversations",
     icon: MessagesSquare,
+  },
+  {
+    label: "Customer Service",
+    href: "/admin/support-team",
+    icon: Headset,
   },
   { label: "Waitlist", href: "/admin/waitlist", icon: ListChecks },
   { label: "KYC Verifications", href: "/admin/kyc", icon: ShieldCheck },
@@ -77,15 +84,19 @@ export default function AdminSidebar() {
     router.replace("/admin/login");
   };
 
+  // Customer service see only what they can open: Conversations.
   const visibleItems = items.filter(
-    (item) => !item.requireSuperAdmin || user?.role === "SUPER_ADMIN"
+    (item) =>
+      (!item.requireSuperAdmin || user?.role === "SUPER_ADMIN") &&
+      staffCanOpen(user?.role, item.href)
   );
+  const home = staffHome(user?.role);
 
   return (
     <>
       {/* Mobile top bar — fixed, always visible on small screens */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between bg-white/95 backdrop-blur-sm border-b border-[#FFD91D] px-4 h-14">
-        <Link href="/admin">
+        <Link href={home}>
           <Brand />
         </Link>
         <div className="flex items-center gap-1">
@@ -139,7 +150,7 @@ export default function AdminSidebar() {
       {/* z-40: the bell's panel hangs out over the page, and must sit above it. */}
       <aside className="hidden md:flex md:w-64 shrink-0 flex-col gap-2 bg-white/70 backdrop-blur-sm border-r border-[#FFD91D] p-4 min-h-screen sticky top-0 z-40">
         <div className="mb-4 flex items-center justify-between gap-2 px-2">
-          <Link href="/admin" className="flex min-w-0 items-center gap-2">
+          <Link href={home} className="flex min-w-0 items-center gap-2">
             <Brand />
           </Link>
           <NotificationBell />
@@ -230,7 +241,7 @@ function UserFooter({
             {user.firstName} {user.lastName}
           </p>
           <p className="text-xs font-dm text-gray-500 truncate">
-            {user.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
+            {staffRoleLabel(user.role)}
           </p>
         </div>
       )}

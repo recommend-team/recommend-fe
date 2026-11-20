@@ -9,6 +9,7 @@ import { Button } from "@/components/molecules/Button";
 import { BackgroundTwo } from "@/components/templates/BackgroundTwo";
 import { useLogin } from "@/hooks";
 import { clearSession } from "@/lib/auth";
+import { isStaff, staffCanOpen, staffHome } from "@/lib/staff-access";
 
 interface FormValues {
   email: string;
@@ -35,14 +36,16 @@ function LoginInner() {
         email: values.email.trim().toLowerCase(),
         password: values.password,
       });
-      if (result.user.role !== "ADMIN" && result.user.role !== "SUPER_ADMIN") {
+      if (!isStaff(result.user.role)) {
         clearSession();
         setSubmitError(
           "This account is not an admin. Use the main site to log in."
         );
         return;
       }
-      router.replace(redirect);
+      // Customer service land in Conversations, even from a link to a page they can't use.
+      const role = result.user.role;
+      router.replace(staffCanOpen(role, redirect.split("?")[0]) ? redirect : staffHome(role));
     } catch (err) {
       setSubmitError(
         err && typeof err === "object" && "message" in err

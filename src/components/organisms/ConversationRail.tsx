@@ -10,7 +10,8 @@ import {
   Trash2,
   UserCheck,
 } from "lucide-react";
-import { useConversations, useDeleteConversations } from "@/hooks";
+import { useConversations, useCurrentUser, useDeleteConversations } from "@/hooks";
+import { isSupport } from "@/lib/staff-access";
 import { useConfirm } from "@/components/organisms/DialogProvider";
 import { ApiError } from "@/lib/api";
 import type { ConversationSummary } from "@/types";
@@ -24,6 +25,15 @@ function ago(iso: string | null | undefined): string {
   const hours = Math.round(minutes / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.round(hours / 24)}d`;
+}
+
+/** "You're answering", "Amaka N. answering" — who has this chat. */
+export function holderText(
+  conversation: Pick<ConversationSummary, "heldByAdminId" | "heldByName">,
+  myId: string | null
+): string {
+  if (conversation.heldByAdminId === myId) return "You're answering";
+  return `${conversation.heldByName ?? "A colleague"} answering`;
 }
 
 function initials(name: string | null): string {
@@ -45,7 +55,11 @@ type View = "all" | "attention" | "deleted";
  * list you have to keep going back to.
  *
  * "Select" clears out the chats that went nowhere, several at a time. Deleted ones move
- * to their own filter, where each can be opened and restored.
+ * to their own filter, where each can be opened and restored. Both are for admins:
+ * customer service answer chats, and never delete them.
+ *
+ * Every chat says who is answering it, so a team working one queue never opens a chat a
+ * colleague already has.
  */
 export default function ConversationRail({
   activeId,
@@ -59,6 +73,8 @@ export default function ConversationRail({
   const [notice, setNotice] = useState<string | null>(null);
   const confirm = useConfirm();
   const remove = useDeleteConversations();
+  const { data: me } = useCurrentUser();
+  const canDelete = !isSupport(me?.role);
 
   const { data, isLoading } = useConversations({
     search: search.trim() || undefined,
@@ -126,7 +142,7 @@ export default function ConversationRail({
                 {waiting} waiting
               </span>
             )}
-            {view !== "deleted" && items.length > 0 && (
+            {canDelete && view !== "deleted" && items.length > 0 && (
               <button
                 onClick={() => {
                   setSelecting((on) => !on);
@@ -161,10 +177,16 @@ export default function ConversationRail({
           >
             Needs a person
           </Filter>
-          <Filter active={view === "deleted"} onClick={() => show("deleted")}>
-            Deleted
-          </Filter>
+          {canDelete && (
+            <Filter active={view === "deleted"} onClick={() => show("deleted")}>
+              Deleted
+            </Filter>
+          )}
         </div>
+
+        {view === "attention" && items.length > 1 && (
+          <p className="font-dm text-xs text-gray-500">Longest waiting first.</p>
+        )}
 
         {selecting && (
           <div className="flex items-center justify-between gap-2 rounded-lg bg-black/[0.03] px-3 py-2">
@@ -216,6 +238,7 @@ export default function ConversationRail({
             selecting={selecting}
             selected={selected.has(conversation.id)}
             onToggle={() => toggle(conversation.id)}
+            myId={me?.id ?? null}
           />
         ))}
       </div>
@@ -253,12 +276,15 @@ function RailRow({
   selecting,
   selected,
   onToggle,
+  myId,
 }: {
   conversation: ConversationSummary;
   active: boolean;
   selecting: boolean;
   selected: boolean;
   onToggle: () => void;
+  /** The signed-in agent — "You're answering" rather than their own name. */
+  myId: string | null;
 }) {
   // Handed over by the assistant, which is now silent: a buyer waiting on a person with a
   // clock running. Outranks a flag — and a handed-over conversation is flagged too, so
@@ -363,9 +389,16 @@ function RailRow({
             </span>
           )}
           {!deleted && conversation.heldByAdminId && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-recommend-green/10 px-1.5 py-0.5 font-dm text-[10px] font-bold text-recommend-green">
+            <span
+              className={[
+                "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-dm text-[10px] font-bold",
+                conversation.heldByAdminId === myId
+                  ? "bg-recommend-green/10 text-recommend-green"
+                  : "bg-blue-500/10 text-blue-700",
+              ].join(" ")}
+            >
               <UserCheck className="h-2.5 w-2.5" />
-              Answering
+              {holderText(conversation, myId)}
             </span>
           )}
         </span>

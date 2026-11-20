@@ -6,10 +6,13 @@ import { io, type Socket } from "socket.io-client";
 import {
   deleteConversations,
   getConversation,
+  getConversationHistory,
   getConversationOrder,
   getConversations,
   getWaitlist,
+  getSupportTeam,
   placeConversationOrder,
+  reassignConversation,
   releaseConversation,
   restoreConversation,
   sendConversationMessage,
@@ -20,12 +23,14 @@ import { API_URL } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
 import type {
   ConversationDetail,
+  ConversationHandling,
   ConversationFeed,
   ConversationListFilters,
   ConversationMessage,
   ConversationOrder,
   PlaceAdminOrderPayload,
   PlacedAdminOrder,
+  SupportTeam,
   WaitlistPage,
 } from "@/types";
 
@@ -254,4 +259,42 @@ export function useConversationStream(conversationId: string | null) {
       socketRef.current = null;
     };
   }, [conversationId, queryClient]);
+}
+
+/** Everyone who has answered this chat. Refreshed with the conversation itself. */
+export function useConversationHistory(id: string | null, enabled = true) {
+  return useQuery<ConversationHandling[]>({
+    queryKey: ["admin", "conversation", id, "history"],
+    queryFn: () => getConversationHistory(id!),
+    enabled: !!id && enabled,
+  });
+}
+
+/** Pass a chat to a colleague. Admins only. */
+export function useReassignConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, adminId }: { id: string; adminId: string }) =>
+      reassignConversation(id, adminId),
+    onSuccess: (_result, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: FEED_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: ["admin", "conversation", id],
+      });
+      void queryClient.invalidateQueries({ queryKey: ["admin", "support-team"] });
+    },
+  });
+}
+
+/**
+ * The team and their figures. Also feeds the "pass to a colleague" picker, which needs
+ * who is around and how many chats each already has. Admins only.
+ */
+export function useSupportTeam(days = 7, enabled = true) {
+  return useQuery<SupportTeam>({
+    queryKey: ["admin", "support-team", days],
+    queryFn: () => getSupportTeam(days),
+    enabled,
+    refetchInterval: 60_000,
+  });
 }

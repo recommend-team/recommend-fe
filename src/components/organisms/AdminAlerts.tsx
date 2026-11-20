@@ -30,6 +30,7 @@ const STALE: Record<string, readonly (readonly string[])[]> = {
   CONVERSATION_HANDED_OVER: [["admin", "conversations"]],
   CONVERSATION_FLAGGED: [["admin", "conversations"]],
   HELD_CONVERSATION_MESSAGE: [["admin", "conversations"]],
+  CONVERSATION_ASSIGNED: [["admin", "conversations"]],
   NEW_PAID_ORDER: [
     ["admin", "transactions"],
     ["admin", "orders"],
@@ -131,6 +132,20 @@ export default function AdminAlerts() {
       }
     });
     socket.on("admin:alert", receive);
+    // A colleague took a chat, or one went back to the assistant: every list and open
+    // conversation shows who has it now, so nobody opens one already being answered.
+    socket.on("admin:conversation", (raw: unknown) => {
+      const conversationId =
+        raw && typeof raw === "object" && "conversationId" in raw
+          ? String((raw as { conversationId: unknown }).conversationId)
+          : null;
+      void queryClient.invalidateQueries({ queryKey: ["admin", "conversations"] });
+      if (conversationId) {
+        void queryClient.invalidateQueries({
+          queryKey: ["admin", "conversation", conversationId],
+        });
+      }
+    });
 
     return () => {
       window.clearTimeout(retry);
@@ -138,7 +153,7 @@ export default function AdminAlerts() {
       socket.disconnect();
       setLiveAlertsState("connecting");
     };
-  }, [receive]);
+  }, [receive, queryClient]);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;

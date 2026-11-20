@@ -5,6 +5,7 @@ export * from "./usePlatformStats";
 export * from "./useAdmins";
 export * from "./useCreateAdmin";
 export * from "./useSuspendAdmin";
+export * from "./useManageAdmin";
 export * from "./usePendingApprovals";
 export * from "./useVendors";
 export * from "./useVendorDetail";
