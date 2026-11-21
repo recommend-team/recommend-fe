@@ -21,6 +21,7 @@ import {
   MapPin,
   ListChecks,
   Headset,
+  Tags,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks";
 import type { AuthUser } from "@/types";
@@ -40,6 +41,7 @@ const items: NavItem[] = [
   { label: "Vendors", href: "/admin/vendors", icon: Store },
   { label: "Riders", href: "/admin/riders", icon: Bike },
   { label: "Areas", href: "/admin/areas", icon: MapPin },
+  { label: "Categories", href: "/admin/categories", icon: Tags },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { label: "Transactions", href: "/admin/transactions", icon: Receipt },
   { label: "Withdrawals", href: "/admin/withdrawals", icon: Banknote },

@@ -7,6 +7,7 @@ import { useUpdateVendor } from "@/hooks";
 import type { AdminUpdateVendorPayload, AdminVendorDetail } from "@/types";
 import ImageUploader from "./ImageUploader";
 import { Field, FormActions, FormError, INPUT, TEXTAREA, changed } from "./form";
+import CategoryOptions, { CATEGORY_HINT } from "./CategoryOptions";
 
 interface Values {
   businessName: string;
@@ -120,14 +121,20 @@ export default function EditStoreDialog({
         </Field>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label="What they sell" error={errors.businessCategory?.message}>
+          <Field
+            label="What they sell"
+            hint={CATEGORY_HINT}
+            error={errors.businessCategory?.message}
+          >
             <input
-              placeholder="e.g. Food, Gadgets"
+              placeholder="e.g. Restaurant"
+              list="edit-store-categories"
               {...register("businessCategory", {
                 validate: (v) => v.trim().length >= 2 || "At least 2 characters",
               })}
               className={INPUT}
             />
+            <CategoryOptions id="edit-store-categories" />
           </Field>
           <Field
             label="WhatsApp"

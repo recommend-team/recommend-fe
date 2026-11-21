@@ -41,6 +41,9 @@ const mutation = (fn: jest.Mock) => ({
 
 jest.mock("@/hooks", () => ({
   useUpdateVendor: () => mutation(updateVendor),
+  useCategoryOptions: () => ({
+    data: [{ id: "cat-food", name: "Restaurant", feePercent: 25 }],
+  }),
   useAddVendorProduct: () => mutation(addProduct),
   useUpdateVendorProduct: () => mutation(editProduct),
   useRemoveVendorProduct: () => mutation(removeProduct),
@@ -569,7 +572,7 @@ describe("Set up a vendor", () => {
     fireEvent.change(screen.getByLabelText("Business name"), {
       target: { value: "Musa Suya" },
     });
-    fireEvent.change(screen.getByLabelText("What they sell"), {
+    fireEvent.change(screen.getByLabelText(/What they sell/), {
       target: { value: "Food" },
     });
     fireEvent.change(screen.getByLabelText("Address"), {

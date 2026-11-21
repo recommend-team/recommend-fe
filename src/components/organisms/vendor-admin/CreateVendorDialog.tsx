@@ -6,6 +6,7 @@ import Modal from "@/components/atoms/admin/Modal";
 import { useAllAreas, useCreateVendor } from "@/hooks";
 import type { CreateVendorPayload } from "@/types";
 import { Field, FormActions, FormError, INPUT, TEXTAREA } from "./form";
+import CategoryOptions, { CATEGORY_HINT } from "./CategoryOptions";
 
 interface Values {
   firstName: string;
@@ -147,14 +148,20 @@ export default function CreateVendorDialog({
           />
         </Field>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label="What they sell" error={errors.businessCategory?.message}>
+          <Field
+            label="What they sell"
+            hint={CATEGORY_HINT}
+            error={errors.businessCategory?.message}
+          >
             <input
-              placeholder="e.g. Food, Gadgets"
+              placeholder="e.g. Restaurant"
+              list="create-vendor-categories"
               {...register("businessCategory", {
                 validate: (v) => v.trim().length >= 2 || "At least 2 characters",
               })}
               className={INPUT}
             />
+            <CategoryOptions id="create-vendor-categories" />
           </Field>
           <fieldset className="flex flex-col gap-1.5">
             <legend className="mb-1.5 font-dm text-sm font-bold text-gray-700">Registered?</legend>

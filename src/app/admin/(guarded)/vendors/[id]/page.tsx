@@ -58,6 +58,7 @@ import VendorHistoryTab from "@/components/organisms/vendor-admin/VendorHistoryT
 import KycUploadButton from "@/components/organisms/vendor-admin/KycUploadButton";
 import type { AdminVendorDetail, Product, WalletEntryType } from "@/types";
 import KycDocumentButton from "@/components/organisms/KycDocumentButton";
+import VendorRateCard from "@/components/organisms/VendorRateCard";
 
 const DAY_LABELS: Record<string, string> = {
   monday: "Monday",
@@ -583,6 +584,8 @@ function OverviewTab({
           multiline
         />
       </InfoCard>
+
+      <VendorRateCard vendorId={v.id} />
 
       <InfoCard
         title="Contact"
