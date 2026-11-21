@@ -344,7 +344,12 @@ export interface AdminTransactionSummary {
     vendorName: string | null;
     status: OrderStatus;
     subtotal: number;
+    /** What this vendor is owed: their items less Recommend's cut. */
     vendorAmount: number;
+    /** Recommend's cut of this vendor's items. Never the delivery fee. */
+    platformFee: number;
+    /** The rate that cut was charged at, in percent. Null on some older orders. */
+    feePercent: number | null;
     items: { name: string; quantity: number; lineTotal: number }[];
   }[];
 }

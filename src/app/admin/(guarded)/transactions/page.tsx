@@ -14,6 +14,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import StatusPill from "@/components/atoms/admin/StatusPill";
+import { earningsHint, earningsOf, rateOf } from "@/lib/earnings";
 import Paginator from "@/components/atoms/admin/Paginator";
 import PageHeader from "@/components/atoms/admin/PageHeader";
 import AssignRiderDialog from "@/components/organisms/AssignRiderDialog";
@@ -215,6 +216,8 @@ export default function AdminTransactionsPage() {
                 <th className="py-3 pr-4">Rider</th>
                 <th className="py-3 pr-4">Items</th>
                 <th className="py-3 pr-4">Delivery</th>
+                <th className="py-3 pr-4">Vendors get</th>
+                <th className="py-3 pr-4">Recommend keeps</th>
                 <th className="py-3 pr-4">Total</th>
                 <th className="py-3 pr-4">Status</th>
                 <th className="py-3 pr-4">Placed</th>
@@ -224,13 +227,13 @@ export default function AdminTransactionsPage() {
             <tbody>
               {transactions.isLoading ? (
                 <tr>
-                  <td colSpan={10} className="py-6 text-center text-gray-400">
+                  <td colSpan={12} className="py-6 text-center text-gray-400">
                     Loading transactions…
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-6 text-center text-gray-400">
+                  <td colSpan={12} className="py-6 text-center text-gray-400">
                     {filter === NEEDS_RIDER
                       ? "Every delivery has a rider."
                       : filter === STUCK
@@ -365,6 +368,7 @@ function TransactionRow({
             ? formatNaira(transaction.deliveryFee)
             : "—"}
         </td>
+        <EarningsCells transaction={transaction} />
         <td className="py-3 pr-4 font-bold text-gray-900">
           {formatNaira(transaction.totalAmount)}
         </td>
@@ -472,7 +476,7 @@ function TransactionRow({
 
       {lifecycleError && (
         <tr className="border-b border-gray-100">
-          <td colSpan={10} className="py-2 px-4 text-xs text-red-600 bg-red-50">
+          <td colSpan={12} className="py-2 px-4 text-xs text-red-600 bg-red-50">
             {lifecycleError.message}
           </td>
         </tr>
@@ -484,7 +488,7 @@ function TransactionRow({
 
       {verify.isError && (
         <tr className="border-b border-gray-100">
-          <td colSpan={10} className="py-2 px-4 text-xs text-red-600 bg-red-50">
+          <td colSpan={12} className="py-2 px-4 text-xs text-red-600 bg-red-50">
             Couldn&apos;t check this payment. Nothing has changed.
           </td>
         </tr>
@@ -494,7 +498,7 @@ function TransactionRow({
       {verify.isSuccess && verify.data?.status === "PENDING_PAYMENT" && (
         <tr className="border-b border-gray-100">
           <td
-            colSpan={10}
+            colSpan={12}
             className="py-2 px-4 text-xs text-gray-600 bg-gray-50"
           >
             Paystack has no successful payment for this reference — it was not
@@ -505,7 +509,7 @@ function TransactionRow({
 
       {expanded && (
         <tr className="border-b border-gray-100 bg-gray-50/60">
-          <td colSpan={10} className="py-3 px-4">
+          <td colSpan={12} className="py-3 px-4">
             <div className="flex flex-col gap-3">
               {transaction.vendors.map((vendor) => (
                 <div key={vendor.orderId} className="flex flex-col gap-1">
@@ -516,7 +520,9 @@ function TransactionRow({
                     <StatusPill status={vendor.status} />
                     <span className="text-xs text-gray-500">
                       {formatNaira(vendor.subtotal)} · payout{" "}
-                      {formatNaira(vendor.vendorAmount)}
+                      {formatNaira(vendor.vendorAmount)} · Recommend{" "}
+                      {formatNaira(vendor.platformFee)}
+                      {rateOf(vendor) !== null && ` (${Number(rateOf(vendor)!.toFixed(2))}%)`}
                     </span>
                   </div>
                   <ul className="pl-3">
@@ -573,6 +579,44 @@ function TransactionRow({
 }
 
 /** Who is carrying it — a phone call away — or that nobody is yet. */
+/**
+ * What the vendors are owed and what Recommend keeps, from this payment. Grey while it
+ * is unpaid; struck through once cancelled or refunded — neither is money anyone has.
+ */
+function EarningsCells({ transaction }: { transaction: AdminTransactionSummary }) {
+  const earnings = earningsOf(transaction);
+  const tone =
+    earnings.state === "earned"
+      ? "text-gray-900"
+      : earnings.state === "expected"
+        ? "text-gray-400"
+        : "text-gray-400 line-through";
+  const hint = earningsHint(earnings.state);
+
+  return (
+    <>
+      <td className="py-3 pr-4" title={hint}>
+        <span className={`font-semibold ${tone}`}>{formatNaira(earnings.vendorsGet)}</span>
+        {earnings.byVendor.length > 1 && (
+          <span className="mt-0.5 block text-[11px] text-gray-500">
+            {earnings.byVendor
+              .map((vendor) => `${vendor.name} ${formatNaira(vendor.amount)}`)
+              .join(" · ")}
+          </span>
+        )}
+      </td>
+      <td className="py-3 pr-4" title={hint}>
+        <span className={`font-semibold ${tone}`}>
+          {formatNaira(earnings.recommendKeeps)}
+        </span>
+        {earnings.rateText && (
+          <span className="mt-0.5 block text-[11px] text-gray-500">{earnings.rateText}</span>
+        )}
+      </td>
+    </>
+  );
+}
+
 function RiderCell({ transaction }: { transaction: AdminTransactionSummary }) {
   if (transaction.fulfillmentType === "PICKUP") {
     return <span className="text-xs text-gray-400">Pickup</span>;
