@@ -7,3 +7,4 @@ export * from "./notification.service";
 export * from "./admin-vendors.service";
 export * from "./admin-areas.service";
 export * from "./places.service";
+export * from "./admin-categories.service";

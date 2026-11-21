@@ -33,3 +33,4 @@ export * from "./useAdminNotifications";
 export * from "./useRiders";
 export * from "./useAdminVendorEdit";
 export * from "./useAdminAreas";
+export * from "./useAdminCategories";

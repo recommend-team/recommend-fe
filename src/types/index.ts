@@ -9,3 +9,4 @@ export * from "./notification";
 export * from "./admin-vendor";
 export * from "./admin-areas";
 export * from "./places";
+export * from "./category";
